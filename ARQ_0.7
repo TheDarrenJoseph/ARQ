@@ -1,0 +1,867 @@
+                        
+//////////////////////The ASCII Roguelike Quester -- Experimental project/////////////////
+//                                                                                      //
+//  Author: Rave Kutsuu                     Version : 0.20 -- UI Implementation         //
+//  Created: Dec 16, 2012                   Last Modified: 02 Jan, 2013                 //
+//                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////
+//         DOCUMENTATION WILL BE INCLUDED IN FINAL DEVELOPMENT BUILD                    //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <ncurses.h>
+
+//---------grid sizes---------//
+#define grid_x 30
+#define grid_y 15
+#define inv_x 3
+#define inv_y 5
+
+using namespace std;
+
+//--TODO--//
+//4. Inventory System (Drop items, etc)
+//5. Door Locks (Inventory checking, etc) 
+//6. Health and Loot Count system (certain actions affect health, health affects gameplay, Any loot found adds to a counter based on its type, death, loot loss, update interaction to work with this)
+//7. NPCs (Fixed bosses, fighting, lootable corpses, moving bosses)
+////////////
+
+//--------running toggle---------//
+bool running;
+bool selection;
+
+//---------hud variables---------//
+int health;
+int loot;
+
+//--------Movement Variables--------//
+int player_x,player_y,move_x,move_y;
+
+//------------ Cell Type/Game Guide ------------//
+//                                              
+//--------environment/gamespace---------//      
+/////////////////////////////////////////////   
+//these cell types constitute the main     //  
+//gamespace of the dungeon and provide the //   
+//player with a reactive environment       //
+/////////////////////////////////////////////
+//
+// non - nothing
+// cor - corridor
+// rom - room
+// wa1 - wall type 1
+// wa2 - wall type 2
+// wa3 - wall type 3
+// win - window 
+// ded - deadly cell
+//
+//---------doors---------//
+/////////////////////////////////////////////////
+//These cell types provide the player          //  
+//with environmental barriers that can be      //   
+//interacted with, these provide a barrier to  //
+//game progress in some cases, and need to be  //
+//"toggled" to another doortype to pass via    //
+//player interaction (items may be needed such //
+//as lockpicks or keys to pass some doors)     //
+/////////////////////////////////////////////////
+//
+// od0 - open door type 0 -main office door, no lock-
+// cd0 - closed door type 0
+//
+// od1 - open door type 1 -main lockable door, has 1 lock-
+// cd1 - closed door type 1
+// ld1 - locked door type 1
+//
+// od2 - open door type 2 -secondary lockable door, has 2 locks-
+// cd2 - closed door type 2
+// ld2 - locked door type 2 
+//
+// ent - level entrance 
+// ext - level exit
+//
+//---------Items(placeable)---------//
+/////////////////////////////////////////////
+//Placeable items are specific celltypes   //
+//that create placeable loot in the dungeon//
+//that can either help the player progress //
+//or increase their score.                 //
+/////////////////////////////////////////////
+//
+// key - a key, can be used to open any "ld"
+// lop - lockpick, can be used to open any "lc"
+//
+//---------Item(lootable)---------//
+//
+//
+
+
+//cell types
+enum tile {ntl,cor,rom,wa1,wa2,wa3,win,od0,cd0,od1,cd1,ld1,od2,cd2,ld2,ent,ext,ded};
+
+//item types
+enum item {nit,lop,key};
+
+struct tile_details 
+ {
+  int tile_id;
+  const char* tile_char;
+  int tile_colour;
+  string tile_name;
+ };
+ 
+struct item_details
+ {
+  int item_id;
+  const char* item_char;
+  int item_colour;
+  string item_name;
+ };
+  
+tile_details tile_library[] =
+{
+ {0," ",0, "NO TILE" }, //non
+ {1,"-",4, "Corridor" }, //cor
+ {2,"!",4, "Room" }, //rom
+ {3,"#",3, "Concrete Wall" }, //wa1
+ {4,"#",3, "Stone Wall" }, //wa2
+ {5,"#",3, "Brick Wall" }, //wa3
+ {6,"%",6, "Window" },
+ {7,"-",0, "Open Office Door" },
+ {8,"=",2, "Closed Office Door" },
+ {9,"-",0, "Open Wooden Door" },
+ {10,"=",2, "Closed Metal Door" },
+ {11,"=",1, "Locked Metal Door" },
+ {12,"-",0, "Open Metal Door" },
+ {13,"=",2, "Closed Metal Door" },
+ {14,"=",1, "Locked Metal Door"},
+ {15,"@",1, "Entrance" },
+ {16,"@",2, "Exit" },
+ {17,"!",7, "Deadly Floor" },
+ {18,"c",2, "Open Trunk", },
+ {19,"c",7, "Closed Trunk", },
+ {20,"c",2, "Open Filing Cabinet", },
+ {21,"c",7, "Closed Filing Cabinet", },
+ {22,"C",1, "Locked Filing Cabinet", },
+ {23,"c",2, "Open Desk", },
+ {24,"c",7, "Closed Desk", },
+ {25,"C",1, "Locked Desk", },
+ {26,"c",2, "Open Large Cabinet", },
+ {27,"c",7, "Closed Large Cabinet", },
+ {28,"C",1, "Locked Large Cabinet", },
+ {29,"c",2, "Open Small Cabinet", },
+ {30,"c",7, "Closed Small Cabinet", },
+ {31,"C",1, "Locked Small Cabinet", },
+};
+
+item_details item_library[]=
+ {
+  {0," ",0, "Empty " }, //item_none
+  {1,"!",2, "Lockpick "}, //item_locp
+  {2,"!",2, "Door Key "}, //item_dkey
+ };
+    
+//main map
+tile game_grid[grid_y][grid_x] = { 
+    {wa1,wa1,ent,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1},
+    {wa1,cor,cor,cor,cor,cor,cor,cor,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,cd0,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,wa2,cd0,cd0,wa2,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,rom,rom,rom,rom,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,rom,rom,rom,rom,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,rom,rom,rom,rom,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,rom,rom,rom,rom,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,cor,wa2,wa2,wa2,wa2,wa2,wa2,cor,wa2,wa2,wa2,cd0,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,cd0,wa2,wa2,wa2,wa2,wa1},
+    {wa1,cor,cor,cor,cor,cor,cor,cor,cor,wa2,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,rom,wa1},
+    {wa1,wa2,wa2,wa2,wa2,wa2,wa2,wa2,cor,wa2,ld1,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,wa2,cd0,wa2,wa2,wa2,cd0,wa2,wa2,wa2,wa1},
+    {wa1,rom,ded,rom,rom,rom,ded,wa2,cor,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,wa1},
+    {wa1,rom,ded,rom,rom,rom,ded,wa2,cd1,wa2,cd1,wa2,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,wa1},
+    {wa1,ded,ded,ded,rom,ded,ded,wa2,cor,wa2,cor,wa2,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,wa1},
+    {wa1,ded,ded,rom,rom,rom,rom,rom,cor,cd1,cor,cd0,rom,rom,rom,rom,rom,rom,wa2,rom,rom,rom,rom,wa2,rom,rom,rom,rom,rom,wa1},
+    {wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,wa1,ext,wa1,wa1,wa1},
+};
+
+item inventory[inv_y][inv_x];
+
+static item game_items[grid_y][grid_x] = {
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},  
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,lop,key,key,lop,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,lop,key,key,lop,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,key,key,lop,lop,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,lop,lop,key,key,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+ {nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit,nit},
+};
+
+int wprintw_col (WINDOW* winchoice, const char *text, int color_choice) //allows ncurses window and colour selection when outputting characters
+{
+ wattron(winchoice,COLOR_PAIR(color_choice)); //turns on the chosen colour pair
+ wprintw (winchoice, text); 
+ wattroff(winchoice,COLOR_PAIR(color_choice)); //turns off the chosen colour pair
+ return (0);
+};             
+
+int wprint_at (WINDOW* winchoice, const char *text, int pos_y, int pos_x)
+{
+ wmove (winchoice,pos_y,pos_x);
+ wprintw (winchoice, text); 
+ wrefresh (winchoice);
+ return (0);
+}
+
+int init_screen (void)
+{
+ initscr();
+
+ if (has_colors() == FALSE)
+   {	
+	  endwin();
+	  printf("Your terminal does not support color\n");
+	  return(0);
+	 }
+ start_color();	
+ 
+ //---------colour pairs---------//
+ init_pair(0, COLOR_BLACK, COLOR_BLACK);
+ init_pair(1, COLOR_RED, COLOR_BLACK);
+ init_pair(2, COLOR_GREEN, COLOR_BLACK);
+ init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+ init_pair(4, COLOR_BLUE, COLOR_BLACK);
+ init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+ init_pair(6, COLOR_CYAN, COLOR_BLACK);
+ init_pair(7, COLOR_WHITE, COLOR_BLACK);
+
+ return (0);
+};
+
+int drawmap (WINDOW* winchoice)
+{
+ wmove (winchoice,0,0);
+ 	for (int y = 0; y < grid_y; y++)
+	 {
+	  wmove (winchoice,y,0);
+	  for(int x = 0; x < grid_x; x++)
+		{
+       int maptile_tile;
+       int maptile_colour;
+       const char *maptile_char;
+      
+       if (game_items [y][x] !=nit)
+        {
+         maptile_tile = game_items [y][x];
+         maptile_colour = item_library[maptile_tile].item_colour;
+		   maptile_char = item_library[maptile_tile].item_char;
+        }
+         
+       else
+        { 
+         maptile_tile = game_grid [y][x];
+         maptile_colour = tile_library[maptile_tile].tile_colour;
+		 maptile_char = tile_library[maptile_tile].tile_char;
+        };
+        
+		 wmove (winchoice,y,x);
+		 wprintw_col (winchoice, maptile_char, maptile_colour);
+		}; 
+	  }; 
+ return (0);
+};
+
+int drop_item (WINDOW* input_win, WINDOW* inv_win, int ply_x, int ply_y)
+ {
+  int inv_tile;
+  int maptile_colour;
+  int x,y;
+  string str;
+  
+  x = 1;
+  y = 1;
+  inv_tile = inventory[y][x];
+  maptile_colour = item_library[inv_tile].item_colour;
+  str = item_library[inv_tile].item_name;
+         
+  const char *maptile_char = str.c_str();
+  
+  selection = true;
+
+  while (selection == true) 
+   {
+    wmove (inv_win,0,0);
+    
+    wchgat (inv_win,8, A_BLINK, 1, NULL);
+    wrefresh (inv_win);
+    
+    wprint_at (input_win, "Select item to drop with WASD..", 0,0);
+    wrefresh (input_win);
+    getch ();
+    selection = false;
+   };
+  return (0);
+ };
+ 
+int invproc (item itm) 
+{
+ for (int y = 0; y < inv_y; y++)
+  {
+   for(int x = 0; x < inv_x; x++)
+    {
+     if (inventory[y][x] == nit) //If slot is empty
+      { 
+	   inventory[y][x] = itm; //Place the item in empty slot
+      return (0);
+      };
+	}; 
+  };
+ return(1);	
+};
+
+int drawinv (WINDOW* winchoice)
+{
+ wmove (winchoice,0,0);
+ 	for (int y = 0; y < inv_y; y++)
+	 {
+	  wmove (winchoice,y,0);
+	  for(int x = 0; x < inv_x; x++)
+		{
+         int inv_tile;
+         int maptile_colour;
+         string str;
+         
+         inv_tile = inventory[y][x];
+         maptile_colour = item_library[inv_tile].item_colour;
+	      str = item_library[inv_tile].item_name;
+         
+         const char *maptile_char = str.c_str();
+        
+		 wprintw_col (winchoice, maptile_char, maptile_colour);
+		}; 
+	  };  
+ return (0);
+};
+
+int drawplayer (WINDOW* winchoice)
+{
+ wmove (winchoice, player_y, player_x);
+ wprintw_col (winchoice,(const char *)"@",5);
+ return (0);
+};
+
+int stats (WINDOW* winchoice)
+{
+ wmove (winchoice,1,1);
+ wprintw_col (winchoice,(const char *)"Health: ",4); 
+ wprintw (winchoice,"%d",health);
+ 
+ wmove (winchoice,2,0);
+ wprintw_col (winchoice,(const char *)" Loot:   ",4); 
+ wprintw (winchoice,"%d",loot);
+ return (0);
+}
+
+int lock_proc (WINDOW * winchoice, int y, int x, tile doortype)
+{
+ if ((doortype == ld1) || (doortype == ld2))
+  {
+   // NEED INVENTORY IMPLEMENTED TO FINISH THIS!
+   // Once inventory works, check for keys, then check the keys against the door (ld2 needs 2 keys!)
+   // If check is good, make the cell an empty version of itsself and do as with normal doors
+   // Maybye add some fancy output about unlocking the door?? //
+  };
+ return (0);
+};
+
+int door_proc (WINDOW * winchoice, int y, int x, tile doortype)
+{
+    if ((doortype == od0) || (doortype == od1) || (doortype == od2))
+     {
+      if (game_grid[y][x] == (od0))
+       {
+        wprint_at (winchoice,(const char *)"You enter the doorway of the open office door.. ",0,0);
+        wgetch (winchoice);
+        player_x = (x);
+        player_y = (y);
+        return (0);
+       };
+         
+      if (game_grid[y][x] == (od1))
+       {
+        wprint_at (winchoice,(const char *)"You enter the doorway of the open wooden door.. ",0,0);
+        wgetch (winchoice);
+        player_x = (x);
+        player_y = (y);
+        return (0);
+       };
+         
+      if (game_grid[y][x] == (od2))
+       {
+        wprint_at (winchoice,(const char *)"You enter the doorway of the open metal door.. ",0,0);
+        wgetch (winchoice);
+        player_x = (x);
+       player_y = (y);
+        return (0);
+       };
+   
+      return (0);
+      }
+      
+    else if ((doortype == cd0) || (doortype == cd1) || (doortype == cd2))
+     {
+	  string answer;
+      char answerchar[20];
+      werase (winchoice);
+      wprint_at (winchoice,(const char *)"Would you like to open the door? ",0,0);
+      wgetstr (winchoice, answerchar);
+      answer = (answerchar);
+      
+       if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y"))
+        {
+         wprint_at (winchoice,(const char *)"You open the door and step into the doorway..",0,0);
+         wgetch (winchoice);
+         
+         if (game_grid[y][x] == (cd0))
+          {
+           game_grid[y][x]=(od0);
+          };
+         
+         if (game_grid[y][x] == (cd1))
+          {
+           game_grid[y][x]=(od1);
+          };
+         
+         if (game_grid[y][x] == (cd2))
+          {
+           game_grid[y][x]=(od2);
+          };
+          
+         player_x = (x);
+         player_y = (y);
+         return (0);
+	    }
+	    
+	   else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N"))
+	    {
+	     wprint_at (winchoice,(const char *)"You leave the door untouched..",0,0);
+        wgetch (winchoice);
+        return (0);
+	    }
+	   
+	   else
+        {
+         wprint_at (winchoice,(const char *)"Not a yes or no answer, try again..",0,0);
+         door_proc (winchoice, y, x, game_grid[y][x]);
+        };
+        
+	   return (0);
+      }
+      
+      else if ((doortype == ld1) || (doortype == ld2))
+     {
+	  string answer;
+      char answerchar[20];
+      werase (winchoice);
+      wprint_at (winchoice,(const char *)"Would you like to open the door? ",0,0);
+      wgetstr (winchoice, answerchar);
+      answer = (answerchar);
+      
+       if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y"))
+        {
+         wprint_at (winchoice,(const char *)"YES - NO WAY TO OPEN LOCKED DOORS YET",0,0);
+         wgetch (winchoice);
+         return (0);
+	    }
+	    
+	   else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N"))
+	    {
+	     wprint_at (winchoice,(const char *)"NO - NO WAY TO OPEN LOCKED DOORS YET",0,0);
+        wgetch (winchoice);
+        return (0);
+	    }
+	    
+	   else
+        {
+         wprint_at (winchoice,(const char *)"Not a yes or no answer, try again..",0,0);
+         door_proc (winchoice, y, x, game_grid[y][x]);
+        };
+        
+	   return (0);
+      }
+
+ return (0);
+};
+
+int moveproc (WINDOW * winchoice, int y, int x)
+{
+ move_x = (x);
+ move_y = (y);
+ 
+ switch (game_items[y][x])
+  {
+   case nit :
+   break;
+   
+   case lop :
+     wprint_at (winchoice,(const char *)"There's a lockpick on the floor..",0,0);
+     wgetch (winchoice);
+     if (invproc (lop) == (1)) 
+      {
+       werase (winchoice);
+       wprint_at (winchoice,(const char *)"Inventory full..",0,0);
+       wgetch (winchoice);
+       return (1);
+      }
+     else
+      {
+       game_items[y][x] = nit;
+       player_x = x;
+       player_y = y;
+       return (0);
+      };
+   break;
+   
+   case key :
+     wprint_at (winchoice,(const char *)"There's a key on the floor..",0,0);
+     wgetch (winchoice);
+     if (invproc (key) == (1)) 
+      {
+       werase (winchoice);
+       wprint_at (winchoice,(const char *)"Inventory full..",0,0);
+       wgetch (winchoice);
+       return (1);
+      }
+     else
+      {
+       game_items[y][x] = nit;
+       player_x = x;
+       player_y = y;
+       return (0);
+      };
+   break;
+  };
+
+ switch (game_grid[y][x])
+  {
+   case ntl :  
+   break;
+	 
+   case cor : 
+   wprint_at (winchoice,(const char *)"You walk along the corridor..",0,0);
+   player_x = (move_x);
+   player_y = (move_y);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case rom :
+   wprint_at (winchoice,(const char *)"You walk along the room..",0,0);
+   player_x = (move_x);
+   player_y = (move_y);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case wa1 : 
+   wprint_at (winchoice,(const char *)"There's a concrete wall here, you cannot pass.",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case wa2 : 
+   wprint_at (winchoice,(const char *)"There's a stone wall here, you cannot pass.",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case wa3 :
+   wprint_at (winchoice,(const char *)"There's a brick wall here, you cannot pass.",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case win : 
+   wprint_at (winchoice,(const char *)"There's a window here..",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case od0 : 
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	 
+   case cd0 : 
+   wprint_at (winchoice,(const char *)"There's a closed office door here..",0,0);
+   wgetch (winchoice);
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return(0);
+   break;
+	        
+   case od1 : 
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   wgetch (winchoice);
+   return (0);
+   break;
+	 
+   case cd1 : 
+   wprint_at (winchoice,(const char *)"There's a closed wooden door here..",0,0);
+   wgetch (winchoice); 
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	           
+   case ld1 : 
+   wprint_at (winchoice,(const char *)"There's a locked wooden door here..",0,0);
+   wgetch (winchoice); 
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	          
+   case od2 : 
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	 
+   case cd2 : 
+   wprint_at (winchoice,(const char *)"There's a closed metal door here..",0,0);
+   wgetch (winchoice);
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	           
+   case ld2 : 
+   wprint_at (winchoice,(const char *)"There's a locked metal door here..",0,0);
+   wgetch (winchoice);
+   door_proc (winchoice, y, x, game_grid[y][x]);
+   return (0);
+   break;
+	           
+   case ent : 
+   wprint_at (winchoice,(const char *)"The way you came in is locked..",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	           
+   case ext : 
+   wprint_at (winchoice,(const char *)"You have reached the exit!",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+	          
+   case ded : 
+   wprint_at (winchoice,(const char *)"You have died!",0,0);
+   wgetch (winchoice);
+   return (0);
+   break;
+
+  };
+return (0);
+};
+
+int input (WINDOW* winchoice, WINDOW* inv_win)
+{
+ string answer;
+ char answerchar[20];
+ werase (winchoice);
+ wmove (winchoice,0,0); //moves the cursor to the window choice inputted into the function, +1 either side to avoid borders
+ wprintw (winchoice,"ARQ:~$ "); 
+ wgetstr (winchoice, answerchar);
+ answer = answerchar;
+ 
+ if (answer == "pos") 
+  {
+   cout << "player y :" << player_y;
+   cout << "\nplayer x :" << player_x;
+   return (0);
+  }
+  
+ if (answer == "help") 
+  {
+   wprint_at (winchoice,(const char *)"phelp - player help",0,0);
+   wprint_at (winchoice,(const char *)"ihelp - interactions",1,0);
+   wprint_at (winchoice,(const char *)"info - game info",2,0);
+   wgetch (winchoice);
+   return (0);
+  }
+ 
+ if (answer == "phelp") 
+  {
+   wprint_at (winchoice,(const char *)"inv - inventory",0,0);
+   wprint_at (winchoice,(const char *)"north - move north",1,0);
+   wprint_at (winchoice,(const char *)"east- move east",2,0);
+   wprint_at (winchoice,(const char *)"south - move south",3,0);
+   wprint_at (winchoice,(const char *)"west - move west",4,0);
+   wgetch (winchoice);
+   return (0);
+  }
+  
+  if (answer == "ihelp") 
+  {
+   return (0);
+  }
+  
+  if (answer == "info") 
+  {
+   return (0);
+  }
+  
+  if (answer == "inv") 
+  {
+   return (0);
+  }
+  
+  if ((answer == "north") || (answer == "North") || (answer == "NORTH") || (answer == "n") || (answer == "N")) 
+  {
+   moveproc (winchoice, player_y-1, player_x);
+   return (0);
+  }
+  
+  if ((answer == "east") || (answer == "East") || (answer == "EAST") || (answer == "e") || (answer == "E"))
+  {
+   moveproc (winchoice, player_y, player_x+1);
+   return (0);
+  }
+  
+  if ((answer == "south") || (answer == "South") || (answer == "SOUTH") || (answer == "s") || (answer == "S")) 
+  {
+   moveproc (winchoice, player_y+1, player_x);
+   return (0);
+  }
+  
+  if ((answer == "west") || (answer == "West") || (answer == "WEST") || (answer == "w") || (answer == "W"))
+  {
+   moveproc (winchoice, player_y, player_x-1);
+   return (0);
+  }
+  
+  if ((answer == "exit") || (answer == "Exit") || (answer == "EXIT") || (answer == "quit") || (answer == "Quit") || (answer == "QUIT"))
+  {
+   wprint_at (winchoice,(const char *)"Quitting.. ",0,0);
+   wgetch (winchoice);
+   running = (false);
+   return(0);
+  }
+  
+  if ((answer == "Drop") || (answer == "DROP") || (answer == "drop"))
+  {
+   drop_item (winchoice, inv_win, player_x, player_y);
+   return(0);
+  }
+  
+ else
+  wprint_at (winchoice,(const char *)"unrecognised input, please input a command, or use 'help' for a list. ",0,0);
+  wgetch (winchoice);
+  input (winchoice, inv_win);
+  return (0);
+
+return (0);
+};
+
+int lootcount ()
+{
+ loot = 0;
+ for (int y = 0; y < inv_y; y++)
+  {
+    for(int x = 0; x < inv_x; x++)
+     {
+        switch (inventory[y][x])
+         {
+          case nit :
+          break;
+          
+          case lop :
+          loot = loot+1;
+          break;
+         
+          case key :
+          loot = loot+5;
+          break;
+         }
+       };
+     };
+ return (0);
+};
+
+
+int main()
+ { 
+ //test variable settings
+ health = (100);
+ loot = (0);
+ player_x = (2); //x is up/down
+ player_y = (1); //y is left/right 
+ //starting up ncurses
+ init_screen ();
+ 
+ //segmenting display into game UI // +2 to positioning to allow for bordering
+ WINDOW*titlewin=newwin(1,37,0,0); //Creates the stats window for content
+ 
+ WINDOW*mainwin_rear=newwin(grid_y+2,grid_x+2,1,1); //Creates a new window called new win at 0,1 that has the dimensions of grid_x, and grid_y.
+ WINDOW*mainwin_front=newwin(grid_y,grid_x,2,2); //Creates a new window called new win at 1,2 that has the dimensions of grid_x, and grid_y.
+ 
+ WINDOW*consolewin_rear=newwin(6,grid_x*2+2,grid_y+3,2); //Creates the console window for deco
+ WINDOW*consolewin_front=newwin(4,grid_x*2,grid_y+4,3); //Creates the console window for content
+ WINDOW*statwin_rear=newwin(10,grid_y+2,1,grid_x+4); //Creates the stat window for deco
+ WINDOW*statwin_front=newwin(8,grid_y,2,grid_x+5); //Creates the stats window for content
+
+ WINDOW*mapwin_rear=newwin(7,30,11,grid_x+4); //Creates the stat window for deco
+ WINDOW*mapwin_front=newwin(5,28,12,grid_x+5); //Creates the stats window for content
+ 
+ keypad(consolewin_front, TRUE);
+ 
+ running = (true);
+ 
+ while ((running==true)) //Main game loop
+  {
+	wprint_at (titlewin,(const char *)"ARQ -- ASCII Roguelike Quester",0,7);
+   
+    box (mainwin_rear,0,0);
+    wrefresh (mainwin_rear);
+    box (consolewin_rear,0,0); //Puts borders around the finalised screen image
+    box (statwin_rear,0,0);
+    box (mapwin_rear,0,0);
+    
+    //adding/adjusting screen content
+    drawmap (mainwin_front); //Adds map content to the main window
+    drawplayer (mainwin_front); //Adds the player(s?) to the main window
+    drawinv (mapwin_front);
+    lootcount ();
+    stats (statwin_front);  //Adds/Updates content to the statistic window
+
+    //refreshing -- finalises screen image and updates the display
+    wrefresh (titlewin);
+    
+    
+    wrefresh (mainwin_front);
+    
+    wrefresh (consolewin_rear);
+    wrefresh (consolewin_front);
+    
+    wrefresh (statwin_rear);
+    wrefresh (statwin_front);
+    
+    wrefresh (mapwin_rear);
+    wrefresh (mapwin_front);
+ 
+    input (consolewin_front, mapwin_front);
+  };
+ //End of game loop
+ werase (titlewin);
+ werase (mainwin_rear);
+ werase (mainwin_front);
+ werase (consolewin_rear);
+ werase (consolewin_front);
+ werase (statwin_rear);
+ werase (statwin_front);
+ werase (titlewin);
+ endwin ();
+ return (0);
+};
