@@ -1,4 +1,4 @@
-//////////////////////The ASCII Roguelike Quester -- Experimental project/////////////////
+//////////////////////The ASCII Roguelike Quester -- Experimental project////////////////
 
 ASCII Rougelike Quester [C++, Ncurses]
 
