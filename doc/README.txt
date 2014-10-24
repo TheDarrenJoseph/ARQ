@@ -4,9 +4,9 @@ A small learner project/tech demo using C++ and Ncurses. ARQ is essentially a ve
 
 --LINUX BUILD-----------------------------------------------------------
 Author: Rave Kutsuu   
-Version : 0.89                              
+Version : 0.89.2                              
 Created: Dec 16, 2012
-Last Modified: Aug 10, 2014                
+Last Modified: Oct 24, 2014                
 ------------------------------------------------------------------------
 
 --TODO------------------------------------------------------------------
@@ -29,6 +29,14 @@ Last Modified: Aug 10, 2014
 
 //RUSHED/OVERSIZED
 -AccessInventory()
+
+--Changelist (0.89.2)--
+--Gameplay--
+1. You can now swap items between containers
+2. Added the ability to store multiple items in one area
+
+--Code--
+1. Finished container implementation
 
 --Changelist (0.89)-----------------------------------------------------
 --GAMEPLAY--
