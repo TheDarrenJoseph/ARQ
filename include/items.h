@@ -44,7 +44,7 @@ struct invWeapon : public invItem
 {
   int damage;
  
- invWeapon() : invItem(0,"None"," ",0,0,false)
+ invWeapon() : invItem(0,"None"," ",2,0,false)
     {
       this->damage=0;
     }

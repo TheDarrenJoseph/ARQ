@@ -157,9 +157,9 @@ void DrawItems()
 	  const char *symbol;
         
 	  //grab the info for each item from the library
-	  item* i = GetArea(x,y);
+	  item* i = GetItem(x,y);
       
-	  if (i != NULL && IsLootable(i)) //Check for an item type, && it not being an empty item 
+	  if ((i != NULL) && (IsLootable(i)) ) //Check for an item type, && it not being an empty item 
 	    {
 	      colour = i->colour;
 	      symbol = i->symbol;
@@ -167,7 +167,8 @@ void DrawItems()
 	      //draw the tile to the screen
 	      wmove (mainwin_front,y,x);
       
-	      wprintw_col (mainwin_front, symbol, colour); 
+	      wprintw_col (mainwin_front, symbol, colour);
+	      //	      wrefresh(mainwin_front);
 	    }
 	};  
     }; 
@@ -175,7 +176,7 @@ void DrawItems()
   return;
 }
 
-void DrawContainers()
+void DrawAreas()
 {
   //iterate through the rows of the grid/map
   for (int y = 0; y < grid_y; y++)
@@ -187,17 +188,17 @@ void DrawContainers()
 	  const char *symbol;
         
 	  //grab the info for each item from the library
-	  area* c = GetArea(x,y);
+	  area* a = GetArea(x,y);
       
-	  if (c != NULL) //Check for an item type, && it not being an empty item 
+	  if (a->id == 98) //Check for an item type, && it not being an empty item 
 	    {
-	      colour = c->colour;
-	      symbol = c->symbol;
+	      colour = a->colour;
+	      symbol = a->symbol;
         
 	      //draw the tile to the screen
 	      wmove (mainwin_front,y,x);
       
-	      wprintw_col (mainwin_front, symbol, colour); 
+	      wprintw_col (mainwin_front, symbol, colour);
 	    }
 	};  
     }; 
@@ -344,6 +345,7 @@ void DrawPlayerStats (Player* p)
   return;
 }
 
+//make sure any overloads of this func are up-to-date with the header
 void DrawInv(container* c)
 {
   for (int y = 0; y<3; y++)
@@ -364,12 +366,13 @@ void DrawInv(container* c)
 	  const char* symbol = str.c_str();
 
 	  wprintw_col (thisWindow, symbol, 0);
-          wrefresh(thisWindow);
+	  //wrefresh(thisWindow);
 	}; 
     };  
   return;
 }
 
+//make sure any overloads of this func are up-to-date with the header
 void DrawInv(area* a)
 {
   for (int y = 0; y<3; y++)
@@ -382,14 +385,13 @@ void DrawInv(area* a)
 	  werase(thisWindow);
 	  wmove(thisWindow,0,0); 
       	 
-	  item* itm = a->GetItem(x,y);      
+	  item* itm = a->GetItem(x,y); //works
        
-	  //int colour = itm->colour;
-	  std::string str = itm->name;
-         
-	  const char* symbol = str.c_str();
+	  int colour = itm->colour;
 
-	  wprintw_col (thisWindow, symbol, 0);
+	  const char* name = itm->name.c_str();
+
+	  wprintw_col (thisWindow, name, colour);
           wrefresh(thisWindow);
 	}; 
     };  

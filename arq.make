@@ -1,4 +1,4 @@
-#makefile for The ASCII Rougelike Quester 
+
 arq : main.o characters.o grid.o ui.o items.o containers.o							
 	cd src; g++ -g -o "arq" -Wall -I../include -lncurses -std=gnu++11 main.o characters.o ui.o grid.o items.o containers.o
 

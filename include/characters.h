@@ -10,7 +10,7 @@
 const int inv_x = 3;
 const int inv_y = 3;
 
-const int max_npcs = 5;
+const int max_npcs = 1;
 
 class Character
 {
@@ -100,7 +100,9 @@ class Player : public Character
   
   public :
  
-  bool DropItem(item* itm, int x, int y);
+  bool CanDropItem(item* thisItem);
+  int DropItem(item* thisItem, int invX, int invY);
+
   int Move ();
   int Move (WINDOW * winchoice, WINDOW* mainwin, int y, int x);
  
@@ -116,12 +118,13 @@ class Player : public Character
 
   area* GetInventory();
  
-  int ItmProc (WINDOW* winchoice, item* itm, int y, int x);
+  int ItemProc (WINDOW* winchoice, item* itm, int y, int x);
   int LockProc (WINDOW* winchoice, int door_y, int door_x, tile doortype, int doortile, std::string doorname );
   int DoorProc (WINDOW* winchoice, int y, int x, tile doortype);
  
   void TileProc(WINDOW* winchoice, int y, int x, tile t);
- 
+  int AreaProc(WINDOW* winchoice, int y, int x);
+
   int BattleTurn (WINDOW* main_win, WINDOW* input_win, int npc_id);
  
   void SetLoot(int x);

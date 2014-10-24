@@ -28,7 +28,7 @@
 
 #include "game.h" 
 #include "grid.h"
-
+#include "items.h"
 #include "ui.h"
 
 
@@ -54,9 +54,9 @@ void GameLoop()
   //Draw main elements
   DrawMap (); 
   DrawItems (); 
-  DrawContainers();
+  //  DrawAreas();
   DrawNPCS();
- 
+  
   //Draw player UI elements
   DrawPlayerInv(player);
   DrawPlayerEquip(player);
@@ -80,6 +80,7 @@ int main()
   
   InitNpcs(); //Fill NPC slots
   
+  InitAreas();
   //GenerateItems(mediumLoot); 
  
   init_screen (); //prep display
@@ -92,13 +93,6 @@ int main()
   c->AddItem(new weapon(weapon_library[sword]));
   player->AddToInventory(c);
 
-  //container* thisContainer = new container(1,"Dead Body","X",1,0,true);
-  //thisContainer->ReplaceItem(1,1,new item(item_library[1]));
-  //SetContainer(4,1,thisContainer);
-
-  //container* mapContainer = GetContainer(4,1);
-  //mapContainer->AddItem(new item(item_library[2]));  
- 
   running = (true);
  
   while ((running==true)) //Main game loop

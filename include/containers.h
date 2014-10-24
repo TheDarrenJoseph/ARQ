@@ -8,6 +8,7 @@
 
 struct container : public item
 {
+  //id 99 to denote container
   invItem* inv[3][3];
    
   void InitialiseInv();
@@ -24,9 +25,10 @@ struct container : public item
   container() : item (99,"None"," ",0,0,false)
     {
       InitialiseInv();
+      //id = 99;
     };
   
-  container(int i, std::string n, const char* s, int col, int val,bool lootable) : item(99,n,s,col,val,lootable)
+  container(int i, std::string n, const char* s, int col, int val,bool lootable) : item(i,n,s,col,val,lootable)
     {
       InitialiseInv();
     };
@@ -35,6 +37,7 @@ struct container : public item
 
 struct area : public container
 {
+  //id 98 to denote area
   item* inv[3][3];
   
   void InitialiseInv();
@@ -48,10 +51,13 @@ struct area : public container
  
   item* GetItem();
   item* GetItem(int x, int y);
-
+  
+  int HasItems();
+ 
   area(int i, std::string n, const char* s, int col, int val,bool lootable) : container(i,n,s,col,val,lootable)
     {
       InitialiseInv();
+      id = 98;
     };  
 };
 

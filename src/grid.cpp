@@ -1,4 +1,4 @@
-#include "grid.h"
+ #include "grid.h"
 
 tile game_grid[grid_y][grid_x] = 
    { 
@@ -27,7 +27,7 @@ tile GetTile(int x, int y)
 }
 
 void SetTile(int x, int y, tile t)
-{ 
+{
   game_grid[y][x] = t;
 };  
 
@@ -41,7 +41,8 @@ item* GetItem(int x, int y,int i, int j)
   return container_grid[y][x]->GetItem(i,j);
 } 
 
-void SetItem(int x, int y, item* i)
+//Adds an item to the area
+void AddToArea(int x, int y, item* i)
 {
   container_grid[y][x]->AddItem(i);
 }
@@ -56,6 +57,16 @@ void SetArea(int x,int y, area* a)
   container_grid[y][x] = a;
 } 
 
+void InitAreas()
+{
+  for (int x=0; x<grid_x; x++)
+    {
+      for (int y=0; y<grid_y; y++)
+	{
+	  container_grid[y][x] = new area(99,"Empty"," ",0,0,false);
+	}
+    }
+}
 /*
 void DrawInv(area* a)
 {

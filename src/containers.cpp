@@ -68,7 +68,7 @@ int area :: AddItem(item* i)
     {
       for (int y=0; y<3; y++)
 	{
-	  if (inv[y][x]->name == inv_item_library[no_item].name)
+	  if (inv[y][x]->name == item_library[no_item].name)
 	    {
 	      inv[y][x] = i;
 	      return 0;
@@ -90,7 +90,6 @@ item* area :: RemoveItem(int x, int y)
   return thisItem;
 }
 
-
 item* area :: GetItem()
 {
   return inv[0][0];
@@ -99,6 +98,42 @@ item* area :: GetItem()
 item* area :: GetItem(int x, int y)
 {
   return inv[y][x];
+}
+
+//Returns an integer to determine the contents of this area
+//Returns 1 for multiple items, and 2 for one
+int area :: HasItems()
+{
+  int count = 0;
+
+  for (int x=0; x<3; x++)
+    {
+      for (int y=0; y<3; y++)
+	{
+	  if (inv[y][x]->id != 0)
+	    {
+	      count = count+1;
+	    }
+	}
+    }
+
+  switch (count)
+    {
+      //if no items, return 0
+    case (0) :
+      return 0;
+      break;
+      
+      //if only 1 item, return 1 for standard item
+    case (1) :
+      return 1;
+      break;
+
+      //otherwise, return 2;
+    default :
+      return 2;
+      break;
+    }
 }
 
 item* ToItem(invItem* i)

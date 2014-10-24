@@ -271,25 +271,22 @@ void Character :: DropItems()
 {
   string name = this->name.c_str();
   string thisName = "Dead " + name;
-  area* thisContainer = new area(1,thisName,"X",1,0,true);
+  area* body = new area(1,thisName,"X",1,0,true);
   
-  thisContainer->AddItem(new weapon(this->weps[1]));
-  thisContainer->AddItem(new weapon(this->weps[2]));
+  body->AddItem(new weapon(this->weps[1]));
+  body->AddItem(new weapon(this->weps[2]));
 
-  thisContainer->AddItem(new outfit(this->currentOutfit));
+  //thisContainer->ReplaceItem(1,1,new outfit(this->currentOutfit));
 
-  SetArea(this->x,this->y,thisContainer);
+  SetArea(this->x,this->y,body);
 }
  
 ////////////////////////////////////////////////
 
-bool Player :: DropItem(item* itm, int x, int y)
+bool Player :: CanDropItem(item* thisItem)
 {
-  if (IsLootable(inventory->GetItem(x,y)))
+  if (thisItem->lootable)
     {    
-      SetInventoryTile(this->x,this->y,itm); //replace the map tile with the item
-    
-      inventory->ReplaceItem(x,y,new item(item_library[no_item])); //clear the inventory tile
       return true;
     }
             
@@ -297,6 +294,27 @@ bool Player :: DropItem(item* itm, int x, int y)
     {
       return false;
     }; 
+}
+
+int Player :: DropItem(item* thisItem, int invX, int invY)
+{    
+  tile playerTile = GetTile(this->x,this->y);
+ 
+  //if the player is at an area where items can be placed, add the item
+  if ((playerTile == ntl) || (playerTile == rom) || (playerTile == cor))
+    {	     
+      AddToArea(x,y,thisItem); //replace the map tile with the item
+    
+      SetInventoryTile(invX,invY,new item(item_library[no_item])); //clear the inventory tile
+
+      return 0;
+    } 
+     
+  else
+    {
+      return 1;
+    };
+      
 }
 
 
@@ -311,9 +329,9 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
   
   //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
   bool selection = true;
-
+  
   while (selection == true) 
-    {
+   { 
       item* thisItem = a->GetItem(loc_x,loc_y);
 
       for (int x=0; x<3; x++)
@@ -323,14 +341,16 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
 	      WINDOW* thisWin = inv_wins[y][x];
         
 	      mvwchgat (thisWin, 0, 0, 9, A_NORMAL, 0, NULL);
-	      wrefresh (thisWin);
+	      
 	    }
 	}
-        
-      DrawInv(a);
 
+      //area b = *a;
+      DrawInv(a);
+      UpdateUI(); //ensures items display propely
+      
       WINDOW* selWin = inv_wins[loc_y][loc_x]; //create a holder for the currently selected window
-    
+      
       mvwchgat (selWin, 0, 0, 9, A_BLINK, 1, NULL); //make the current window blink red
       wrefresh (selWin);
      
@@ -446,6 +466,9 @@ int Player :: AccessContainer (WINDOW* input_win, WINDOW* inv_wins[3][3], contai
   
   //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
   bool selection = true;
+  
+  werase(input_win); wprintw(input_win,"Accessing Container");
+  wgetch (input_win);
 
   while (selection == true) 
     {
@@ -602,14 +625,15 @@ int Player :: AccessInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 	      wrefresh (thisWin);
 	    }
 	}
-        
-      DrawInv(a);
 
       WINDOW* selWin = inv_wins[loc_y][loc_x]; //create a holder for the currently selected window
     
-      mvwchgat (selWin, 0, 0, 9, A_BLINK, 1, NULL); //make the current window blink red
+      mvwchgat (selWin, 0, 0, 9, A_BLINK, 2, NULL); //make the current window blink red
       wrefresh (selWin);
      
+      //DrawInv(a);
+      UpdateUI();
+
       werase (input_win);
       wprint_at (input_win, "Select an item with WASD.. 'help' for commands.", 0,0);
     
@@ -671,42 +695,43 @@ int Player :: AccessInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 	{
 	  werase (input_win);
      
-	  tile playerTile = GetTile(this->x,this->y);
 	  item* thisItem = a->GetItem(loc_x,loc_y);
       
-	  if ((playerTile == ntl) || (playerTile == rom) || (playerTile == cor))
-	    {	     
-	      if (DropItem(thisItem,loc_x,loc_y) == true)
-		{
-		  //update the current item details 
-		  item* thisItem = inventory->GetItem(loc_x,loc_y);
-		  const char* invtile_char = thisItem->name.c_str();
+	  if (CanDropItem(thisItem) == true)
+	    {
+	     
+	      if (DropItem(thisItem, loc_x, loc_y) == 0)
+	      {
+		//update the current item details 
+		item* thisItem = inventory->GetItem(loc_x,loc_y);
+		const char* invtile_char = thisItem->name.c_str();
           
-		  WINDOW* thisWin = inv_wins[loc_x][loc_y];
+		WINDOW* thisWin = inv_wins[loc_x][loc_y];
           
-		  //update the inventory tile
-		  wmove (thisWin,0,0);
-		  wprintw_col (thisWin, invtile_char, thisItem->colour);
-		  wrefresh (thisWin);
+		//update the inventory tile
+		wmove (thisWin,0,0);
+		wprintw_col (thisWin, invtile_char, thisItem->colour);
+		wrefresh (thisWin);
            
-		  wprintw (input_win, "Item dropped.");
-		}
-         
-	      else
+		wprintw (input_win, "Item dropped.");
+	      }
+	      
+	      else 
 		{
-		  wprintw (input_win, "No item selected.");
+		  wprintw (input_win, "Cannot drop that here.");
 		}
-	    } 
-     
+	    }
+         
+      
 	  else
 	    {
-	      wprintw (input_win, "Cannot drop an item here.");
+	      wprintw (input_win, "Cannot drop this item.");
 	    };
       
 	  wgetch(input_win);
 	}
      
-      else if (slc_string == "Wear") 
+      else if (slc_string == "wear") 
 	{
 	  if (IsLootable (a->GetItem(loc_x,loc_y) ))
 	    {
@@ -768,7 +793,7 @@ int Player :: AccessInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 	{
 	  //containers can be polymporphised to items.
 	  //PLACEHOLDER
-	  if (inventory->GetItem(loc_x,loc_y)->id == 99)
+	  if (inventory->GetItem(loc_x,loc_y)->id == 98)
 	    {
 	      container* c = (container*) inventory->GetItem(loc_x,loc_y);
 
@@ -926,7 +951,7 @@ area* Player :: GetInventory()
   return this->inventory;
 }  
 
-int Player :: ItmProc (WINDOW* winchoice, item* itm, int y, int x)
+int Player :: ItemProc (WINDOW* winchoice, item* itm, int x, int y)
 {
   string answer;
   char answerchar[20];
@@ -985,7 +1010,7 @@ int Player :: ItmProc (WINDOW* winchoice, item* itm, int y, int x)
     {
       wprint_at (winchoice, "Incorrect choice, please answer yes or no.. ",0,0);
       wgetch (winchoice);
-      ItmProc (winchoice,itm,y,x);
+      ItemProc (winchoice,itm,x,y);
     };
     
   return (0);
@@ -1582,12 +1607,12 @@ int Player :: Move(WINDOW * winchoice, WINDOW* mainwin, int y, int x)
  
   if ((x < 0) || (x > grid_x))
     {
-      return (1);
+      return (0);
     }
   
   else if ((y < 0) || (y > grid_y))
     {
-      return (1);
+      return (0);
     };
  
 
@@ -1624,31 +1649,32 @@ int Player :: Move(WINDOW * winchoice, WINDOW* mainwin, int y, int x)
 
 	      wmove (winchoice,0,0);
 	      wprintw (winchoice,"There is the corpse of a %s here..",enemy_name.c_str());   
-	   
-	      return 2;
-	      //AccessInventory(winchoice,mainwin,Get);
-	      //Lootproc? (loot the dead body?)
-	     
+	      
 	      wgetch (winchoice);
+	      return 2;
 	    };
 	}
     };
  
-  //item check
-  item* i = inventory->GetItem(x,y);
- 
-  if (i != NULL && IsLootable(i))
+  //check the area and react accordingyl
+  switch (AreaProc(winchoice,x,y))
     {
-      ItmProc (winchoice, i, y, x);
-   
-      return (0);
-    }
-
-  //container check
-  if (GetArea(x,y) != NULL)
-    {
-      //return container alert 
-      return 2;
+      //returns 1 to indicate item
+    case (1) :
+      {
+	return 1; 
+      }
+    
+    //returns 2 to indicate area
+    case (2) :
+      {
+	return 2;
+      }
+    
+    default :
+      {
+	break;
+      }
     }
 
   //main movement check
@@ -1784,7 +1810,7 @@ int Player :: Input (WINDOW* winchoice, WINDOW* inv_wins[3][3], WINDOW* main_win
       return(0);
     }
   
-  else if ((answer == "Inventory") || (answer == "INVENTORY") || (answer == "inventory"))
+  else if (answer == "inventory")
     {
       AccessInventory (winchoice, inv_wins);
       return(0);
@@ -1807,16 +1833,26 @@ int Player :: Input (WINDOW* winchoice, WINDOW* inv_wins[3][3], WINDOW* main_win
       switch (this->Move(winchoice,main_win,thisY,thisX))
 	{
 	case 2 :
-	  { 
-	    AccessContainer(winchoice,inv_wins,GetArea(thisX,thisY));
+	  {
+	    area* thisArea = GetArea(thisX,thisY);
+	    wprintw (winchoice, "Accessing %s", thisArea->name.c_str());
+	    wgetch (winchoice);
 
-	    return 0;
+	    AccessArea(winchoice,inv_wins,thisArea);
 	    break;
 	  }
     
+	case 1 :
+	  {
+	    //grab the item from the currunt area
+	    item* i = GetItem(thisX,thisY);
+
+	    ItemProc(winchoice,i,thisX,thisY);
+	    break;
+	  }
+	 
 	default :
 	  {
-	    return 0;
 	    break;
 	  }
 	}
@@ -1841,6 +1877,12 @@ int Player :: LootCount ()
   this->SetLoot(total);
   return (0);
 };
+
+int Player :: AreaProc (WINDOW* winchoice, int x ,int y)
+{
+  area* a = GetArea(x,y);
+  return a->HasItems();
+}
  
 /////////////////////////////////////////////////
 
@@ -1947,7 +1989,8 @@ void InitNpcs()
     { 
       npcs[a] = NULL;
       npcs[a] = new Goblin(); //Fills the array with the information of the specific class
-      npcs[a]->SetPos (3,6); //Sets the position of the templated NPC.
+      npcs[a]->SetPos (1,2); //Sets the position of the templated NPC.
+      npcs[a]->Kill();
     };
    
   cout << "Characters generated\n"; 

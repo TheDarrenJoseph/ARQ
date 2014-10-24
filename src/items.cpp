@@ -3,7 +3,7 @@
 #include "grid.h"
 #include "items.h"
 
-void GenerateItems(lootChance thisChance)
+void GenerateIetms(lootChance thisChance)
 {
   for (int y = 0; y < grid_y; y++)
     {
@@ -25,7 +25,7 @@ void GenerateItems(lootChance thisChance)
 		  if (chance<=thisChance)  
 		    {
 		      //then add it to the item grid
-		      SetItem(x,y,new item(thisItem));
+		      AddToArea(x,y,new item(thisItem));
 	        
 		      //break the for loop
 		      break; 
@@ -55,7 +55,7 @@ void GenerateItems(lootChance thisChance)
 																	
 	  else
 	    {
-	      SetItem(x,y,new item(item_library[no_item]));
+	      AddToArea(x,y,new item(item_library[no_item]));
 	    }
 	}
     }

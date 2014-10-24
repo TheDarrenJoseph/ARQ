@@ -13,9 +13,11 @@ tile GetTile(int x, int y);
 void SetTile(int x, int y,tile t);
 
 item* GetItem(int x, int y);
-void SetItem(int x, int y,item* i);
+void AddToArea(int x, int y,item* i);
 
 area* GetArea(int x, int y);
 void SetArea(int x, int y, area* a);
+
+void InitAreas();
 
 #endif

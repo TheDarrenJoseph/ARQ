@@ -8,13 +8,14 @@ void DestroyWindows();
 void DecorateWindows();
 
 void DrawItems();
-void DrawContainers();
+void DrawAreas();
 
 void DrawPlayerInv(Player* p);
 void DrawPlayerEquip(Player* p);
 void DrawPlayerStats (Player* p);
 
 void DrawInv(container* c);
+void DrawInv(area* a);
 
 int DrawMap ();
 void DrawCharacter (int x, int y, int colour, char symbol);
