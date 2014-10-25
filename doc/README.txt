@@ -34,9 +34,12 @@ Last Modified: Oct 24, 2014
 --Gameplay--
 1. You can now swap items between containers
 2. Added the ability to store multiple items in one area
+3. Added the Horny Goblin subtype
 
 --Code--
 1. Finished container implementation
+2. Fixed major character death bug (bodies respawning)
+3. Fixed container accessing issues
 
 --Changelist (0.89)-----------------------------------------------------
 --GAMEPLAY--

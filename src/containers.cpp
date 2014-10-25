@@ -36,13 +36,9 @@ void container :: ReplaceItem(int x, int y, item* i)
   inv[y][x] = thisItem;
 }
 
-item* container :: RemoveItem(int x, int y)
+void container :: RemoveItem(int x, int y)
 {
-  item* thisItem = ToItem(inv[y][x]);
-  
   inv[y][x] = new invItem(inv_item_library[no_item]);
-  
-  return thisItem;
 }
 
 item* container :: GetItem(int x, int y)
@@ -83,16 +79,9 @@ void area :: ReplaceItem(int x, int y, item* i)
   inv[y][x] = i;
 }
 
-item* area :: RemoveItem(int x, int y)
+void area :: RemoveItem(int x, int y)
 {
-  item* thisItem = inv[y][x];
   inv[y][x] = new item(item_library[no_item]);
-  return thisItem;
-}
-
-item* area :: GetItem()
-{
-  return inv[0][0];
 }
 
 item* area :: GetItem(int x, int y)

@@ -18,7 +18,7 @@ struct container : public item
   int AddItem(item* i);
   void ReplaceItem(int x, int y,item* i);
   
-  item* RemoveItem(int x, int y);
+  void RemoveItem(int x, int y);
  
   item* GetItem(int x,int y);
  
@@ -47,9 +47,8 @@ struct area : public container
   int AddItem(item* i);
   void ReplaceItem(int x, int y,item* i);
   
-  item* RemoveItem(int x, int y);
+  void RemoveItem(int x, int y);
  
-  item* GetItem();
   item* GetItem(int x, int y);
   
   int HasItems();

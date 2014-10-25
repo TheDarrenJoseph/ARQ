@@ -143,7 +143,16 @@ int wprint_at (WINDOW* winchoice, const char *text, int pos_y, int pos_x)
   wprintw (winchoice, text); 
   wrefresh (winchoice);
   return (0);
-}  
+}
+
+int wprintNoRefresh (WINDOW* win, std::string text)
+{
+  wmove (win,0,0);
+  werase(win);
+  
+  wprintw (win, text.c_str());
+  return 0;
+}
  
 void DrawItems()
 {

@@ -79,7 +79,7 @@ int main()
   player->SetPos (1,1);
   
   InitNpcs(); //Fill NPC slots
-  
+
   InitAreas();
   //GenerateItems(mediumLoot); 
  
@@ -89,7 +89,7 @@ int main()
   DecorateWindows(); //Box/label the UI
   
   player->AddToInventory(new outfit(outfit_library[goblin]));
-  container* c = new container(1,"Bag","X",2,0,true);
+  container* c = new container(98,"Bag","X",2,0,true);
   c->AddItem(new weapon(weapon_library[sword]));
   player->AddToInventory(c);
 

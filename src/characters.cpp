@@ -129,7 +129,7 @@ void Battle (WINDOW* main_win, WINDOW* input_win, int npc_id, Player* player, NP
 
 bool Character :: IsAlive ()
 {
-  if (health<=0)
+  if (health<=0 && alive==true)
     {
       this->Kill();
       return false;
@@ -137,7 +137,7 @@ bool Character :: IsAlive ()
   
   else
     {
-      return true;
+      return alive;
     }
   
 };
@@ -329,7 +329,10 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
   
   //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
   bool selection = true;
-  
+
+    werase(input_win); wprintw(input_win,"Accessing Area");
+    wgetch (input_win);
+
   while (selection == true) 
    { 
       item* thisItem = a->GetItem(loc_x,loc_y);
@@ -397,6 +400,7 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
       else if (slc_string == "close") 
 	{
 	  selection = false;
+	  
 	  return (0);
 	}
     
@@ -413,12 +417,15 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
  
       else if (slc_string == "take") 
 	{
-	  this->inventory->AddItem(thisItem);
-          a->RemoveItem(loc_x,loc_y);
-	  
-          werase(input_win);
-	  wprintw (input_win, "You put the %s into your inventory.",thisItem->name.c_str());
-	  wgetch(input_win);
+	  if (IsLootable(thisItem))
+	    {
+	      this->inventory->AddItem(thisItem);
+	      a->RemoveItem(loc_x,loc_y);
+
+	      werase(input_win);
+	      wprintw (input_win, "You put the %s into your inventory.",thisItem->name.c_str());
+	      wgetch(input_win);
+	    }
 	}
 
       
@@ -426,6 +433,12 @@ int Player :: AccessArea (WINDOW* input_win, WINDOW* inv_wins[3][3], area* a)
 	{
 	  item* thisItem = GetFromInventory(input_win,inv_wins);
 	  
+	  werase (input_win);
+	  wprintw (input_win, "You put the %s inside.",thisItem->name.c_str());
+	  wrefresh (input_win);
+
+	  wgetch(input_win);
+
 	  if (thisItem != NULL)
 	    {
 	      a->AddItem(thisItem);
@@ -485,7 +498,8 @@ int Player :: AccessContainer (WINDOW* input_win, WINDOW* inv_wins[3][3], contai
 	    }
 	}
         
-      DrawInv(c);
+      DrawInv(c); //draw the current items
+      UpdateUI(); //call a full system UI refresh to fix display bug
 
       WINDOW* selWin = inv_wins[loc_y][loc_x]; //create a holder for the currently selected window
     
@@ -791,22 +805,22 @@ int Player :: AccessInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
       
       else if (slc_string == "open")
 	{
-	  //containers can be polymporphised to items.
-	  //PLACEHOLDER
-	  if (inventory->GetItem(loc_x,loc_y)->id == 98)
+	  int thisId = inventory->GetItem(loc_x,loc_y)->id;
+	  
+	  //98 denotes container, which is a closed-ended area, we never want to access an area here
+	  if (thisId == 98)
 	    {
+	      wprintNoRefresh(input_win,"You open the container");
 	      container* c = (container*) inventory->GetItem(loc_x,loc_y);
 
 	      AccessContainer(input_win,inv_wins,c);
+	      DrawInv(a);
 	    }
 	}
 	 
       else if (slc_string == "help") 
 	{
-	  wmove (input_win,0,0);
-	  werase(input_win);
-      
-	  wprintw (input_win, "what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container");
+	  wprintNoRefresh (input_win, "what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container");
 	  wrefresh (input_win);
     
 	  wgetch(input_win);      
@@ -828,7 +842,7 @@ int Player :: AccessInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 
 item* Player :: GetFromInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 {
-  container* c = this->inventory;
+  area* a = this->inventory;
 
   std::string slc_string;
   char slc_char[20];
@@ -851,8 +865,9 @@ item* Player :: GetFromInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
 	      wrefresh (thisWin);
 	    }
 	}
-        
-      DrawInv(c);
+      
+      DrawInv(a);
+      UpdateUI();
 
       WINDOW* selWin = inv_wins[loc_y][loc_x]; //create a holder for the currently selected window
     
@@ -907,14 +922,9 @@ item* Player :: GetFromInventory (WINDOW* input_win, WINDOW* inv_wins[3][3])
     
       else if (slc_string == "put") 
 	{
-	  item* thisItem = c->GetItem(loc_x,loc_y);
-          c->RemoveItem(loc_x,loc_y);
+	  item* thisItem = a->GetItem(loc_x,loc_y);
+          a->RemoveItem(loc_x,loc_y);
 
-	  werase (input_win);
-	  wprintw (input_win, "You put the %s inside.",thisItem->name.c_str());
-	  wrefresh (input_win);
-
-	  wgetch(input_win);
           return thisItem;      
 	}
             
@@ -965,7 +975,7 @@ int Player :: ItemProc (WINDOW* winchoice, item* itm, int x, int y)
   wgetch (winchoice); 
  
   wmove (winchoice,0,0);
-  wprintw (winchoice,"Would you like to pick up the %s? ",itm_name.c_str());
+  wprintw (winchoice,"Would you like to pick the %s? ",itm_name.c_str());
   wgetstr (winchoice, answerchar);
  
   answer = (answerchar);
@@ -1642,7 +1652,8 @@ int Player :: Move(WINDOW * winchoice, WINDOW* mainwin, int y, int x)
      
 	      return (0);
 	    }
-      
+	  
+	  //dead body check
 	  else if (pmove_x == enemy_x and pmove_y == enemy_y)
 	    {
 	      string enemy_name = npcs[e_id]->GetName();
@@ -1656,7 +1667,7 @@ int Player :: Move(WINDOW * winchoice, WINDOW* mainwin, int y, int x)
 	}
     };
  
-  //check the area and react accordingyl
+  //container check
   switch (AreaProc(winchoice,x,y))
     {
       //returns 1 to indicate item
@@ -1835,7 +1846,7 @@ int Player :: Input (WINDOW* winchoice, WINDOW* inv_wins[3][3], WINDOW* main_win
 	case 2 :
 	  {
 	    area* thisArea = GetArea(thisX,thisY);
-	    wprintw (winchoice, "Accessing %s", thisArea->name.c_str());
+	    wprintw (winchoice, "Accessing %s at %d, %d", thisArea->name.c_str(),thisX,thisY);
 	    wgetch (winchoice);
 
 	    AccessArea(winchoice,inv_wins,thisArea);
@@ -1946,7 +1957,7 @@ int NPC :: Move ()
       
 	      if (move_x == player_x and move_y == player_y)
 		{
-		  //Battle
+		  //Battle 
 		};
      
 	      if (move_x == character_x and move_y == character_y)
@@ -1988,9 +1999,8 @@ void InitNpcs()
   for(int a = 0; a < max_npcs; a++) 
     { 
       npcs[a] = NULL;
-      npcs[a] = new Goblin(); //Fills the array with the information of the specific class
-      npcs[a]->SetPos (1,2); //Sets the position of the templated NPC.
-      npcs[a]->Kill();
+      npcs[a] = new HornyGoblin(); //Fills the array with the information of the specific class
+      npcs[a]->SetPos (2,1); //Sets the position of the templated NPC.
     };
    
   cout << "Characters generated\n"; 

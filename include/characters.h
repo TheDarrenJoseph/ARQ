@@ -86,7 +86,7 @@ class NPC : public Character
  
   NPC (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
-      this->SetPos(6,6);
+      //this->SetPos(6,6);
     }; 
 };
 
@@ -167,6 +167,23 @@ class Goblin : public NPC
     {
       SetWeps (no_weapon,claw,sword);
       SetOutfit(outfit_library[goblin]);
+    };
+
+ Goblin(char c, int col, std::string name, int health) : NPC (c,col,name,health)
+    {
+      SetWeps (no_weapon,claw,sword);
+      SetOutfit(outfit_library[goblin]);
+    };
+  
+};
+
+class HornyGoblin : public Goblin
+{
+ public:
+  
+ HornyGoblin() : Goblin ('@',1,"Horny Goblin",5) 
+    {
+      SetWeps (no_weapon,claw,axe);
     };
   
 };

@@ -33,7 +33,7 @@ void SetTile(int x, int y, tile t)
 
 item* GetItem(int x, int y)
 {
-  return container_grid[y][x]->GetItem();
+  return container_grid[y][x]->GetItem(0,0);
 } 
 
 item* GetItem(int x, int y,int i, int j)
