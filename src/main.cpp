@@ -1,21 +1,36 @@
-//////////////////////The ASCII Roguelike Quester -- Experimental project/////////////////
-/////////////////////////////////LINUX BUILD//////////////////////////////////////////////
-//                                                                                      //
-//  Author: Rave Kutsuu                     Version : 0.89                              //
-//  Created: Dec 16, 2012                   Last Modified: 20 July, 2014                //
-//                                                                                      //
-//////////////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CREDITS                                                                                                                //
-// 1. The Beginner's Guide to Roguelike Development in C/C++ -- http://www.kathekonta.com/rlguide/index.html (28/08/2013) //
-// 3. NCURSES Programming HOWTO --  http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/                                  // 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////The ASCII Roguelike Quester -- Experimental project////////
+/////////////////////////////////LINUX BUILD////////////////////////////
+//                                                                    //
+//  Author: Rave Kutsuu              Version : 0.89                   //
+//  Created: Dec 16, 2012            Last Modified: 20 July, 2014     //
+//                                                                    //
+////////////////////////////////////////////////////////////////////////
+//												                      //
+//           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE			  //					
+//                   Version 2, December 2004                         //
+//                                                                 	  //
+//Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>                    //
+//                                                                    //
+//Everyone is permitted to copy and distribute verbatim or modified   //
+//copies of this license document, and changing it is allowed as long //
+//as the name is changed.                                          	  //
+//                                                                    //
+//           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE              //
+// TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION    //
+//																	  //
+// 0. You just DO WHAT THE FUCK YOU WANT TO.						  //
+//																	  //
+////////////////////////////////////////////////////////////////////////
+//CREDITS                                                             //  //                                                                    //
+// 1. The Beginner's Guide to Roguelike Development in C/C++ --       //
+// http://www.kathekonta.com/rlguide/index.html //(28/08/2013)        //
+//                                                                    //
+// 3. NCURSES Programming HOWTO --                                    //   		//http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/                //             //                                                                    // 
+////////////////////////////////////////////////////////////////////////
 
 //BULD COMMANDS
 //Linux G++ -- "g++ -Wall -I../include -o "%e" "%f" -lncurses -std=gnu++11 characters.cpp ui.cpp grid.cpp items.cpp"
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <cstdlib>
 #include <time.h>
 #include <iostream>
