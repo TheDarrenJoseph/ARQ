@@ -1,32 +1,22 @@
-           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-                   Version 2, December 2004
-
-Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
-
-Everyone is permitted to copy and distribute verbatim or modified
-copies of this license document, and changing it is allowed as long
-as the name is changed.
-
-           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-  TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
- 0. You just DO WHAT THE FUCK YOU WANT TO.
-
-------------------------------------------------------------------------
 ASCII Rougelike Quester -- Experimental project [C++, Ncurses]
- 
+=============================================================
+
 A small learner project/tech demo using C++ and Ncurses. ARQ is 
 essentially a very basic rougelike being used to understand and learn
  new coding and appplication development techniques.
 
---LINUX BUILD-----------------------------------------------------------
+LINUX BUILD
+===========
+
 Author: Rave Kutsuu   
 Version : 0.89.3                              
 Created: Dec 16, 2012
-Last Modified: Oct 24, 2014                
-------------------------------------------------------------------------
+Last Modified: Oct 24, 2014
 
---TODO------------------------------------------------------------------
+
+TODO
+----
+
 2. Equipment (Implementation of weapons)
 3. Health System (Player Death, NPCs become lootable)
 4. NPCs (improved spawning, AI, bosses)
@@ -48,24 +38,28 @@ Last Modified: Oct 24, 2014
 //RUSHED/OVERSIZED
 -AccessInventory()
 
---Changelist (0.89.2)--
---Gameplay--
+Changelist (0.89.2)
+-------------------
+
+**GAMEPLAY**
 1. You can now swap items between containers
 2. Added the ability to store multiple items in one area
 3. Added a new Goblin subtype
 
---Code--
+**CODE**
 1. Finished container implementation
 2. Fixed major character death bug (bodies respawning)
 3. Fixed container accessing issues
 
---Changelist (0.89)-----------------------------------------------------
---GAMEPLAY--
+Changelist (0.89)
+-----------------
+
+**GAMEPLAY**
 1.Added lootable containers/dead bodies
 2.Added the ability to put player inv items into containers
 3.Characters drop their equipment on death
 
---CODE--
+**CODE**
 1.Added containers
 2.Reworked inventory system to work using containers
 3.Added a secondary AcessInv function specifically for the player's inv
@@ -73,18 +67,22 @@ Last Modified: Oct 24, 2014
 5.Changed indent style to GNU standard.
 6.Cleaned up UI code/fixed refresh issues
 
---Changelist (0.88)-----------------------------------------------------
-//GAMEPLAY
+Changelist (0.88)
+-----------------
+
+**GAMEPLAY**
 1. Added the ability to Flee when in combat
 
-//CODE
+**CODE**
 1. Improved player Move(WINDOW * winchoice, WINDOW* mainwin, int y, int x)
 2. Added Traversable Tile check and TileProc() (Abstracted from Move())
 3. SPLIT CODE INTO HEADERS AND MULTIPLE SOURCE FILES
 4. REWORKED MAJOR FUNCTIONS TO SUPPORT THE ABOVE
 
---Changelist (0.87)-----------------------------------------------------
-//GAMEPLAY
+Changelist (0.87)
+-----------------
+
+**GAMEPLAY**
 1.Fixed bug with NPCs not dying
 2.Added corpses/modified NPC symbol
 3.Small improvements to movement feedback
@@ -93,23 +91,29 @@ Last Modified: Oct 24, 2014
 6.Added equipment window
 7.Added outfits/armour
 
-//CODE
+**CODE**
 1.Updated item system enums and listings 
 2.Fixed bad naming conventions
 3.Cleaned up main() and added init functions
 4.Gave WINDOW*'s global scope
 
---Changelist (0.86)-----------------------------------------------------
+Changelist (0.86)
+-----------------
+
 1.Fixed item pickup bug
 
---Changelist (0.85)-----------------------------------------------------
+Changelist (0.85)
+-----------------
+
 1.Improved documentation
 2.Ablity to walk over items
 3.Fixed inventory to work with the new item system
 4.Added the ability to fight/kill NPCs
 5.Fixed death
 
---CREDITS---------------------------------------------------------------
+CREDITS
+=======
+
 1. The Beginner's Guide to Roguelike Development in C/C++ -- 
 http://www.kathekonta.com/rlguide/index.html 
 
