@@ -16,19 +16,14 @@
             <file>file:/home/rave/documents/ARQ-2/include/tile.h</file>
             <file>file:/home/rave/documents/ARQ-2/src/ui.cpp</file>
             <file>file:/home/rave/documents/ARQ-2/include/items.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/playerUI.h</file>
             <file>file:/home/rave/documents/ARQ-2/include/ui.h</file>
             <file>file:/home/rave/documents/ARQ-2/include/game.h</file>
             <file>file:/home/rave/documents/ARQ-2/include/grid.h</file>
             <file>file:/home/rave/documents/ARQ-2/arq.make</file>
-            <file>file:/home/rave/documents/ARQ-2/src/game.cpp</file>
             <file>file:/home/rave/documents/ARQ-2/include/containers.h</file>
-            <file>file:/home/rave/documents/ARQ-2/src/playerUI.cpp</file>
             <file>file:/home/rave/documents/ARQ-2/src/items.cpp</file>
             <file>file:/home/rave/documents/ARQ-2/include/characters.h</file>
             <file>file:/home/rave/documents/ARQ-2/src/characters.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/src/room.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/include/room.h</file>
             <file>file:/home/rave/documents/ARQ-2/LICENSE</file>
             <file>file:/home/rave/documents/ARQ-2/README.md</file>
         </group>
