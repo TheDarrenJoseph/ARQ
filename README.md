@@ -4,6 +4,7 @@ ASCII Rougelike Quester -- Experimental project [C++, Ncurses]
 A small learner project/tech demo using C++ and Ncurses. ARQ is 
 essentially a very basic rougelike being used to understand and learn
  new coding and appplication development techniques.
+<<<<<<< d3f3a215c1775b154dccf4b7b491a121e003c472
 
 LINUX BUILD
 ===========
@@ -19,6 +20,33 @@ TODO
 
 2. Equipment (Implementation of weapons)
 3. Health System (Player Death, NPCs become lootable)
+=======
+ 
+I have currently resumed work on this project in the hopes of making it 
+a more complete experience, introducing more game-like aspects and platfprm
+support.
+
+LINUX BUILD
+===========
+Author: Rave Kutsuu   
+Version : 0.90.0                             
+Created: Dec 16, 2012
+Last Modified: Sep 12, 2015
+
+Changelist (0.90.0)
+-------------------
+**GAMEPLAY**
+1 (1) Procedural levels -- Room and corridor generation in progress! :D
+2 (8) Menu -- Partially implemented, expect great things soon!)
+3 (3) Health System (Player Death menu)
+4 (4) Multiple dungeon levels goal REMOVED (Procedural levels should cover this)
+5 (Ex) Fog of War -- This now exists! Just needs some improvements.
+
+TODO
+----
+1. Procedural levels (Room and corridor generation in progress! :D)
+3. Health System (Player Death menu)
+>>>>>>> Major refactoring/Improvements, jumped to 0.90.0
 4. NPCs (improved spawning, AI, bosses)
 5. Items (potions, scrolls, etc)
 6. Level Progression (Break down doors, disarm/dodge traps,
@@ -26,6 +54,7 @@ TODO
 7. Full ending (Dungeon escape?)
 8. Menu
 9. Load game/item maps from files
+<<<<<<< d3f3a215c1775b154dccf4b7b491a121e003c472
 10. Multiple dungeon levels
 
 --Extras (Windows, Fog of War, Menu, Sound? (Ambient music)
@@ -37,6 +66,12 @@ TODO
 
 //RUSHED/OVERSIZED
 -AccessInventory()
+=======
+
+EXTRAS
+------
+(Windows, Sound? (Ambient music)
+>>>>>>> Major refactoring/Improvements, jumped to 0.90.0
 
 Changelist (0.89.2)
 -------------------

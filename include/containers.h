@@ -2,13 +2,15 @@
 #define CONTAINERS_H
 
 #include <string>
-#include <items.h>
+#include "items.h"
+
 
 //enum containerIndex {no_container,body,chest,container_size};
 
+//id 99 to denote container
 struct container : public item
 {
-  //id 99 to denote container
+  
   invItem* inv[3][3];
    
   void InitialiseInv();
@@ -25,7 +27,7 @@ struct container : public item
   container() : item (99,"None"," ",0,0,false)
     {
       InitialiseInv();
-      //id = 99;
+      id = 99;
     };
   
   container(int i, std::string n, const char* s, int col, int val,bool lootable) : item(i,n,s,col,val,lootable)
@@ -35,9 +37,9 @@ struct container : public item
 
 };
 
+//id 98 to denote area
 struct area : public container
 {
-  //id 98 to denote area
   item* inv[3][3];
   
   void InitialiseInv();

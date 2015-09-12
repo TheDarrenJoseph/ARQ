@@ -2,15 +2,16 @@
 #define CHARACTERS_H
 
 #include <string>
-#include <curses.h>
+#include "curses.h"
 
-#include "items.h"
+#define INV_X 3
+#define INV_Y 3
+
 #include "tile.h"
+#include "items.h"
+#include "containers.h"
 
-const int inv_x = 3;
-const int inv_y = 3;
 
-const int max_npcs = 1;
 
 class Character
 {
@@ -34,13 +35,14 @@ class Character
   bool IsAlive();
 
   void Kill();
-    
+  
   bool IsTraversable(tile t);
   bool CanFlee();
   int Flee();
   
   void Draw();
-  
+  int Flee();
+ 
   void SetCharacter(char char_choice, int colour_choice, std::string name_choice, int health_choice);
 
   void GetPos (int *x, int *y);
@@ -52,8 +54,8 @@ class Character
   int GetHealth ();
 
   void SetWeps(weaponIndex one, weaponIndex two, weaponIndex three);
-  weapon* GetWeps(); //returns a pointer to allow return of a 1D array
-  
+  weapon* GetWeps(); //returns a pointer to a 1D array of weapons
+
   void SetOutfit(outfit o);
   outfit GetOutfit();
   
@@ -66,6 +68,13 @@ class Character
    
   Character (char c, int col, std::string name, int health) 
     {
+  area* DropItems(); //Drops the players inv on death as a dead body
+   
+  Character (char c, int col, std::string name, int health) 
+    {
+      x=0;
+      y=0;
+           
       max_health = health;
       SetCharacter(c,col,name,health);
    	
@@ -80,10 +89,13 @@ class Character
 
 class NPC : public Character
 {
+ private:
+    NPC* npcs;
+    
  public :
   int BattleTurn ();
-  int Move();
- 
+  void Move(int* x, int* y); //returns chosen movement co-ordinates for the NPC
+
   NPC (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
       //this->SetPos(6,6);
@@ -93,53 +105,37 @@ class NPC : public Character
 class Player : public Character
 {
  private:
-
-  area* inventory = new area(1,"Inventory","%",1,0,true);
-
+ 
+  area* inventory;
+  NPC* npcs;
+  
   int loot;
   
+  
   public :
- 
-  bool CanDropItem(item* thisItem);
   int DropItem(item* thisItem, int invX, int invY);
-
-  int Move ();
-  int Move (WINDOW * winchoice, WINDOW* mainwin, int y, int x);
- 
-  int AccessContainer(WINDOW* input_win, WINDOW* inv_wins[3][3], container* c); 
-  int AccessArea(WINDOW* input_win, WINDOW* inv_wins[3][3], area* a);
-  int AccessInventory(WINDOW* input_win, WINDOW* inv_wins[3][3]);
-
-  item* GetFromInventory(WINDOW* input_win, WINDOW* inv_wins[3][3]);
-
-  void AddToInventory(item* i);
+  
+  int AddToInventory(item* i);
   void SetInventoryTile(int x, int y, item* i);
-  item* GetFromInventory(int x, int y);  
 
   area* GetInventory();
- 
-  int ItemProc (WINDOW* winchoice, item* itm, int y, int x);
-  int LockProc (WINDOW* winchoice, int door_y, int door_x, tile doortype, int doortile, std::string doorname );
-  int DoorProc (WINDOW* winchoice, int y, int x, tile doortype);
- 
-  void TileProc(WINDOW* winchoice, int y, int x, tile t);
-  int AreaProc(WINDOW* winchoice, int y, int x);
-
-  int BattleTurn (WINDOW* main_win, WINDOW* input_win, int npc_id);
- 
+  item* GetFromInventory(int x, int y);
+  
   void SetLoot(int x);
   int GetLootScore();
- 
-  int Input (WINDOW* winchoice, WINDOW* inv_wins[3][3], WINDOW* main_win);
 
   int LootCount ();
+  
+  //int AreaProc (int x ,int y);
  
   Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
       //initialise the item inventory
-      for (y=0; y<inv_y; y++)
+      inventory = new area(1,"Inventory","%",1,0,true);
+      
+      for (y=0; y<INV_Y; y++)
 	{
-	  for (x=0; x<inv_x; x++)
+	  for (x=0; x<INV_X; x++)
 	    {
 	      inventory->AddItem(new item(item_library[no_item]));
 	    }
@@ -150,7 +146,7 @@ class Player : public Character
 class Warrior : public Player
 {
  public:
-
+     
   Warrior () : Player('@',6,"Warrior",100)
     {
       SetWeps(no_weapon,fist,sword);
@@ -177,11 +173,11 @@ class Goblin : public NPC
   
 };
 
-class HornyGoblin : public Goblin
+class GoblinBeserker : public Goblin
 {
  public:
   
- HornyGoblin() : Goblin ('@',1,"Horny Goblin",5) 
+    GoblinBeserker() : Goblin ('@',1,"Goblin Beserker",5) 
     {
       SetWeps (no_weapon,claw,axe);
     };

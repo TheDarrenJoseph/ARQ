@@ -3,10 +3,11 @@
 
 #include <string>
 
-//enums for reference to detail structs (for dynamic items, their size is controlled by the last enum)
+//enums for reference to detail structs (for dynamic item lists, their size is controlled by the last enum)
 enum itemIndex {no_item,lockpick,key,statue,gold_coin,silver_coin,bronze_coin,gold_bar,silver_bar,bronze_bar,item_size};
 enum weaponIndex {no_weapon,fist,claw,acid,sword,axe,dagger,spear,weapon_size};
 enum outfitIndex {no_outfit,warrior,goblin,outfit_size};
+
 enum lootChance {noLoot,lowLoot,mediumLoot,highLoot};
 
 struct invItem
@@ -131,9 +132,11 @@ struct outfit : public item
     }
 };
 
-void GenerateItems(lootChance thisChance);
+
 
 bool IsLootable(item* i);
+
+bool CanDropItem(item* thisItem);
 
 const invItem inv_item_library[item_size] =
   { 
