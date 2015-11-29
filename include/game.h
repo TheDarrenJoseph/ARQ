@@ -3,9 +3,10 @@
 
 #define VERSION "0.89 Linux Native"
 
+#include <string>
 #include "characters.h"
-#include "ui.h" //includes grid
 #include "playerUI.h"
+#include "ui.h"
 
 void SetRunning(bool state);
 std::string GetVersion();
@@ -17,7 +18,7 @@ class GameEngine
         Map map;
         Player* player;
         NPC* npcs;
-        CursesUI* displayUI;
+        UI* displayUI;
         PlayerUI* playerUI; 
         
     public:
@@ -38,10 +39,9 @@ class GameEngine
         
         void GenerateItems(lootChance thisChance);
     
-        GameEngine(Player* p, NPC* n, const int maxNPCS, Map* m, CursesUI* ui, PlayerUI* playerUI) {
+        GameEngine(Player* p, NPC* n, const int maxNPCS, Map* m, UI* ui, PlayerUI* playerUI) {
             
             player = p;
-            
             npcs = &n[0];
             
             MAX_NPCS = maxNPCS; 

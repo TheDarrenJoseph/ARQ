@@ -8,7 +8,7 @@
 //enum containerIndex {no_container,body,chest,container_size};
 
 //id 99 to denote container
-struct container : public item
+struct Container : public Item
 {
   
   invItem* inv[3][3];
@@ -17,20 +17,20 @@ struct container : public item
 
   invItem* GetInv();
 
-  int AddItem(item* i);
-  void ReplaceItem(int x, int y,item* i);
+  int AddItem(Item* i);
+  void ReplaceItem(int x, int y,Item* i);
   
   void RemoveItem(int x, int y);
  
-  item* GetItem(int x,int y);
+  Item* GetItem(int x,int y);
  
-  container() : item (99,"None"," ",0,0,false)
+  Container() : Item (99,"None"," ",0,0,false)
     {
       InitialiseInv();
       id = 99;
     };
   
-  container(int i, std::string n, const char* s, int col, int val,bool lootable) : item(i,n,s,col,val,lootable)
+  Container(int i, std::string n, const char* s, int col, int val,bool lootable) : Item(i,n,s,col,val,lootable)
     {
       InitialiseInv();
     };
@@ -38,32 +38,37 @@ struct container : public item
 };
 
 //id 98 to denote area
-struct area : public container
+struct Area : public Container
 {
+<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
   item* inv[3][3];
+=======
+
+  Item* inv[3][3];
+>>>>>>> Branch work pre-header fix branch
   
   void InitialiseInv();
 
-  item* GetInv();
+  Item* GetInv();
 
-  int AddItem(item* i);
-  void ReplaceItem(int x, int y,item* i);
+  int AddItem(Item* i);
+  void ReplaceItem(int x, int y,Item* i);
   
   void RemoveItem(int x, int y);
  
-  item* GetItem(int x, int y);
+  Item* GetItem(int x, int y);
   
   int HasItems();
  
-  area(int i, std::string n, const char* s, int col, int val,bool lootable) : container(i,n,s,col,val,lootable)
+  Area(int i, std::string n, const char* s, int col, int val,bool lootable) : Container(i,n,s,col,val,lootable)
     {
       InitialiseInv();
       id = 98;
     };  
 };
 
-item* ToItem(invItem* i);
-invItem* ToInvItem(item* i);
+Item* ToItem(invItem* i);
+invItem* ToInvItem(Item* i);
 
 /*
   const container container_library[container_size]=

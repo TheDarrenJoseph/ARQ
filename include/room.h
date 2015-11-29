@@ -3,8 +3,6 @@
 
 #include "tile.h"
 
-using namespace std;
-
 enum side{TOP,BOTTOM,LEFT,RIGHT};
 
 /** A class type to store indicator information for rooms in use in the game,
@@ -31,21 +29,21 @@ class Room {
         };   
         
         //Top-left corner/starting co-ordinates for a room
-        pair<int,int> startPos;
+        std::pair<int,int> startPos;
         
         //Size of each wall/overall square size
         int size;
         
         //Co-ordinates for the bottom-right corner of a room
-        pair<int,int> endPos;
+        std::pair<int,int> endPos;
         
         Door doors[8];
         int doorNo = 0;
         
 public:
     
-    pair<int,int> GetStartPos();
-    pair<int,int> GetEndPos();
+    std::pair<int,int> GetStartPos();
+    std::pair<int,int> GetEndPos();
     int GetSize();
     
     bool AddDoor(tile doorType, side s, int* x, int* y);
@@ -53,8 +51,8 @@ public:
     
     Room(int x, int y, int s) {
         doorNo = 0;
-        startPos = make_pair(x,y);
-        endPos   = make_pair(x+s,y+s);
+        startPos = std::make_pair(x,y);
+        endPos   = std::make_pair(x+s,y+s);
         size = s;
     }
     

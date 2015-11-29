@@ -2,7 +2,6 @@
 #define CHARACTERS_H
 
 #include <string>
-#include "curses.h"
 
 #define INV_X 3
 #define INV_Y 3
@@ -61,6 +60,7 @@ class Character
   
   void SetPos(int x, int y);
   void SetHealth(int);
+<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
    
   virtual int Move() =0; /*Do nothing by default, abstract*/
   
@@ -69,6 +69,10 @@ class Character
   Character (char c, int col, std::string name, int health) 
     {
   area* DropItems(); //Drops the players inv on death as a dead body
+=======
+
+  Area* DropItems(); //Drops the players inv on death as a dead body
+>>>>>>> Branch work pre-header fix branch
    
   Character (char c, int col, std::string name, int health) 
     {
@@ -105,39 +109,46 @@ class NPC : public Character
 class Player : public Character
 {
  private:
+<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
  
   area* inventory;
+=======
+
+  Area* inventory;
+>>>>>>> Branch work pre-header fix branch
   NPC* npcs;
   
   int loot;
   
   
   public :
-  int DropItem(item* thisItem, int invX, int invY);
+  int DropItem(Item* thisItem, int invX, int invY);
   
-  int AddToInventory(item* i);
-  void SetInventoryTile(int x, int y, item* i);
+  int AddToInventory(Item* i);
+  void SetInventoryTile(int x, int y, Item* i);
 
-  area* GetInventory();
-  item* GetFromInventory(int x, int y);
+  Area* GetInventory();
+  Item* GetFromInventory(int x, int y);
   
   void SetLoot(int x);
   int GetLootScore();
 
-  int LootCount ();
+  int GetLootCount ();
+  int GetKeyCount();
+  void RemoveKeyCount(int keyCount);
   
   //int AreaProc (int x ,int y);
  
   Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
       //initialise the item inventory
-      inventory = new area(1,"Inventory","%",1,0,true);
+      inventory = new Area(1,"Inventory","%",1,0,true);
       
       for (y=0; y<INV_Y; y++)
 	{
 	  for (x=0; x<INV_X; x++)
 	    {
-	      inventory->AddItem(new item(item_library[no_item]));
+	      inventory->AddItem(new Item(item_library[no_item]));
 	    }
 	}
     };

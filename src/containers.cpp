@@ -1,6 +1,6 @@
 #include "containers.h"
 
-void container :: InitialiseInv()
+void Container :: InitialiseInv()
 {
   for (int x=0;x<3;x++)
     {
@@ -11,7 +11,7 @@ void container :: InitialiseInv()
     }
 }
 
-int container :: AddItem(item* i)
+int Container :: AddItem(Item* i)
 {
   invItem* thisItem = ToInvItem(i);
 
@@ -29,36 +29,36 @@ int container :: AddItem(item* i)
   return 1;
 }
 
-void container :: ReplaceItem(int x, int y, item* i)
+void Container :: ReplaceItem(int x, int y, Item* i)
 {
   invItem* thisItem = ToInvItem(i);
 
   inv[y][x] = thisItem;
 }
 
-void container :: RemoveItem(int x, int y)
+void Container :: RemoveItem(int x, int y)
 {
   inv[y][x] = new invItem(inv_item_library[no_item]);
 }
 
-item* container :: GetItem(int x, int y)
+Item* Container :: GetItem(int x, int y)
 {
-  item* i = ToItem(inv[y][x]);
+  Item* i = ToItem(inv[y][x]);
   return i;
 }
 
-void area :: InitialiseInv()
+void Area :: InitialiseInv()
 {
   for (int x=0;x<3;x++)
     {
       for (int y=0;y<3;y++)
 	{
-	  this->inv[y][x] = new item(item_library[no_item]);
+	  this->inv[y][x] = new Item(item_library[no_item]);
 	}
     }
 }
 
-int area :: AddItem(item* i)
+int Area :: AddItem(Item* i)
 {
   for (int x=0; x<3; x++)
     {
@@ -74,24 +74,24 @@ int area :: AddItem(item* i)
   return 1;
 }
 
-void area :: ReplaceItem(int x, int y, item* i)
+void Area :: ReplaceItem(int x, int y, Item* i)
 {
   inv[y][x] = i;
 }
 
-void area :: RemoveItem(int x, int y)
+void Area :: RemoveItem(int x, int y)
 {
-  inv[y][x] = new item(item_library[no_item]);
+  inv[y][x] = new Item(item_library[no_item]);
 }
 
-item* area :: GetItem(int x, int y)
+Item* Area :: GetItem(int x, int y)
 {
   return inv[y][x];
 }
 
 //Returns an integer to determine the contents of this area
 //Returns 1 for multiple items, and 2 for one
-int area :: HasItems()
+int Area :: HasItems()
 {
   int count = 0;
 
@@ -125,7 +125,7 @@ int area :: HasItems()
     }
 }
 
-item* ToItem(invItem* i)
+Item* ToItem(invItem* i)
 {
   int id = i->id;
   std::string name = i->name;
@@ -134,12 +134,12 @@ item* ToItem(invItem* i)
   int value=i->value;
   bool lootable=i->lootable;
   
-  item* thisItem = new item (id,name,symbol,colour,value,lootable);
+  Item* thisItem = new Item (id,name,symbol,colour,value,lootable);
   
   return thisItem;
 } 
 
-invItem* ToInvItem(item* i)
+invItem* ToInvItem(Item* i)
 {
   int id = i->id;
   std::string name = i->name;

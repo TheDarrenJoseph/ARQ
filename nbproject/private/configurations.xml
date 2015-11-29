@@ -7,9 +7,10 @@
       <df name="include">
         <in>characters.h</in>
         <in>containers.h</in>
+        <in>cursesUI.h</in>
         <in>game.h</in>
-        <in>grid.h</in>
         <in>items.h</in>
+        <in>map.h</in>
         <in>playerUI.h</in>
         <in>room.h</in>
         <in>tile.h</in>
@@ -18,14 +19,13 @@
       <df name="src">
         <in>characters.cpp</in>
         <in>containers.cpp</in>
+        <in>cursesUI.cpp</in>
         <in>game.cpp</in>
-        <in>grid.cpp</in>
         <in>items.cpp</in>
         <in>main.cpp</in>
-        <in>playerUI.c</in>
+        <in>map.cpp</in>
         <in>playerUI.cpp</in>
         <in>room.cpp</in>
-        <in>ui.cpp</in>
       </df>
     </df>
   </logicalFolder>

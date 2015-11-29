@@ -107,11 +107,11 @@ void Character :: SetPos(int x, int y)
 }
 
 /* Returns an area/dead body that contains the characters possesions*/
-area* Character :: DropItems()
+Area* Character :: DropItems()
 {
-  string name = this->name.c_str();
-  string thisName = "Dead " + name;
-  area* body = new area(1,thisName,"X",1,0,true);
+ std::string name = this->name.c_str();
+ std::string thisName = "Dead " + name;
+  Area* body = new Area(1,thisName,"X",1,0,true);
   
   body->AddItem(new weapon(this->weps[1]));
   body->AddItem(new weapon(this->weps[2]));
@@ -163,22 +163,22 @@ outfit Character :: GetOutfit()
 
 /////////////////////////////////////////////////
 
-int Player :: AddToInventory(item* i)
+int Player :: AddToInventory(Item* i)
 {
   return this->inventory->AddItem(i);
 }
 
-void Player :: SetInventoryTile(int x, int y, item* i)
+void Player :: SetInventoryTile(int x, int y, Item* i)
 {
   this->inventory->ReplaceItem(x,y,i); 
 }
 
-item* Player :: GetFromInventory(int x, int y)
+Item* Player :: GetFromInventory(int x, int y)
 {
   return this->inventory->GetItem(x,y);
 }
 
-area* Player :: GetInventory()
+Area* Player :: GetInventory()
 {
   return this->inventory;
 }  
@@ -195,7 +195,7 @@ int Player :: GetLootScore ()
   return this->loot;
 }
 
-int Player :: LootCount ()
+int Player :: GetLootCount ()
 {
   int total = 0;
 
@@ -212,7 +212,50 @@ int Player :: LootCount ()
   return (0);
 }
 
+int Player :: GetKeyCount() {
+    Item* invTile;
+    int keyCount = 0;
+    
+    
+    for (int y = 0; y < INV_Y; y++)
+    {
+        for(int x = 0; x < INV_X; x++)
+        {
+            invTile = GetFromInventory(x,y);
+            
+            if (invTile->id == key) {
+                keyCount+=1;
+            };
+            
+        };
+    }; 
+    
+    return keyCount;    
+}
 
+
+void Player :: RemoveKeyCount(int keyCount) {
+    Item* invTile;
+    int removedCount = 0;
+    
+    for (int y = 0; y < INV_Y; y++)
+    {
+        for(int x = 0; x < INV_X; x++)
+        {
+            invTile = GetFromInventory(x,y);
+            
+            if (removedCount == keyCount) {
+                return;
+            } else  if (invTile->id == key) {
+               SetInventoryTile(x, y, new Item(item_library[no_item]));
+            };
+            
+        };
+    }; 
+  
+}
+
+  
 
 /////////////////////////////////////////////////
 //returns an int to represent a weapon choice from weps[] based on health

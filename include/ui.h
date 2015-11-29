@@ -1,88 +1,50 @@
 #ifndef UI_H
-#define UI_H
+#define	UI_H
 
-#include <string>
-#include "grid.h"
+#include <curses.h>  
+#include "map.h"
 
-class CursesUI
-{
-    private:
+class UI {
+public:
+    virtual void InitWindows() = 0;
+    virtual void DestroyWindows() = 0;
+    virtual void DecorateWindows() = 0;
 
-    WINDOW* titlewin; //Creates the stats window for content
+    virtual void DrawItems(Map* m) = 0;
+    virtual void DrawAreas(Map* m) = 0;
 
-    WINDOW* mainwin_rear; //Creates a new window called new win at 0,1 that has the dimensions of grid_x, and grid_y.
-    WINDOW* mainwin_front; //Creates a new window called new win at 1,2 that has the dimensions of grid_x, and grid_y.
+    virtual void DrawPlayerStats (std::string name, int health, int loot) = 0;
+    virtual void DrawPlayerEquipmentSlot(int slot, std::string name) = 0;
 
-    WINDOW* consolewin_rear; //Creates the console window for deco
-    WINDOW* consolewin_front; //Creates the console window for content
+    virtual void DrawInv(Container* c) = 0;
+    virtual void DrawInv(Area* a) = 0;
+    virtual void ClearInvHighlighting() = 0;
+    virtual void HighlightInv(int loc_x, int loc_y) = 0;
+    virtual void DrawInvWindow(int loc_x, int loc_y, const char* tileChar, int colour) = 0;
 
-    WINDOW* statwin_rear; //Creates the stat window for deco
-    WINDOW* statwin_front; //Creates the stats window for content
+    virtual int DrawMap (Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance) = 0;
+    virtual void DrawCharacter (int x, int y, int colour, char symbol) = 0;
 
-    WINDOW* invwins_front[3][3];
-    WINDOW* invwins_rear; 
 
-    WINDOW* equipwin_rear; 
-    WINDOW* equipwin_outfit; 
-    WINDOW* equipwin_front[3];
-  
+    virtual void ShowInfo();
     
-    int MAX_NPCS;
+    virtual void ShowNotification(const char* text);
     
-    int UI_X = GRID_X*2+7;
-    int UI_Y = GRID_Y+6;
+    virtual int Menu(const char** text, int buttons);
+
+    virtual void UpdateUI();
     
-    NPC* npcs;
-    Player* player;
-    Map* map;
-  
-    public :
-    void InitWindows();
-    void DestroyWindows();
-    void DecorateWindows();
+    virtual void ClearConsole();
+    virtual void ConsolePrint (std::string text, int posX, int posY);
+    virtual void ConsolePrintWithWait (std::string text, int posX, int posY);
+    virtual int ConsoleGetInput();
+    virtual std::string ConsoleGetString();
+    virtual void ClearConsoleHighlighting();
+    virtual void HighlightConsole(int scr_x, int scr_y);
+        
+    virtual int InitScreen ();
 
-
-    void DrawItems(Map* m);
-    void DrawAreas(Map* m);
-
-    void DrawPlayerInv();
-    void DrawPlayerEquip();
-    void DrawPlayerStats ();
-
-    void DrawInv(container* c);
-    void DrawInv(area* a);
-
-    int DrawMap (Map* m, bool fogOfWar);
-    void DrawCharacter (int x, int y, int colour, char symbol);
-
-
-    void Info();
-
-    void UpdateUI();
-
-    int wprintw_col (WINDOW* winchoice, const char *text, int color_choice);
-    int wprint_at (WINDOW* winchoice, const char *text, int pos_y, int pos_x);
-    int wprintNoRefresh (WINDOW* win, std::string text);
-
-    int init_screen ();
-    
-    //Player based functions
-    void Battle (int npc_id);
-
-    item* GetFromInventory ();
-    
-    int ItemProc (item* itm, int x, int y);
-    int LockProc (int door_y, int door_x, tile doortype, int doortile, std::string doorname );
-    void TileProc(int y, int x,tile t);
-
-    CursesUI(int maxNPCS, NPC* npcs, Player* p, Map* m) {
-        MAX_NPCS = maxNPCS;
-        this->npcs = npcs;
-        player = p;
-        map = m;
-
-        raw();  //stops needing [Enter] to input text
-    }
 };
 
-#endif
+#endif	/* UI_H */
+

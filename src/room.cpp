@@ -1,7 +1,7 @@
 #include "room.h"
 
-pair<int,int> Room :: GetStartPos() {return startPos;}
-pair<int,int> Room :: GetEndPos() {return endPos;}
+std::pair<int,int> Room :: GetStartPos() {return startPos;}
+std::pair<int,int> Room :: GetEndPos() {return endPos;}
 
 int Room :: GetSize() {return size;}
 

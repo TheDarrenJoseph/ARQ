@@ -71,7 +71,7 @@ struct invOutfit : public invItem
     }
 };
 
-struct item
+struct Item
 {
   int id;
   std::string name;
@@ -80,7 +80,7 @@ struct item
   int value;
   bool lootable;
 
-  item()
+  Item()
   {
     id = 0;
     name = "None";
@@ -90,7 +90,7 @@ struct item
     lootable = false;
   }
    
-  item(int i, std::string n, const char* s, int col, int val, bool lootable)
+  Item(int i, std::string n, const char* s, int col, int val, bool lootable)
   {
     id = i;
     name = n;
@@ -102,31 +102,31 @@ struct item
        
 };
  
-struct weapon : public item
+struct weapon : public Item
 {
   int damage;
  
- weapon() : item(0,"None"," ",0,0,false)
+ weapon() : Item(0,"None"," ",0,0,false)
     {
       this->damage=0;
     }
    
- weapon(int i, std::string n, const char* s, int col, int val,bool lootable,int d) : item(i,n,s,col,val,lootable)
+ weapon(int i, std::string n, const char* s, int col, int val,bool lootable,int d) : Item(i,n,s,col,val,lootable)
     {
       damage = d;
     }
 };
  
-struct outfit : public item
+struct outfit : public Item
 {
   int armourPoints;
     
- outfit() : item(0,"None"," ",0,0,false)
+ outfit() : Item(0,"None"," ",0,0,false)
     {
       this->armourPoints=0;
     }
    
- outfit(int i, std::string n, const char* s, int col, int val,bool lootable,int AP) : item(i,n,s,col,val,lootable)
+ outfit(int i, std::string n, const char* s, int col, int val,bool lootable,int AP) : Item(i,n,s,col,val,lootable)
     {
       armourPoints = AP;
     }
@@ -134,9 +134,9 @@ struct outfit : public item
 
 
 
-bool IsLootable(item* i);
+bool IsLootable(Item* i);
 
-bool CanDropItem(item* thisItem);
+bool CanDropItem(Item* thisItem);
 
 const invItem inv_item_library[item_size] =
   { 
@@ -153,7 +153,7 @@ const invItem inv_item_library[item_size] =
     {9,  "BrnzeBar"  , "$",    2,   25 , true},
   };
 
-const item item_library[item_size] =
+const Item item_library[item_size] =
   { 
     // {id}{Name(12 cha)}{Symbol}{Col}{Val}{Lootable}
     {0,  "None"      , " ",    0,   0,   false},

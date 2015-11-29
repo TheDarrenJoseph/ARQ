@@ -27,13 +27,13 @@ void GameEngine :: StartGame()
   map.InitAreas();
  // GenerateItems(mediumLoot); 
  
-  displayUI->init_screen (); //prep display
+  displayUI->InitScreen (); //prep display
   displayUI->InitWindows(); 
   displayUI->DecorateWindows(); //Box/label the UI
   
   switch (MainMenu()) {
   case 0 :
-      playerUI->ShowNotification("Welcome To ARQ! \n "
+      displayUI->ShowNotification("Welcome To ARQ! \n "
       "You are a humble warrior hoping to earn prestige "
       "and bring fame and fortune to your family! "
       "You have set forth into the dungeon in order"
@@ -63,15 +63,21 @@ void GameEngine :: StartGame()
 bool GameEngine :: GameLoop()
 {
   //Draw main elements
-  displayUI->DrawMap (&map,false); 
+  int playerX;
+  int playerY;  
+  
+  player->GetPos(&playerX, &playerY);
+  
+  displayUI->DrawMap (&map,false,playerX,playerY,3); 
   displayUI->DrawItems (&map); 
   //DrawAreas();
   playerUI->DrawNPCS();
   
   //Draw player UI elements
-  displayUI->DrawPlayerInv();
-  displayUI->DrawPlayerEquip();
-  displayUI->DrawPlayerStats ();  
+  playerUI->DrawPlayerInv();
+  playerUI->DrawPlayerEquipment();
+  
+  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());  
 
   playerUI->DrawPlayer(); //Draw the player
 
@@ -113,13 +119,13 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 		  int chance = rand() %100+1;
 	      
 		  //convert the current index in the library to an item enum 
-		  item thisItem = item_library[i];
+		  Item thisItem = item_library[i];
 	      
 		  //if the random chance < the number of items (e.g 10, 10%)
 		  if (chance<=thisChance)  
 		    {
 		      //then add it to the item grid
-		      map.AddToArea(x,y,new item(thisItem));
+		      map.AddToArea(x,y,new Item(thisItem));
 	        
 		      //break the for loop
 		      break; 
@@ -149,7 +155,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 																	
 	  else
 	    {
-	      map.AddToArea(x,y,new item(item_library[no_item]));
+	      map.AddToArea(x,y,new Item(item_library[no_item]));
 	    }
 	}
     }

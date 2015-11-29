@@ -41,8 +41,6 @@ void Quit()
   running = false;
 }
 
-
-
 int main()
 {
     /*Main initialisation of the game, use of new is avoided, instead creating every element for the game
@@ -57,19 +55,17 @@ int main()
     thisPlayer.SetPos (1,1);
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    container c = container(98,"Bag","X",2,0,true); //inventory testing
+    Container c = Container(98,"Bag","X",2,0,true); //inventory testing
     thisPlayer.AddToInventory(&c);
             
     Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],&thisPlayer);
-    CursesUI  thisUI = CursesUI(MAX_NPCS,&npcs[0], &thisPlayer, &thisMap); 
-    PlayerUI playerUI = PlayerUI();
+    CursesUI thisUI = CursesUI();
+    PlayerUI playerUI = PlayerUI(MAX_NPCS,thisUI,&thisMap,&thisPlayer,&npcs[0]);
     
     GameEngine thisGame = GameEngine(&thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
 
     
     thisGame.StartGame();
-    
-    //cleanup?
-    
+
     return 0;
 };

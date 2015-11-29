@@ -1,4 +1,4 @@
-#include "grid.h"
+#include "map.h"
 #include "room.h"
 
 bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
@@ -317,7 +317,7 @@ int Map::MoveNPCS()
 void Map::DropCharacterItems(Character* c)
 {
 
-    area* body = c->DropItems();
+    Area* body = c->DropItems();
 
     int x, y;
     c->GetPos(&x, &y);
@@ -325,7 +325,7 @@ void Map::DropCharacterItems(Character* c)
     SetArea(x, y, body);
 }
 
-int Map::DropPlayerItem(Player* p, item* thisItem, int invX, int invY)
+int Map::DropPlayerItem(Player* p, Item* thisItem, int invX, int invY)
 {
     int x, y;
     p->GetPos(&x, &y);
@@ -334,7 +334,7 @@ int Map::DropPlayerItem(Player* p, item* thisItem, int invX, int invY)
     if (CanPlaceItems(x, y)) {
         AddToArea(x, y, thisItem); //replace the map tile with the item
 
-        p->SetInventoryTile(invX, invY, new item(item_library[no_item])); //clear the inventory tile
+        p->SetInventoryTile(invX, invY, new Item(item_library[no_item])); //clear the inventory tile
 
         return 0;
     }
@@ -355,29 +355,29 @@ void Map::SetTile(int x, int y, tile t)
     game_grid[y][x] = t;
 };
 
-item* Map::GetItem(int x, int y)
+Item* Map::GetItem(int x, int y)
 {
     return container_grid[y][x]->GetItem(0, 0);
 }
 
-item* Map::GetContainerItem(int containerX, int containerY, int x, int y)
+Item* Map::GetContainerItem(int containerX, int containerY, int x, int y)
 {
     return container_grid[containerY][containerX]->GetItem(x, y);
 }
 
 //Adds an item to the area
 
-void Map::AddToArea(int x, int y, item* i)
+void Map::AddToArea(int x, int y, Item* i)
 {
     container_grid[y][x]->AddItem(i);
 }
 
-area* Map::GetArea(int x, int y)
+Area* Map::GetArea(int x, int y)
 {
     return container_grid[y][x];
 }
 
-void Map::SetArea(int x, int y, area* a)
+void Map::SetArea(int x, int y, Area* a)
 {
     container_grid[y][x] = a;
 }
@@ -396,7 +396,7 @@ void Map::InitAreas()
 {
     for (int x = 0; x < GRID_X; x++) {
         for (int y = 0; y < GRID_Y; y++) {
-            container_grid[y][x] = new area(99, "Empty", " ", 0, 0, false);
+            container_grid[y][x] = new Area(99, "Empty", " ", 0, 0, false);
         }
     }
 }

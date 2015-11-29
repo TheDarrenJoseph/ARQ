@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "grid.h"
+#include "map.h"
 #include "items.h"
 
-bool IsLootable(item* i) { return i->lootable; };
+bool IsLootable(Item* i) { return i->lootable; };
 
-bool CanDropItem(item* thisItem)
+bool CanDropItem(Item* thisItem)
 {
   if (thisItem->lootable)
     {    
