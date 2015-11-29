@@ -3,35 +3,20 @@ ASCII Rougelike Quester -- Experimental project [C++, Ncurses]
 
 A small learner project/tech demo using C++ and Ncurses. ARQ is 
 essentially a very basic rougelike being used to understand and learn
- new coding and appplication development techniques.
-<<<<<<< d3f3a215c1775b154dccf4b7b491a121e003c472
-
-LINUX BUILD
-===========
-
-Author: Rave Kutsuu   
-Version : 0.89.3                              
-Created: Dec 16, 2012
-Last Modified: Oct 24, 2014
-
-
-TODO
-----
-
-2. Equipment (Implementation of weapons)
-3. Health System (Player Death, NPCs become lootable)
-=======
- 
-I have currently resumed work on this project in the hopes of making it 
-a more complete experience, introducing more game-like aspects and platfprm
-support.
+new coding and appplication development techniques. With the hope that I might make a game out of it all at the end of it.
 
 LINUX BUILD
 ===========
 Author: Rave Kutsuu   
-Version : 0.90.0                             
+Version : ~1.0 transition                             
 Created: Dec 16, 2012
-Last Modified: Sep 12, 2015
+Last Modified: Nov 29, 2015
+
+Changelist (~1.0)
+----------------
+I've decided to do a large amount of refactoring and cleanup. Currently branched everything to 'ARQ2' because there have been so many changes that needed an obviously different name. Things such as improved UI/Curses access implementation, procedural generation, 
+pathfinding, and general gameplay improvements are underway. Therefore this whole project is rather messy, but once I've made sufficient changes I'll be merging everything and hopefully reaching 1.0! 
+
 
 Changelist (0.90.0)
 -------------------
@@ -54,24 +39,10 @@ TODO
 7. Full ending (Dungeon escape?)
 8. Menu
 9. Load game/item maps from files
-<<<<<<< d3f3a215c1775b154dccf4b7b491a121e003c472
-10. Multiple dungeon levels
-
---Extras (Windows, Fog of War, Menu, Sound? (Ambient music)
-
---Cleanup needed (Break things into headers first)
-//OLD STYLE/NESTED IFS
--Lockproc()
--DoorProc()
-
-//RUSHED/OVERSIZED
--AccessInventory()
-=======
 
 EXTRAS
 ------
 (Windows, Sound? (Ambient music)
->>>>>>> Major refactoring/Improvements, jumped to 0.90.0
 
 Changelist (0.89.2)
 -------------------
