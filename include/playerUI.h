@@ -9,7 +9,7 @@
 class PlayerUI {
     
 public:
-    UI mainUI;
+    UI* mainUI;
     
     Map* map;
     
@@ -40,7 +40,7 @@ public:
     
     void TileProc(int y, int x,tile t);
     
-    PlayerUI(int maxNPCS, UI mainUI, Map* map, Player* player, NPC* npcs) {
+    PlayerUI(int maxNPCS, UI* mainUI, Map* map, Player* player, NPC* npcs){
         MAX_NPCS = maxNPCS;
         
         this->mainUI = mainUI;

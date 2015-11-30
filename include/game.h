@@ -3,7 +3,7 @@
 
 #define VERSION "0.89 Linux Native"
 
-#include <string>
+
 #include "characters.h"
 #include "playerUI.h"
 #include "ui.h"

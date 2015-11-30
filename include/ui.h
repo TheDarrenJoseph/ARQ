@@ -44,6 +44,7 @@ public:
         
     virtual int InitScreen ();
 
+    virtual ~UI() {}
 };
 
 #endif	/* UI_H */

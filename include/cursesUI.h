@@ -101,6 +101,7 @@ public:
     CursesUI() {
         raw(); //stops needing [Enter] to input text
     }
+    
 
 };
 

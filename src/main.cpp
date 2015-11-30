@@ -30,8 +30,6 @@
 #include <sstream>
 #include <curses.h>
 
-#include <string>
-
 #include "game.h"
 
 bool running = true;
@@ -60,7 +58,7 @@ int main()
             
     Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],&thisPlayer);
     CursesUI thisUI = CursesUI();
-    PlayerUI playerUI = PlayerUI(MAX_NPCS,thisUI,&thisMap,&thisPlayer,&npcs[0]);
+    PlayerUI playerUI = PlayerUI(MAX_NPCS,&thisUI,&thisMap,&thisPlayer,&npcs[0]);
     
     GameEngine thisGame = GameEngine(&thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
 

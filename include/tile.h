@@ -1,5 +1,6 @@
 #ifndef TILE_H
 #define TILE_H
+#include <string>
 
 //enum for indexing fixed instances of tile_details
 enum tile {ntl,cor,rom,wa1,wa2,wa3,win,od0,cd0,od1,cd1,ld1,od2,cd2,ld2,ent,ext,ded};

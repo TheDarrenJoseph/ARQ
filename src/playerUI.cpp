@@ -5,7 +5,7 @@ void PlayerUI::Battle(int npc_id)
     std::string p_name = player->GetName();
     std::string npc_name = npcs[npc_id].GetName();
 
-    mainUI.ClearConsole();
+    mainUI->ClearConsole();
 
     //werase (consolewin_front); //Clears both the input and map windows to fit the battle scenario
     //werase (mainwin_front);
@@ -21,11 +21,11 @@ void PlayerUI::Battle(int npc_id)
 
             player->Kill();
 
-            mainUI.ConsolePrintWithWait("You have been slain..", 0, 0);
+            mainUI->ConsolePrintWithWait("You have been slain..", 0, 0);
             return;
         } else if (npcs[npc_id].IsAlive() == false) {
             npcs[npc_id].Kill();
-            mainUI.ConsolePrintWithWait("Your foe has been slain..", 0, 0);
+            mainUI->ConsolePrintWithWait("Your foe has been slain..", 0, 0);
             return;
         } else {
             std::ostringstream playerHealthStream;
@@ -37,9 +37,9 @@ void PlayerUI::Battle(int npc_id)
             const std::string enemyHealthText = playerHealthStream.str();
 
             //display the info of both combatants
-            mainUI.ClearConsole();
-            mainUI.ConsolePrint(playerHealthText, 0, 0);
-            mainUI.ConsolePrintWithWait(enemyHealthText, 0, 1);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrint(playerHealthText, 0, 0);
+            mainUI->ConsolePrintWithWait(enemyHealthText, 0, 1);
 
             //Get both combatants weapons
             weapon* p_weps = player->GetWeps();
@@ -55,7 +55,7 @@ void PlayerUI::Battle(int npc_id)
                 weapon npc_choice = npc_weps[npc_move];
 
                 //show each players choices
-                mainUI.ClearConsole();
+                mainUI->ClearConsole();
                 std::ostringstream hitTextStream;
                 int playerDamage = p_choice.damage;
                 int npcDamage = npc_choice.damage;
@@ -68,12 +68,12 @@ void PlayerUI::Battle(int npc_id)
                     npcs[npc_id].SetHealth(npcs[npc_id].GetHealth() - playerDamage);
 
                     hitTextStream << "You use your " << p_choice.name.c_str() << " and strike the enemy for " << playerDamage << " damage " << "\n";
-                    mainUI.ConsolePrintWithWait(hitTextStream.str(), 0, 0);
+                    mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 } else if (p_move == 0 && npc_move != 0) {
                     player->SetHealth(player->GetHealth() - npcDamage);
 
                     hitTextStream << "You do nothing, and are struck for " << npcDamage << " damage." << "\n";
-                    mainUI.ConsolePrintWithWait(hitTextStream.str(), 0, 0);
+                    mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 };
 
                 //Enemy move
@@ -81,23 +81,23 @@ void PlayerUI::Battle(int npc_id)
                     player->SetHealth(player->GetHealth() - npcDamage);
 
                     hitTextStream << "Your enemy uses their " << npc_choice.name.c_str() << " and deals " << npcDamage << " damage " << "\n";
-                    mainUI.ConsolePrintWithWait(hitTextStream.str(), 0, 0);
+                    mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 } else if (npc_move == 0 && p_move != 0) {
                     npcs[npc_id].SetHealth(npcs[npc_id].GetHealth() - playerDamage);
 
                     hitTextStream << "Your enemy does nothing, and takes " << playerDamage << " damage " << "\n";
-                    mainUI.ConsolePrintWithWait(hitTextStream.str(), 0, 0);
+                    mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 }
                 else {
-                    mainUI.ConsolePrintWithWait("You both do nothing.", 0, 0);
+                    mainUI->ConsolePrintWithWait("You both do nothing.", 0, 0);
                 };
             }
             else if (p_move == 3) {
                 return; //default exit for now, need to refactor this
 
                 //FLEE CODE HERE
-                mainUI.ClearConsole();
-                mainUI.ConsolePrintWithWait("You attempt to flee.", 0, 0);
+                mainUI->ClearConsole();
+                mainUI->ConsolePrintWithWait("You attempt to flee.", 0, 0);
 
                 /**
 	  
@@ -110,8 +110,8 @@ void PlayerUI::Battle(int npc_id)
                         }
 		 
                 else..  */
-                mainUI.ClearConsole();
-                mainUI.ConsolePrintWithWait("You try to escape but have nowhere to run to.", 0, 0);
+                mainUI->ClearConsole();
+                mainUI->ConsolePrintWithWait("You try to escape but have nowhere to run to.", 0, 0);
 
             }
         }
@@ -121,7 +121,7 @@ void PlayerUI::Battle(int npc_id)
 
 void PlayerUI::DrawPlayerInv()
 {
-    mainUI.DrawInv(player->GetInventory());
+    mainUI->DrawInv(player->GetInventory());
 };
 
 void PlayerUI::DrawPlayerEquipment()
@@ -130,23 +130,23 @@ void PlayerUI::DrawPlayerEquipment()
 
     for (int x = 0; x < INV_X - 1; x++) {
         std::string name = weps[x].name;
-        mainUI.DrawPlayerEquipmentSlot(x, name);
+        mainUI->DrawPlayerEquipmentSlot(x, name);
     };
 
-    mainUI.DrawPlayerEquipmentSlot(INV_X, player->GetOutfit().name);
+    mainUI->DrawPlayerEquipmentSlot(INV_X, player->GetOutfit().name);
 };
 
 int PlayerUI::BattleTurn(int npc_id)
 {
-    mainUI.ClearConsole();
+    mainUI->ClearConsole();
 
     for (int i = 0; i < 3; i++) {
         Item* weps = player->GetWeps();
         std::string wepName = weps[i].name;
-        mainUI.ConsolePrint(wepName, 0, (9 * i));
+        mainUI->ConsolePrint(wepName, 0, (9 * i));
     }
 
-    mainUI.ConsolePrint("Flee", 0, (9 * 3));
+    mainUI->ConsolePrint("Flee", 0, (9 * 3));
 
     ////input
     int index = 1;
@@ -156,19 +156,19 @@ int PlayerUI::BattleTurn(int npc_id)
     while (selection == true) {
         int scr_x = index * 9; //calculate the start of the item name
         int scr_y = 0;
-        mainUI.HighlightConsole(scr_x, scr_y);
+        mainUI->HighlightConsole(scr_x, scr_y);
 
-        mainUI.ConsolePrint("Use A and D to choose a weapon, 'use' to select", 1, 0);
-        mainUI.ConsolePrint("ARQ:~$ ", 2, 0); //give us a prompt
+        mainUI->ConsolePrint("Use A and D to choose a weapon, 'use' to select", 1, 0);
+        mainUI->ConsolePrint("ARQ:~$ ", 2, 0); //give us a prompt
 
-        std::string choice = mainUI.ConsoleGetString();
+        std::string choice = mainUI->ConsoleGetString();
         if ((choice == "a") && (index > 0)) {
             index--;
         } else if ((choice == "d") && (index < 3)) {
             index++;
         } else if (choice == "use") {
-            mainUI.ClearConsole();
-            mainUI.ConsolePrintWithWait("Weapon Selected", 0, 0);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait("Weapon Selected", 0, 0);
             return index;
         }
 
@@ -186,7 +186,7 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
     if ((doortype == od0) || (doortype == od1) || (doortype == od2)) {
         std::string output = "You enter the doorway of the" + door_name; //Building our message
 
-        mainUI.ConsolePrintWithWait(output, 0, 0);
+        mainUI->ConsolePrintWithWait(output, 0, 0);
 
         player->SetPos(x, y);
 
@@ -195,12 +195,12 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
         std::string answer;
 
         std::string output = "Would you like to open the " + door_name + "?";
-        mainUI.ConsolePrint(output, 0, 0);
-        answer = mainUI.ConsoleGetString();
+        mainUI->ConsolePrint(output, 0, 0);
+        answer = mainUI->ConsoleGetString();
 
         if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
             std::string output = "You open the " + door_name + " and step into the doorway";
-            mainUI.ConsolePrint(output, 0, 0);
+            mainUI->ConsolePrint(output, 0, 0);
 
 
             tile door = map->GetTile(x, y);
@@ -225,13 +225,13 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
         } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
             std::string output = "You leave the " + door_name + " untouched";
 
-            mainUI.ClearConsole();
-            mainUI.ConsolePrintWithWait(output, 0, 0);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait(output, 0, 0);
 
             return (0);
         } else {
-            mainUI.ClearConsole();
-            mainUI.ConsolePrint("Not a yes or no answer, try again..", 0, 0);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
 
             DoorProc(y, x, map->GetTile(x, y));
         };
@@ -240,9 +240,9 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
     } else if ((doortype == ld1) || (doortype == ld2)) {
         std::string answer;
 
-        mainUI.ClearConsole();
-        mainUI.ConsolePrint("Would you like to open the door? ", 0, 0);
-        answer = mainUI.ConsoleGetString();
+        mainUI->ClearConsole();
+        mainUI->ConsolePrint("Would you like to open the door? ", 0, 0);
+        answer = mainUI->ConsoleGetString();
 
         if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
             LockProc(y, x, doortype, map_tile, door_name);
@@ -250,11 +250,11 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
         } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
             std::string output = "You leave the " + door_name + " untouched";
 
-            mainUI.ConsolePrintWithWait(output, 0, 0);
+            mainUI->ConsolePrintWithWait(output, 0, 0);
 
             return (0);
         } else {
-            mainUI.ConsolePrintWithWait("Not a yes or no answer, try again..", 0, 0);
+            mainUI->ConsolePrintWithWait("Not a yes or no answer, try again..", 0, 0);
 
             DoorProc(y, x, map->GetTile(x, y));
         };
@@ -271,24 +271,24 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
     int keyCount = player->GetKeyCount();
     int requiredCount = tile_library[doortile].locks;
 
-    mainUI.ClearConsole();
-    mainUI.ConsolePrint("How would you like to unlock the door? ", 0, 0);
-    mainUI.ConsolePrint("1. Using Door Keys, 2. Using Lockpicks ", 1, 0);
-    mainUI.ConsolePrint("Enter a choice to continue, or 'exit' to cancel ", 2, 0);
-    mainUI.ConsolePrint("lock_proc:~$  ", 3, 0);
+    mainUI->ClearConsole();
+    mainUI->ConsolePrint("How would you like to unlock the door? ", 0, 0);
+    mainUI->ConsolePrint("1. Using Door Keys, 2. Using Lockpicks ", 1, 0);
+    mainUI->ConsolePrint("Enter a choice to continue, or 'exit' to cancel ", 2, 0);
+    mainUI->ConsolePrint("lock_proc:~$  ", 3, 0);
 
-    answer = mainUI.ConsoleGetString();
+    answer = mainUI->ConsoleGetString();
 
     if ((answer == "1") || (answer == "Key") || (answer == "Keys") || (answer == "key") || (answer == "keys") || (answer == "Door Key") || (answer == "Door Keys") || (answer == "door key") || (answer == "door keys")) {
         std::ostringstream lockContextStream;
-        mainUI.ClearConsole(); //Clear ready for response
+        mainUI->ClearConsole(); //Clear ready for response
 
         //Check we have enough keys for the number of locks on this door
         if (keyCount >= requiredCount) {
             player->RemoveKeyCount(requiredCount); //Use up/delete these keys
             
             lockContextStream << "You insert " << requiredCount << " keys into the door and open it .. ";
-            mainUI.ConsolePrintWithWait(lockContextStream.str(),0,0);
+            mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
             
             if (doortype == ld1) {
                 
@@ -321,7 +321,7 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
             return;
         } else {
             lockContextStream << "You need " << requiredCount << " keys to open this door.. ";
-            mainUI.ConsolePrintWithWait(lockContextStream.str(),0,0);
+            mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
             return;
         };
 
@@ -351,23 +351,23 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
                         int chance = rand() % 100 + 1;
                         int lockno = 1;
                         std::ostringstream lockContextStream;
-                        mainUI.ClearConsole();
+                        mainUI->ClearConsole();
                         
                         lockContextStream << "This door has " << requiredCount << " lock(s).. ";
-                        mainUI.ConsolePrint(lockContextStream.str(),0,0);
+                        mainUI->ConsolePrint(lockContextStream.str(),0,0);
                         lockContextStream.str("");
                         lockContextStream.clear();
                         
                         lockContextStream << "You attempt to pick lock " << lockno;
-                        mainUI.ConsolePrintWithWait(lockContextStream.str(),1,0);
+                        mainUI->ConsolePrintWithWait(lockContextStream.str(),1,0);
 
                         if (chance > 50) {
-                            mainUI.ConsolePrintWithWait("You manage to open the lock with the lockpick.. ", 0, 0);
+                            mainUI->ConsolePrintWithWait("You manage to open the lock with the lockpick.. ", 0, 0);
                             count++;
                             lockno++;
                             
                         } else {
-                            mainUI.ConsolePrintWithWait("Your lockpick breaks as you attempt to open the lock.. ", 0, 0);
+                            mainUI->ConsolePrintWithWait("Your lockpick breaks as you attempt to open the lock.. ", 0, 0);
                         };
                         
                        player->SetInventoryTile(x, y, new Item(item_library[no_item]));
@@ -375,8 +375,8 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
                     };
 
                     if (count == (tile_library[doortile].locks)) {
-                        mainUI.ClearConsole();
-                        mainUI.ConsolePrintWithWait("You manage to unlock the door.. ", 0, 0);
+                        mainUI->ClearConsole();
+                        mainUI->ConsolePrintWithWait("You manage to unlock the door.. ", 0, 0);
                         
                         //Setting the correct open door
                         if (doortype == ld1) {
@@ -394,18 +394,18 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
 
         } else if (lockpick_count != (tile_library[doortile].locks)) {
             std::ostringstream lockContextStream;
-            mainUI.ClearConsole(); //Clear ready for response
+            mainUI->ClearConsole(); //Clear ready for response
             
             lockContextStream << "You need " << requiredCount << " lock picks to attempt to open this door.. ";
-            mainUI.ConsolePrintWithWait(lockContextStream.str(),0,0);
+            mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
             
             return;
         };
 
         if (count != (tile_library[doortile].locks)) {
             std::ostringstream lockContextStream;
-            mainUI.ClearConsole(); //Clear ready for response
-            mainUI.ConsolePrintWithWait("You have run out of lockpicks..", 0, 0);
+            mainUI->ClearConsole(); //Clear ready for response
+            mainUI->ConsolePrintWithWait("You have run out of lockpicks..", 0, 0);
 
             return;
         };
@@ -413,14 +413,14 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
         return;
     } else if ((answer == "Exit") || (answer == "EXIT") || (answer == "exit")) {
         std::ostringstream lockContextStream;
-        mainUI.ClearConsole(); //Clear ready for response
+        mainUI->ClearConsole(); //Clear ready for response
         
         lockContextStream << "You leave the " << doorname.c_str() << " untouched.";
         
-        mainUI.ConsolePrintWithWait(lockContextStream.str(),0,0);
+        mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
         return;
     } else {
-        mainUI.ConsolePrintWithWait("Not a correct choice, try again.. ", 0, 0);
+        mainUI->ConsolePrintWithWait("Not a correct choice, try again.. ", 0, 0);
         LockProc(door_y, door_x, doortype, doortile, doorname);
     };
 
@@ -435,7 +435,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
     if ((x < 0) | (y < 0) | (x > GRID_X) | (y > GRID_Y)) {
 
-        mainUI.ConsolePrintWithWait("There's a large Granite wall here!", 0, 0);
+        mainUI->ConsolePrintWithWait("There's a large Granite wall here!", 0, 0);
         return;
     }
 
@@ -446,13 +446,13 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
     if (map->IsTraversable(x, y)) {
 
         output = "You walk along the " + move_tilename;
-        mainUI.ConsolePrintWithWait(output, 0, 0);
+        mainUI->ConsolePrintWithWait(output, 0, 0);
 
         //player->SetPos(x,y);  
     } else {
 
         output = "There's a " + move_tilename + " here";
-        mainUI.ConsolePrintWithWait(output, 0, 0);
+        mainUI->ConsolePrintWithWait(output, 0, 0);
 
         TileProc(y, x, map->GetTile(x, y));
     }
@@ -471,7 +471,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
         //Enemy    
     case 3:
         output = "You are confronted by a " + enemy_name;
-        mainUI.ConsolePrintWithWait(output, 0, 0);
+        mainUI->ConsolePrintWithWait(output, 0, 0);
 
         Battle(eid);
         break;
@@ -481,7 +481,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
         std::string enemy_name = npcs[eid].GetName();
 
         output = "There is the corpse of a" + enemy_name + "here..";
-        mainUI.ConsolePrintWithWait(output, 0, 0);
+        mainUI->ConsolePrintWithWait(output, 0, 0);
 
         break;
     }
@@ -494,26 +494,26 @@ bool PlayerUI::TextInput()
 
     std::string answer;
 
-    mainUI.ClearConsole();
-    mainUI.ConsolePrint("ARQ:~$ ", 0, 0);
-    answer = mainUI.ConsoleGetString();
+    mainUI->ClearConsole();
+    mainUI->ConsolePrint("ARQ:~$ ", 0, 0);
+    answer = mainUI->ConsoleGetString();
 
     if (answer == "help") {
-        mainUI.ConsolePrint("ihelp - interactions", 1, 0);
-        mainUI.ConsolePrintWithWait("info - game info", 2, 0); //getch on last line 
+        mainUI->ConsolePrint("ihelp - interactions", 1, 0);
+        mainUI->ConsolePrintWithWait("info - game info", 2, 0); //getch on last line 
 
     } else if (answer == "ihelp") {
-        mainUI.ConsolePrintWithWait("drop - drop item (selection)", 0, 0);
+        mainUI->ConsolePrintWithWait("drop - drop item (selection)", 0, 0);
 
     } else if (answer == "info") {
-        mainUI.ShowInfo();
+        mainUI->ShowInfo();
     } else if ((answer == "exit") || (answer == "Exit") || (answer == "EXIT") || (answer == "quit") || (answer == "Quit") || (answer == "QUIT")) {
-        mainUI.ConsolePrintWithWait("Quitting.. ", 0, 0);
+        mainUI->ConsolePrintWithWait("Quitting.. ", 0, 0);
         return false;
     } else if (answer == "inventory") AccessInventory();
 
     else {
-        mainUI.ConsolePrintWithWait("unrecognised input, please input a command, or use 'help' for a list. ", 0, 0);
+        mainUI->ConsolePrintWithWait("unrecognised input, please input a command, or use 'help' for a list. ", 0, 0);
         Input();
     }
 
@@ -522,7 +522,7 @@ bool PlayerUI::TextInput()
 
 void PlayerUI::ShowControls()
 {
-     mainUI.ConsolePrintWithWait("CONTROLS GO HERE :'D", 0, 0);
+     mainUI->ConsolePrintWithWait("CONTROLS GO HERE :'D", 0, 0);
 }
 
 bool PlayerUI::Input()
@@ -538,7 +538,7 @@ bool PlayerUI::Input()
     thisY = y;
 
     ShowControls();
-    int choice = mainUI.ConsoleGetInput();
+    int choice = mainUI->ConsoleGetInput();
 
     if (choice == KEY_UP || choice == 'w') thisY--;
     else if (choice == KEY_RIGHT || choice == 'd') thisX++;
@@ -566,7 +566,7 @@ void PlayerUI::DrawNPCS()
             colour = npcs[a].GetColour();
             symbol = npcs[a].GetSymbol();
 
-            mainUI.DrawCharacter(x, y, colour, symbol);
+            mainUI->DrawCharacter(x, y, colour, symbol);
         };
     }
 
@@ -582,7 +582,7 @@ void PlayerUI::DrawPlayer()
     colour = player->GetColour();
     symbol = player->GetSymbol();
 
-     mainUI.DrawCharacter(x, y, colour, symbol);
+     mainUI->DrawCharacter(x, y, colour, symbol);
 }
 
 int PlayerUI::AccessArea(Area * a)
@@ -596,21 +596,21 @@ int PlayerUI::AccessArea(Area * a)
     while (selection == true) {
         Item* thisItem = a->GetItem(loc_x, loc_y);
         
-        mainUI.ClearInvHighlighting();
+        mainUI->ClearInvHighlighting();
 
 
         //area b = *a;
-        mainUI.DrawInv(a);
-        mainUI.UpdateUI(); //ensures items display propely
+        mainUI->DrawInv(a);
+        mainUI->UpdateUI(); //ensures items display propely
 
-        mainUI.HighlightInv(loc_x,loc_y);
+        mainUI->HighlightInv(loc_x,loc_y);
 
-        mainUI.ClearConsole();
-        mainUI.ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
-        mainUI.ConsolePrintWithWait("ARQ:~$ ", 2, 0);
+        mainUI->ClearConsole();
+        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
+        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
 
-        std::string input = mainUI.ConsoleGetString();
-        mainUI.ClearConsole(); //Get ready for our output!
+        std::string input = mainUI->ConsoleGetString();
+        mainUI->ClearConsole(); //Get ready for our output!
         
         if ((input == "W") || (input == "w")) {
             if (loc_x != 0) {
@@ -634,7 +634,7 @@ int PlayerUI::AccessArea(Area * a)
             return (0);
         } else if (input == "what") {
             std::string output = "This is a "+thisItem->name+".";
-            mainUI.ConsolePrintWithWait(output,0,0);
+            mainUI->ConsolePrintWithWait(output,0,0);
         } else if (input == "take") {
             if (IsLootable(thisItem)) {
                 player->AddToInventory(thisItem);
@@ -642,21 +642,21 @@ int PlayerUI::AccessArea(Area * a)
                 
                 std::string output = "You put the "+thisItem->name+" into your inventory.";
 
-                mainUI.ConsolePrintWithWait(output,0,0);
+                mainUI->ConsolePrintWithWait(output,0,0);
             }
         } else if (input== "put") {
             Item* thisItem = player->GetFromInventory(loc_y, loc_x);
             std::string output = "You put the "+thisItem->name+" inside.";
 
-            mainUI.ConsolePrintWithWait(output,0,0);
+            mainUI->ConsolePrintWithWait(output,0,0);
 
             if (thisItem != NULL) {
                 a->AddItem(thisItem);
             }
         } else if (input== "help") {
-            mainUI.ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
+            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
         } else {
-            mainUI.ConsolePrintWithWait("Not a correct selection, try again.",0,0);
+            mainUI->ConsolePrintWithWait("Not a correct selection, try again.",0,0);
         };
 
         //std::cout << "\n " << loc_x << " " << loc_y;
@@ -678,17 +678,17 @@ int PlayerUI::AccessContainer(Container * c)
     while (selection == true) {
         Item* thisItem = c->GetItem(loc_x, loc_y);
 
-        mainUI.DrawInv(c); //draw the current items
-        mainUI.UpdateUI(); //call a full system UI refresh to fix display bug
+        mainUI->DrawInv(c); //draw the current items
+        mainUI->UpdateUI(); //call a full system UI refresh to fix display bug
 
-        mainUI.ClearInvHighlighting();
+        mainUI->ClearInvHighlighting();
 
         //Highlight item
 
-        mainUI.ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
-        mainUI.ConsolePrintWithWait("ARQ:~$ ", 2, 0);
-        input = mainUI.ConsoleGetString();
-        mainUI.ClearConsole(); //Clear ready for output
+        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
+        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
+        input = mainUI->ConsoleGetString();
+        mainUI->ClearConsole(); //Clear ready for output
 
         if ((input == "W") || (input == "w")) {
             if (loc_x != 0) {
@@ -712,14 +712,14 @@ int PlayerUI::AccessContainer(Container * c)
         } else if (input == "what") {
             
             std::string output = "This is a " +thisItem->name;
-            mainUI.ConsolePrintWithWait(output,0,0);
+            mainUI->ConsolePrintWithWait(output,0,0);
             
         } else if (input == "take") {
             player->AddToInventory(thisItem);
             c->RemoveItem(loc_x, loc_y);
 
             std::string output = "You put the "+thisItem->name+" into your inventory.";
-            mainUI.ConsolePrintWithWait(output,0,0);
+            mainUI->ConsolePrintWithWait(output,0,0);
             
         } else if (input == "put") {
             Item* thisItem = player->GetFromInventory(loc_x, loc_y);
@@ -728,9 +728,9 @@ int PlayerUI::AccessContainer(Container * c)
                 c->AddItem(thisItem);
             }
         } else if (input == "help") {
-            mainUI.ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container", 0, 0);
+            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container", 0, 0);
         } else {
-            mainUI.ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
+            mainUI->ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
         };
 
         //std::cout << "\n " << loc_x << " " << loc_y;
@@ -755,16 +755,16 @@ int PlayerUI::AccessInventory()
     while (selection == true) {
         Item* thisItem = player->GetFromInventory(loc_x, loc_y);
 
-        mainUI.ClearInvHighlighting();
-        mainUI.HighlightInv(loc_x,loc_y);
+        mainUI->ClearInvHighlighting();
+        mainUI->HighlightInv(loc_x,loc_y);
 
         //DrawInv(a);
-        mainUI.UpdateUI();
-        mainUI.ClearConsole();
-        mainUI.ConsolePrint("Select an item with WASD.. 'help' for commands.", 0, 0);
-        mainUI.ConsolePrint("ARQ:~$ ", 2, 0);
+        mainUI->UpdateUI();
+        mainUI->ClearConsole();
+        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands.", 0, 0);
+        mainUI->ConsolePrint("ARQ:~$ ", 2, 0);
 
-        std::string input = mainUI.ConsoleGetString();
+        std::string input = mainUI->ConsoleGetString();
 
         if ((input == "W") || (input == "w")) {
             if (loc_x != 0) {
@@ -786,13 +786,13 @@ int PlayerUI::AccessInventory()
             selection = false;
             return (0);
         } else if (input == "what") {
-            mainUI.ClearConsole();
+            mainUI->ClearConsole();
             
             std::string output = "This is a "+thisItem->name;
-            mainUI.ConsolePrintWithWait(output,0,0);
+            mainUI->ConsolePrintWithWait(output,0,0);
            
         } else if (input == "drop") {
-            mainUI.ClearConsole();
+            mainUI->ClearConsole();
 
             Item* thisItem = player->GetFromInventory(loc_x, loc_y);
 
@@ -809,12 +809,12 @@ int PlayerUI::AccessInventory()
                     //wprintw_col(thisWin, invtile_char, thisItem->colour);
                     //wrefresh(thisWin);
 
-                    mainUI.ConsolePrintWithWait("Item dropped",0,0);
+                    mainUI->ConsolePrintWithWait("Item dropped",0,0);
                 } else {
-                    mainUI.ConsolePrintWithWait("Cannot drop that here.",0,0);
+                    mainUI->ConsolePrintWithWait("Cannot drop that here.",0,0);
                 }
             } else {
-                mainUI.ConsolePrintWithWait("Cannot drop this item.",0,0);
+                mainUI->ConsolePrintWithWait("Cannot drop this item.",0,0);
             };
 
         } else if (input == "wear") {
@@ -826,29 +826,29 @@ int PlayerUI::AccessInventory()
 
                 const char *invtile_char = thisChar;
 
-                mainUI.DrawInvWindow(loc_x,loc_y,invtile_char, invtile_colour);
+                mainUI->DrawInvWindow(loc_x,loc_y,invtile_char, invtile_colour);
 
                 for (int i = 0; i < outfit_size; i++) {
-                    mainUI.ClearConsole();
+                    mainUI->ClearConsole();
                     std::string output;
                     std::ostringstream outputStream; 
                     outputStream << thisChar << " selected";
-                    mainUI.ConsolePrintWithWait(outputStream.str(),0,0);
+                    mainUI->ConsolePrintWithWait(outputStream.str(),0,0);
 
                     //if this item matches an outfit, assume it is and equip it
                     if (thisChar == outfit_library[i].symbol) {
-                        mainUI.ClearConsole();
+                        mainUI->ClearConsole();
                         //store the old outfit
                         outfit oldOutfit = player->GetOutfit();
                         output = "You change from "+oldOutfit.name+" into "+thisChar;
-                        mainUI.ConsolePrintWithWait(output,0,0);
+                        mainUI->ConsolePrintWithWait(output,0,0);
 
                         //change into the new outfit
                         player->SetOutfit(outfit_library[i]);
 
-                        mainUI.ClearConsole();
+                        mainUI->ClearConsole();
                         output = "You put your old "+oldOutfit.name+" into your inventory";
-                        mainUI.ConsolePrintWithWait(output,0,0);
+                        mainUI->ConsolePrintWithWait(output,0,0);
                         
                         //set the current inventory tile to the old outfit
                         player->SetInventoryTile(loc_x, loc_y, new outfit(oldOutfit)); //instanciates a new outfit to fix polymorphism issues
@@ -857,8 +857,8 @@ int PlayerUI::AccessInventory()
 
 
             } else {
-                mainUI.ClearConsole();
-                mainUI.ConsolePrint("No item selected",0,0);
+                mainUI->ClearConsole();
+                mainUI->ConsolePrint("No item selected",0,0);
             };
 
         } else if (input == "open") {
@@ -866,21 +866,21 @@ int PlayerUI::AccessInventory()
 
             //98 denotes container, which is a closed-ended area, we never want to access an area here
             if (thisId == 98) {
-                mainUI.ClearConsole();
-                mainUI.ConsolePrintWithWait("You open the container",0,0);
+                mainUI->ClearConsole();
+                mainUI->ConsolePrintWithWait("You open the container",0,0);
                 Container* c = (Container*) player->GetFromInventory(loc_x, loc_y);
 
                 AccessContainer(c);
 
-                mainUI.DrawInv(player->GetInventory());
+                mainUI->DrawInv(player->GetInventory());
             }
         } else if (input == "help") {
-            mainUI.ClearConsole();
-            mainUI.ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
             
         } else {
-            mainUI.ClearConsole();
-            mainUI.ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
         };
 
         //std::cout << "\n " << loc_x << " " << loc_y;
@@ -899,16 +899,16 @@ void PlayerUI::TileProc(int y, int x, tile t)
         DoorProc(y, x, t);
         return;
     } else if (t == ent) {
-        mainUI.ClearConsole();
-        mainUI.ConsolePrintWithWait("The way you came in is locked..", 0, 0);
+        mainUI->ClearConsole();
+        mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);
         return;
     } else if (t == ext) {
-         mainUI.ClearConsole();
-        mainUI.ConsolePrintWithWait("You have reached the exit!", 0, 0);
+         mainUI->ClearConsole();
+        mainUI->ConsolePrintWithWait("You have reached the exit!", 0, 0);
         return;
     } else if (t == ded) {
-        mainUI.ClearConsole();
-        mainUI.ConsolePrintWithWait("The floor caves in below one of your feet, injuring you..", 0, 0);
+        mainUI->ClearConsole();
+        mainUI->ConsolePrintWithWait("The floor caves in below one of your feet, injuring you..", 0, 0);
         player->SetHealth(player->GetHealth() - 20);
         return;
     };

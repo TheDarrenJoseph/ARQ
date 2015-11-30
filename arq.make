@@ -5,7 +5,7 @@ LIBS=-lncurses
 INCLUDES=-I../include -std=gnu++11
 TARGET=arq
 SOURCES=main.cpp game.cpp characters.cpp map.cpp cursesUI.cpp playerUI.cpp items.cpp containers.cpp room.cpp
-OBJECTS=main.o game.o characters.o map.o cursesUI.o playerUI.o items.o containers.o room.o
+OBJECTS=main.o game.o characters.o map.o ui.o cursesUI.o playerUI.o items.o containers.o room.o
 all : arq clean
 
 arq : objects
