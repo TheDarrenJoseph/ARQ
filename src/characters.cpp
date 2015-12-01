@@ -85,7 +85,7 @@ std::string Character :: GetName()
 
 void Character :: GetPos (int* x, int* y)
 {
-  (*x = this->x);
+  (*x = this->i);
   (*y = this->y);
 }
 
@@ -102,16 +102,16 @@ void Character :: SetHealth(int i)
 
 void Character :: SetPos(int x, int y)
 {
-      this->x = x;
+      this->i = x;
       this->y = y;
 }
 
 /* Returns an area/dead body that contains the characters possesions*/
-Area* Character :: DropItems()
+Container* Character :: DropItems()
 {
  std::string name = this->name.c_str();
  std::string thisName = "Dead " + name;
-  Area* body = new Area(1,thisName,"X",1,0,true);
+  Container* body = new Container(1,thisName,"X",1,0,true);
   
   body->AddItem(new weapon(this->weps[1]));
   body->AddItem(new weapon(this->weps[2]));
@@ -168,17 +168,17 @@ int Player :: AddToInventory(Item* i)
   return this->inventory->AddItem(i);
 }
 
-void Player :: SetInventoryTile(int x, int y, Item* i)
+void Player :: SetInventory(int index, Item* item)
 {
-  this->inventory->ReplaceItem(x,y,i); 
+  this->inventory->ReplaceItem(index,item); 
 }
 
-Item* Player :: GetFromInventory(int x, int y)
+Item* Player :: GetFromInventory(int index)
 {
-  return this->inventory->GetItem(x,y);
+  return this->inventory->GetItem(index);
 }
 
-Area* Player :: GetInventory()
+Inventory* Player :: GetInventory()
 {
   return this->inventory;
 }  
@@ -199,14 +199,7 @@ int Player :: GetLootCount ()
 {
   int total = 0;
 
-  for (int y = 0; y < INV_Y; y++)
-    {
-      for(int x = 0; x < INV_X; x++)
-	{
-	  int value = inventory->value;
-	  total+=value;
-	}
-    }
+  //Count??
 
   this->SetLoot(total);
   return (0);
@@ -216,20 +209,15 @@ int Player :: GetKeyCount() {
     Item* invTile;
     int keyCount = 0;
     
-    
-    for (int y = 0; y < INV_Y; y++)
-    {
-        for(int x = 0; x < INV_X; x++)
+        for(int i = 0; i < INV_SIZE; i++)
         {
-            invTile = GetFromInventory(x,y);
+            invTile = GetFromInventory(i);
             
             if (invTile->id == key) {
-                keyCount+=1;
-            };
+                keyCount++;
+            }
             
-        };
-    }; 
-    
+        }
     return keyCount;    
 }
 
@@ -238,20 +226,17 @@ void Player :: RemoveKeyCount(int keyCount) {
     Item* invTile;
     int removedCount = 0;
     
-    for (int y = 0; y < INV_Y; y++)
-    {
-        for(int x = 0; x < INV_X; x++)
+    for(int i = 0; i < INV_SIZE; i++)
         {
-            invTile = GetFromInventory(x,y);
+            invTile = GetFromInventory(i);
             
             if (removedCount == keyCount) {
                 return;
             } else  if (invTile->id == key) {
-               SetInventoryTile(x, y, new Item(item_library[no_item]));
+               SetInventory(i, new Item(item_library[no_item]));
             };
             
         };
-    }; 
   
 }
 
@@ -261,21 +246,9 @@ void Player :: RemoveKeyCount(int keyCount) {
 //returns an int to represent a weapon choice from weps[] based on health
 int NPC :: BattleTurn ()
 {
-  if (health>50)
-    {
-      return 1;
-    }
-   
-  else if (health<50 && health>25)
-    {
-      return 2;
-    }
-   
-  else
-    {
-      return 0;
-    }
- 
+  if (health>50) return 1;
+  else if (health<50 && health>25) return 2;
+  else  return 0;
 }
 
 //randomly moves within the 6 local directions
@@ -283,7 +256,7 @@ void NPC :: Move(int* x, int* y) {
         int xOffset = ((rand() % 3 - 1)); //generates a random number to offset current position by
         int yOffset = ((rand() % 3 - 1));
         
-        int pos_x = this->x;
+        int pos_x = this->i;
         int pos_y = this->y;
        
         //Sets the pointed-to values of the passed pointers to our new value

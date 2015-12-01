@@ -33,7 +33,7 @@ public:
     void DrawPlayerInv();
     void DrawPlayerEquipment();
 
-    int AccessArea (Area* a);
+    int AccessArea (Inventory* a);
     int AccessContainer (Container* c);
     int AccessInventory ();
 

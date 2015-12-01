@@ -3,8 +3,7 @@
 
 #include <string>
 
-#define INV_X 3
-#define INV_Y 3
+#define INV_SIZE 3
 
 #include "tile.h"
 #include "items.h"
@@ -15,7 +14,7 @@
 class Character
 {
  protected:
-  int x;
+  int i;
   int y;
   
   char symbol;
@@ -60,23 +59,12 @@ class Character
   
   void SetPos(int x, int y);
   void SetHealth(int);
-<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
-   
-  virtual int Move() =0; /*Do nothing by default, abstract*/
-  
-  void DropItems();
-   
-  Character (char c, int col, std::string name, int health) 
-    {
-  area* DropItems(); //Drops the players inv on death as a dead body
-=======
 
-  Area* DropItems(); //Drops the players inv on death as a dead body
->>>>>>> Branch work pre-header fix branch
+  Container* DropItems(); //Drops the players inv on death as a dead body
    
   Character (char c, int col, std::string name, int health) 
     {
-      x=0;
+      i=0;
       y=0;
            
       max_health = health;
@@ -109,13 +97,8 @@ class NPC : public Character
 class Player : public Character
 {
  private:
-<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
- 
-  area* inventory;
-=======
 
-  Area* inventory;
->>>>>>> Branch work pre-header fix branch
+  Inventory* inventory;
   NPC* npcs;
   
   int loot;
@@ -125,10 +108,10 @@ class Player : public Character
   int DropItem(Item* thisItem, int invX, int invY);
   
   int AddToInventory(Item* i);
-  void SetInventoryTile(int x, int y, Item* i);
+  void SetInventory(int index, Item* i);
 
-  Area* GetInventory();
-  Item* GetFromInventory(int x, int y);
+  Inventory* GetInventory();
+  Item* GetFromInventory(int index);
   
   void SetLoot(int x);
   int GetLootScore();
@@ -142,15 +125,13 @@ class Player : public Character
   Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
       //initialise the item inventory
-      inventory = new Area(1,"Inventory","%",1,0,true);
+      inventory = new Inventory();
       
-      for (y=0; y<INV_Y; y++)
-	{
-	  for (x=0; x<INV_X; x++)
+	  for (i=0; i<INV_SIZE; i++)
 	    {
 	      inventory->AddItem(new Item(item_library[no_item]));
 	    }
-	}
+	
     };
 };
 

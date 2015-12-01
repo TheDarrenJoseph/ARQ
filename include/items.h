@@ -10,67 +10,6 @@ enum outfitIndex {no_outfit,warrior,goblin,outfit_size};
 
 enum lootChance {noLoot,lowLoot,mediumLoot,highLoot};
 
-struct invItem
-{
-  int id;
-  std::string name;
-  const char* symbol;
-  int colour;
-  int value;
-  bool lootable;
-
-  invItem()
-  {
-    id = 0;
-    name = "None";
-    symbol = " ";
-    colour = 0;
-    value = 0;
-    lootable = false;
-  }
-   
-  invItem(int i, std::string n, const char* s, int col, int val, bool lootable)
-  {
-    id = i;
-    name = n;
-    symbol = s;
-    colour = col;
-    value = val;
-    this->lootable = lootable;
-  }
-       
-};
-
-struct invWeapon : public invItem
-{
-  int damage;
- 
- invWeapon() : invItem(0,"None"," ",2,0,false)
-    {
-      this->damage=0;
-    }
-   
- invWeapon(int i, std::string n, const char* s, int col, int val,bool lootable,int d) : invItem(i,n,s,col,val,lootable)
-    {
-      damage = d;
-    }
-};
- 
-struct invOutfit : public invItem
-{
-  int armourPoints;
-    
- invOutfit() : invItem(0,"None"," ",0,0,false)
-    {
-      this->armourPoints=0;
-    }
-   
- invOutfit(int i, std::string n, const char* s, int col, int val,bool lootable,int AP) : invItem(i,n,s,col,val,lootable)
-    {
-      armourPoints = AP;
-    }
-};
-
 struct Item
 {
   int id;
@@ -137,21 +76,6 @@ struct outfit : public Item
 bool IsLootable(Item* i);
 
 bool CanDropItem(Item* thisItem);
-
-const invItem inv_item_library[item_size] =
-  { 
-    // {id}{Name(12 cha)}{Symbol}{Col}{Val}{Lootable}
-    {0,  "None"      , " ",    0,   0,   false},
-    {1,  "Lockpick"  , "!",    2,   1,   true}, 
-    {2,  "Door Key"  , "!",    2,   5,   true}, 
-    {3,  "Statue"    , "$",    2,   500, true},
-    {4,  "Gld Coin"  , "$",    2,   50,  true},
-    {5,  "Silv Coin" , "$",    2,   25,  true},
-    {6,  "BrnzCoin"  , "$",    2,   5,   true},
-    {7,  "GoldBar"   , "$",    2,   100, true},
-    {8,  "SilvrBar"  , "$",    2,   50,  true },
-    {9,  "BrnzeBar"  , "$",    2,   25 , true},
-  };
 
 const Item item_library[item_size] =
   { 

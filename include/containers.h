@@ -2,73 +2,61 @@
 #define CONTAINERS_H
 
 #include <string>
+#include <list>
 #include "items.h"
 
 
 //enum containerIndex {no_container,body,chest,container_size};
 
+//Essentially an item type that stores other items
+//Container inventory, only allows items
 //id 99 to denote container
 struct Container : public Item
-{
-  
-  invItem* inv[3][3];
-   
-  void InitialiseInv();
+{  
+  std::list<Item*> inv;
 
-  invItem* GetInv();
+  Item* GetInv();
 
+  std::list<Item*>::iterator indexToIterator(int i);
   int AddItem(Item* i);
-  void ReplaceItem(int x, int y,Item* i);
+  void ReplaceItem(int it,Item* i);
   
-  void RemoveItem(int x, int y);
+  void RemoveItem(int i);
  
-  Item* GetItem(int x,int y);
+  Item* GetItem(int i);
+  
+  int HasItems();
  
   Container() : Item (99,"None"," ",0,0,false)
     {
-      InitialiseInv();
       id = 99;
     };
   
   Container(int i, std::string n, const char* s, int col, int val,bool lootable) : Item(i,n,s,col,val,lootable)
     {
-      InitialiseInv();
     };
 
 };
 
-//id 98 to denote area
-struct Area : public Container
+//A special type to represent rooms and inventories.
+struct Inventory 
 {
-<<<<<<< 4afa103590b178c44c1f6c1f01aaf35e405f453f
-  item* inv[3][3];
-=======
-
-  Item* inv[3][3];
->>>>>>> Branch work pre-header fix branch
-  
-  void InitialiseInv();
-
-  Item* GetInv();
+  std::list<Item*>::iterator indexToIterator(int i);  
+  std::list<Item*> inv; //Use the supertype Item so that we can polymorphically store Containers, etc
 
   int AddItem(Item* i);
-  void ReplaceItem(int x, int y,Item* i);
-  
-  void RemoveItem(int x, int y);
- 
-  Item* GetItem(int x, int y);
+  void ReplaceItem(int i,Item* item);
+  void RemoveItem(int i);
+  Item* GetItem(int index);
   
   int HasItems();
  
-  Area(int i, std::string n, const char* s, int col, int val,bool lootable) : Container(i,n,s,col,val,lootable)
+  Inventory()
     {
-      InitialiseInv();
-      id = 98;
+      
     };  
 };
 
-Item* ToItem(invItem* i);
-invItem* ToInvItem(Item* i);
 
 /*
   const container container_library[container_size]=

@@ -1,111 +1,64 @@
 #include "containers.h"
 
-void Container :: InitialiseInv()
-{
-  for (int x=0;x<3;x++)
-    {
-      for (int y=0;y<3;y++)
-	{
-	  this->inv[y][x] = new invItem(inv_item_library[no_item]);
-	}
+std::list<Item*>::iterator Container :: indexToIterator(int i) {
+    
+    if (i>0 && (long unsigned int)i<inv.size()) { 
+        std::list<Item*>::iterator it = inv.begin();
+        
+        for (long unsigned int i=0; i<inv.size(); it++){} //Iterate
+        
+        return it;
+        
     }
+    
+    return inv.end();
 }
 
-int Container :: AddItem(Item* i)
-{
-  invItem* thisItem = ToInvItem(i);
-
-  for (int x=0; x<3; x++)
-    {
-      for (int y=0; y<3; y++)
-	{
-	  if (inv[y][x]->name == inv_item_library[no_item].name)
-	    {
-	      inv[y][x] = thisItem;
-	      return 0;
-	    }
-	}
+std::list<Item*>::iterator Inventory :: indexToIterator(int i) {
+    
+    if (i>0 && (long unsigned int)i<inv.size()) { 
+        std::list<Item*>::iterator it = inv.begin();
+        
+        for (long unsigned int i=0; i<inv.size(); it++){} //Iterate
+        
+        return it;
+        
     }
-  return 1;
+    
+    return inv.end();
 }
 
-void Container :: ReplaceItem(int x, int y, Item* i)
-{
-  invItem* thisItem = ToInvItem(i);
-
-  inv[y][x] = thisItem;
+int Container :: AddItem(Item* i) {
+  inv.push_front(i);
+  return 0;
 }
 
-void Container :: RemoveItem(int x, int y)
-{
-  inv[y][x] = new invItem(inv_item_library[no_item]);
+void Container :: ReplaceItem(int i, Item* item) {
+    if (i>0 && (long unsigned int)i<inv.size()) {
+    (*indexToIterator(i)) = item;
+   }
 }
 
-Item* Container :: GetItem(int x, int y)
-{
-  Item* i = ToItem(inv[y][x]);
-  return i;
-}
+void Container :: RemoveItem(int i) {
+      //inv[index] = new invItem(inv_item_library[no_item]);
+   
+    if (i>0 && (long unsigned int)i<inv.size()) {
+       
+       inv.erase(indexToIterator(i));
+   }
 
-void Area :: InitialiseInv()
-{
-  for (int x=0;x<3;x++)
-    {
-      for (int y=0;y<3;y++)
-	{
-	  this->inv[y][x] = new Item(item_library[no_item]);
-	}
-    }
-}
+}  
 
-int Area :: AddItem(Item* i)
-{
-  for (int x=0; x<3; x++)
-    {
-      for (int y=0; y<3; y++)
-	{
-	  if (inv[y][x]->name == item_library[no_item].name)
-	    {
-	      inv[y][x] = i;
-	      return 0;
-	    }
-	}
-    }
-  return 1;
-}
-
-void Area :: ReplaceItem(int x, int y, Item* i)
-{
-  inv[y][x] = i;
-}
-
-void Area :: RemoveItem(int x, int y)
-{
-  inv[y][x] = new Item(item_library[no_item]);
-}
-
-Item* Area :: GetItem(int x, int y)
-{
-  return inv[y][x];
+Item* Container :: GetItem(int i) {
+     return (*indexToIterator(i));
 }
 
 //Returns an integer to determine the contents of this area
 //Returns 1 for multiple items, and 2 for one
-int Area :: HasItems()
+int Container :: HasItems()
 {
-  int count = 0;
-
-  for (int x=0; x<3; x++)
-    {
-      for (int y=0; y<3; y++)
-	{
-	  if (inv[y][x]->id != 0)
-	    {
-	      count = count+1;
-	    }
-	}
-    }
-
+    long unsigned int count = inv.size();
+ 
   switch (count)
     {
       //if no items, return 0
@@ -125,31 +78,29 @@ int Area :: HasItems()
     }
 }
 
-Item* ToItem(invItem* i)
-{
-  int id = i->id;
-  std::string name = i->name;
-  const char* symbol = i->symbol;
-  int colour = i->colour;
-  int value=i->value;
-  bool lootable=i->lootable;
-  
-  Item* thisItem = new Item (id,name,symbol,colour,value,lootable);
-  
-  return thisItem;
-} 
+Item* Inventory :: GetItem(int i) {
+     return (*indexToIterator(i));
+}
 
-invItem* ToInvItem(Item* i)
+
+int Inventory :: AddItem(Item* item)
 {
-  int id = i->id;
-  std::string name = i->name;
-  const char* symbol = i->symbol;
-  int colour = i->colour;
-  int value=i->value;
-  bool lootable=i->lootable;
-  
-  invItem* thisItem = new invItem (id,name,symbol,colour,value,lootable);
-  
-  return thisItem;
-} 
- 
+  inv.push_front(item);
+  return 0;
+}
+
+void Inventory :: ReplaceItem(int i, Item* item) {
+   if (i>0 && (long unsigned int)i<inv.size()) {
+    (*indexToIterator(i)) = item;
+   }
+}
+
+void Inventory :: RemoveItem(int i)
+{
+  if (i>0 && (long unsigned int)i<inv.size()) {  
+      inv.erase(indexToIterator(i));
+  }
+}
+
+
+

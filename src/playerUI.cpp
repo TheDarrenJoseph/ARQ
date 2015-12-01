@@ -121,19 +121,19 @@ void PlayerUI::Battle(int npc_id)
 
 void PlayerUI::DrawPlayerInv()
 {
-    mainUI->DrawInv(player->GetInventory());
+    mainUI->ListInv(player->GetInventory());
 };
 
 void PlayerUI::DrawPlayerEquipment()
 {
-    weapon* weps = player->GetWeps();
-
-    for (int x = 0; x < INV_X - 1; x++) {
-        std::string name = weps[x].name;
-        mainUI->DrawPlayerEquipmentSlot(x, name);
-    };
-
-    mainUI->DrawPlayerEquipmentSlot(INV_X, player->GetOutfit().name);
+//    weapon* weps = player->GetWeps();
+//
+//    for (int x = 0; x < INV_SIZE - 1; x++) {
+//        std::string name = weps[x].name;
+//        mainUI->DrawPlayerEquipmentSlot(x, name);
+//    };
+//
+//    mainUI->DrawPlayerEquipmentSlot(INV_SIZE, player->GetOutfit().name);
 };
 
 int PlayerUI::BattleTurn(int npc_id)
@@ -330,22 +330,20 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
         int lockpick_count = 0;
         int count = 0;
 
-        for (int y = 0; y < INV_Y; y++) {
-            for (int x = 0; x < INV_X; x++) {
-                inv_tile = player->GetFromInventory(x, y);
+            for (int i = 0; i < INV_SIZE; i++) {
+                inv_tile = player->GetFromInventory(i);
 
                 if (inv_tile->name == item_library[lockpick].name) {
-                    lockpick_count +=1; //Add to our lockpick count
-                };
+                    lockpick_count++; //Add to our lockpick count
+                }
 
-            };
-        };
+            }
+       
 
         if (lockpick_count >= (tile_library[doortile].locks)) {
 
-            for (int y = 0; y < INV_Y; y++) {
-                for (int x = 0; x < INV_X; x++) {
-                    inv_tile = player->GetFromInventory(x, y);
+                for (int i = 0; i < INV_SIZE; i++) {
+                    inv_tile = player->GetFromInventory(i);
 
                     if (inv_tile->name == item_library[lockpick].name) {
                         int chance = rand() % 100 + 1;
@@ -368,11 +366,11 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
                             
                         } else {
                             mainUI->ConsolePrintWithWait("Your lockpick breaks as you attempt to open the lock.. ", 0, 0);
-                        };
+                        }
                         
-                       player->SetInventoryTile(x, y, new Item(item_library[no_item]));
+                       player->SetInventory(i, new Item(item_library[no_item]));
                        chance = rand() % 100 + 1;
-                    };
+                    }
 
                     if (count == (tile_library[doortile].locks)) {
                         mainUI->ClearConsole();
@@ -387,10 +385,10 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
 
                         player->SetPos(door_x, door_y);
                         return;
-                    };
+                    }
 
-                };
-            };
+                }
+           
 
         } else if (lockpick_count != (tile_library[doortile].locks)) {
             std::ostringstream lockContextStream;
@@ -433,9 +431,9 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
     std::string output;
     int eid;
 
-    if ((x < 0) | (y < 0) | (x > GRID_X) | (y > GRID_Y)) {
-
-        mainUI->ConsolePrintWithWait("There's a large Granite wall here!", 0, 0);
+    //Sanity check!
+    if ((x < 0) | (y < 0) | (x >= GRID_X) | (y >= GRID_Y)) {
+        mainUI->ConsolePrintWithWait("There's a large Granite wall here!", 0, 0); //Just give an out of bounds message that sounds vaguely believable
         return;
     }
 
@@ -446,12 +444,14 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
     if (map->IsTraversable(x, y)) {
 
         output = "You walk along the " + move_tilename;
+        mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         //player->SetPos(x,y);  
     } else {
 
         output = "There's a " + move_tilename + " here";
+        mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         TileProc(y, x, map->GetTile(x, y));
@@ -468,19 +468,21 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
     case 2:
         //Trap found!!
 
-        //Enemy    
+    //Enemy    
     case 3:
         output = "You are confronted by a " + enemy_name;
+        mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         Battle(eid);
         break;
 
-        //Dead body
+      //Dead body
     case 4:
         std::string enemy_name = npcs[eid].GetName();
 
         output = "There is the corpse of a" + enemy_name + "here..";
+        mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         break;
@@ -489,7 +491,6 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
 bool PlayerUI::TextInput()
 {
-
     echo();
 
     std::string answer;
@@ -522,7 +523,10 @@ bool PlayerUI::TextInput()
 
 void PlayerUI::ShowControls()
 {
-     mainUI->ConsolePrintWithWait("CONTROLS GO HERE :'D", 0, 0);
+    mainUI->ConsolePrint("i - command prompt",0,0);
+    mainUI->ConsolePrint("Arrow Keys to move.. ", 0, 1);
+    DrawPlayerInv();
+    
 }
 
 bool PlayerUI::Input()
@@ -544,6 +548,7 @@ bool PlayerUI::Input()
     else if (choice == KEY_RIGHT || choice == 'd') thisX++;
     else if (choice == KEY_DOWN || choice == 's') thisY++;
     else if (choice == KEY_LEFT || choice == 'a') thisX--;
+    else if (choice == 'q') return false;
     else if (choice == 'i') return TextInput();
 
     //handle any movement input
@@ -585,157 +590,122 @@ void PlayerUI::DrawPlayer()
      mainUI->DrawCharacter(x, y, colour, symbol);
 }
 
-int PlayerUI::AccessArea(Area * a)
+int PlayerUI::AccessArea(Inventory * a)
 {
-    int loc_x = 0;
-    int loc_y = 0;
-
-    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
-    bool selection = true;
-
-    while (selection == true) {
-        Item* thisItem = a->GetItem(loc_x, loc_y);
-        
-        mainUI->ClearInvHighlighting();
-
-
-        //area b = *a;
-        mainUI->DrawInv(a);
-        mainUI->UpdateUI(); //ensures items display propely
-
-        mainUI->HighlightInv(loc_x,loc_y);
-
-        mainUI->ClearConsole();
-        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
-        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
-
-        std::string input = mainUI->ConsoleGetString();
-        mainUI->ClearConsole(); //Get ready for our output!
-        
-        if ((input == "W") || (input == "w")) {
-            if (loc_x != 0) {
-                loc_x--;
-            };
-        } else if ((input == "A") || (input == "a")) {
-            if (loc_y != 0) {
-                loc_y--;
-            };
-        } else if ((input == "S") || (input == "s")) {
-            if (loc_x != 2) {
-                loc_x++;
-            };
-        } else if ((input == "D") || (input == "d")) {
-            if (loc_y != 2) {
-                loc_y++;
-            }
-        } else if (input == "close") {
-            selection = false;
-
-            return (0);
-        } else if (input == "what") {
-            std::string output = "This is a "+thisItem->name+".";
-            mainUI->ConsolePrintWithWait(output,0,0);
-        } else if (input == "take") {
-            if (IsLootable(thisItem)) {
-                player->AddToInventory(thisItem);
-                a->RemoveItem(loc_x, loc_y);
-                
-                std::string output = "You put the "+thisItem->name+" into your inventory.";
-
-                mainUI->ConsolePrintWithWait(output,0,0);
-            }
-        } else if (input== "put") {
-            Item* thisItem = player->GetFromInventory(loc_y, loc_x);
-            std::string output = "You put the "+thisItem->name+" inside.";
-
-            mainUI->ConsolePrintWithWait(output,0,0);
-
-            if (thisItem != NULL) {
-                a->AddItem(thisItem);
-            }
-        } else if (input== "help") {
-            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
-        } else {
-            mainUI->ConsolePrintWithWait("Not a correct selection, try again.",0,0);
-        };
-
-        //std::cout << "\n " << loc_x << " " << loc_y;
-    };
+//    int loc_x = 0;
+//    int loc_y = 0;
+//
+//    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
+//    bool selection = true;
+//
+//    while (selection == true) {
+//        Item* thisItem = a->GetItem(loc_x, loc_y);
+//        
+//        mainUI->ClearInvHighlighting();
+//
+//
+//        //area b = *a;
+//        mainUI->ListInv(a);
+//        mainUI->UpdateUI(); //ensures items display propely
+//
+//        mainUI->HighlightInv(loc_x,loc_y);
+//
+//        mainUI->ClearConsole();
+//        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
+//        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
+//
+//        std::string input = mainUI->ConsoleGetString();
+//        mainUI->ClearConsole(); //Get ready for our output!
+//        
+//        if ((input == "W") || (input == "w")) {
+//            if (loc_x != 0) {
+//                loc_x--;
+//            };
+//        } else if ((input == "A") || (input == "a")) {
+//            if (loc_y != 0) {
+//                loc_y--;
+//            };
+//        } else if ((input == "S") || (input == "s")) {
+//            if (loc_x != 2) {
+//                loc_x++;
+//            };
+//        } else if ((input == "D") || (input == "d")) {
+//            if (loc_y != 2) {
+//                loc_y++;
+//            }
+//        } else if (input == "close") {
+//            selection = false;
+//
+//            return (0);
+//        } else if (input == "what") {
+//            std::string output = "This is a "+thisItem->name+".";
+//            mainUI->ConsolePrintWithWait(output,0,0);
+//        } else if (input == "take") {
+//            if (IsLootable(thisItem)) {
+//                player->AddToInventory(thisItem);
+//                a->RemoveItem(loc_x, loc_y);
+//                
+//                std::string output = "You put the "+thisItem->name+" into your inventory.";
+//
+//                mainUI->ConsolePrintWithWait(output,0,0);
+//            }
+//        } else if (input== "put") {
+//            Item* thisItem = player->GetFromInventory(loc_y, loc_x);
+//            std::string output = "You put the "+thisItem->name+" inside.";
+//
+//            mainUI->ConsolePrintWithWait(output,0,0);
+//
+//            if (thisItem != NULL) {
+//                a->AddItem(thisItem);
+//            }
+//        } else if (input== "help") {
+//            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
+//        } else {
+//            mainUI->ConsolePrintWithWait("Not a correct selection, try again.",0,0);
+//        };
+//
+//        //std::cout << "\n " << loc_x << " " << loc_y;
+//    };
 
     return (0);
 };
 
-int PlayerUI::AccessContainer(Container * c)
-{
-    std::string input;
-
-    int loc_x = 0;
-    int loc_y = 0;
-
-    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
-    bool selection = true;
-
-    while (selection == true) {
-        Item* thisItem = c->GetItem(loc_x, loc_y);
-
-        mainUI->DrawInv(c); //draw the current items
-        mainUI->UpdateUI(); //call a full system UI refresh to fix display bug
-
-        mainUI->ClearInvHighlighting();
-
-        //Highlight item
-
+int accessList(int* index, UI* mainUI) {
         mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
         mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
-        input = mainUI->ConsoleGetString();
+        std::string input = mainUI->ConsoleGetString();
         mainUI->ClearConsole(); //Clear ready for output
-
+        
         if ((input == "W") || (input == "w")) {
-            if (loc_x != 0) {
-                loc_x--;
-            };
-        } else if ((input == "A") || (input == "a")) {
-            if (loc_y != 0) {
-                loc_y--;
+            if ((*index) != 0) {
+                (*index)--;
             };
         } else if ((input == "S") || (input == "s")) {
-            if (loc_x != 2) {
-                loc_x++;
+            if ((*index) != 2) {
+                (*index)++;
             };
-        } else if ((input == "D") || (input == "d")) {
-            if (loc_y != 2) {
-                loc_y++;
-            }
         } else if (input == "close") {
-            selection = false;
-            return (0);
+            return 0;
         } else if (input == "what") {
+            return 1;
             
-            std::string output = "This is a " +thisItem->name;
-            mainUI->ConsolePrintWithWait(output,0,0);
             
         } else if (input == "take") {
-            player->AddToInventory(thisItem);
-            c->RemoveItem(loc_x, loc_y);
-
-            std::string output = "You put the "+thisItem->name+" into your inventory.";
-            mainUI->ConsolePrintWithWait(output,0,0);
+            return 2;
             
         } else if (input == "put") {
-            Item* thisItem = player->GetFromInventory(loc_x, loc_y);
-
-            if (thisItem != NULL) {
-                c->AddItem(thisItem);
-            }
+            return 3;
         } else if (input == "help") {
             mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container", 0, 0);
-        } else {
-            mainUI->ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
-        };
+        }
+        
+        mainUI->ConsolePrintWithWait("Not a correct selection, try again.", 0, 0);
+        accessList(index,mainUI); //recurse
+        return 0;
+}
 
-        //std::cout << "\n " << loc_x << " " << loc_y;
-    };
-
+int PlayerUI::AccessContainer(Container * c)
+{
     return (0);
 };
 
@@ -746,17 +716,16 @@ int PlayerUI::AccessInventory()
 
     const char* thisChar;
 
-    int loc_x = 0;
-    int loc_y = 0;
+    int index = 0;
 
     //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
     bool selection = true;
 
     while (selection == true) {
-        Item* thisItem = player->GetFromInventory(loc_x, loc_y);
+        Item* thisItem = player->GetFromInventory(index);
 
         mainUI->ClearInvHighlighting();
-        mainUI->HighlightInv(loc_x,loc_y);
+        mainUI->HighlightInv(index);
 
         //DrawInv(a);
         mainUI->UpdateUI();
@@ -767,21 +736,13 @@ int PlayerUI::AccessInventory()
         std::string input = mainUI->ConsoleGetString();
 
         if ((input == "W") || (input == "w")) {
-            if (loc_x != 0) {
-                loc_x--;
-            };
-        } else if ((input == "A") || (input == "a")) {
-            if (loc_y != 0) {
-                loc_y--;
+            if (index != 0) {
+                index--;
             };
         } else if ((input == "S") || (input == "s")) {
-            if (loc_x != 2) {
-                loc_x++;
+            if (index != 2) {
+                index++;
             };
-        } else if ((input == "D") || (input == "d")) {
-            if (loc_y != 2) {
-                loc_y++;
-            }
         } else if (input == "close") {
             selection = false;
             return (0);
@@ -794,11 +755,11 @@ int PlayerUI::AccessInventory()
         } else if (input == "drop") {
             mainUI->ClearConsole();
 
-            Item* thisItem = player->GetFromInventory(loc_x, loc_y);
+            Item* thisItem = player->GetFromInventory(index);
 
             if (CanDropItem(thisItem)) {
 
-                if (map->DropPlayerItem(player, thisItem, loc_x, loc_y) == 0) {
+                if (map->DropPlayerItem(player, thisItem, index) == 0) {
                     //update the current item details 
                     //const char* invtile_char = thisItem->name.c_str();
 
@@ -818,15 +779,15 @@ int PlayerUI::AccessInventory()
             };
 
         } else if (input == "wear") {
-            if (IsLootable(player->GetFromInventory(loc_x, loc_y))) {
-                inv_tile = player->GetInventory()->GetItem(loc_x, loc_y); //grab the current inventory tile
+            if (IsLootable(player->GetFromInventory(index))) {
+                inv_tile = player->GetInventory()->GetItem(index); //grab the current inventory tile
 
                 invtile_colour = inv_tile->colour;
                 thisChar = inv_tile->symbol;
 
                 const char *invtile_char = thisChar;
 
-                mainUI->DrawInvWindow(loc_x,loc_y,invtile_char, invtile_colour);
+              //  mainUI->DrawInvWindow(loc_x,loc_y,invtile_char, invtile_colour);
 
                 for (int i = 0; i < outfit_size; i++) {
                     mainUI->ClearConsole();
@@ -851,7 +812,7 @@ int PlayerUI::AccessInventory()
                         mainUI->ConsolePrintWithWait(output,0,0);
                         
                         //set the current inventory tile to the old outfit
-                        player->SetInventoryTile(loc_x, loc_y, new outfit(oldOutfit)); //instanciates a new outfit to fix polymorphism issues
+                        player->SetInventory(index, new outfit(oldOutfit)); //instanciates a new outfit to fix polymorphism issues
                     }
                 }
 
@@ -862,17 +823,17 @@ int PlayerUI::AccessInventory()
             };
 
         } else if (input == "open") {
-            int thisId = player->GetFromInventory(loc_x, loc_y)->id;
+            int thisId = player->GetFromInventory(index)->id;
 
             //98 denotes container, which is a closed-ended area, we never want to access an area here
             if (thisId == 98) {
                 mainUI->ClearConsole();
                 mainUI->ConsolePrintWithWait("You open the container",0,0);
-                Container* c = (Container*) player->GetFromInventory(loc_x, loc_y);
+                Container* c = (Container*) player->GetFromInventory(index);
 
                 AccessContainer(c);
 
-                mainUI->DrawInv(player->GetInventory());
+                mainUI->ListInv(player->GetInventory());
             }
         } else if (input == "help") {
             mainUI->ClearConsole();

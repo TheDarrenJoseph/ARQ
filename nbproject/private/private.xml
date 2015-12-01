@@ -10,28 +10,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/rave/documents/ARQ-2/include/cursesUI.h</file>
-            <file>file:/home/rave/documents/ARQ-2/src/containers.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/src/main.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/src/cursesUI.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/include/tile.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/items.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/playerUI.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/map.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/ui.h</file>
-            <file>file:/home/rave/documents/ARQ-2/include/game.h</file>
-            <file>file:/home/rave/documents/ARQ-2/src/map.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/arq.make</file>
-            <file>file:/home/rave/documents/ARQ-2/src/game.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/include/containers.h</file>
-            <file>file:/home/rave/documents/ARQ-2/src/playerUI.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/src/items.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/include/characters.h</file>
-            <file>file:/home/rave/documents/ARQ-2/src/characters.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/src/room.cpp</file>
-            <file>file:/home/rave/documents/ARQ-2/include/room.h</file>
-            <file>file:/home/rave/documents/ARQ-2/LICENSE</file>
-            <file>file:/home/rave/documents/ARQ-2/README.md</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/arq.make</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/game.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/cursesUI.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/ui.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/game.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/cursesUI.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/playerUI.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/map.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/room.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/main.cpp</file>
         </group>
     </open-files>
 </project-private>

@@ -14,7 +14,7 @@ class Map
     private:
     
     tile game_grid[GRID_Y][GRID_X];
-    Area* container_grid[GRID_Y][GRID_X];
+    Container* container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS=((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
@@ -89,22 +89,22 @@ class Map
 
     int MoveNPCS ();
     void DropCharacterItems(Character* c);
-    int DropPlayerItem(Player* p, Item* thisItem, int invX, int invY);
+    int DropPlayerItem(Player* p, Item* thisItem, int index);
     
         
     tile GetTile(int x, int y);
     void SetTile(int x, int y,tile t);
 
     Item* GetItem(int x, int y);
-    Item* GetContainerItem(int containerX, int containerY,int x, int y);
+    Item* GetContainerItem(int containerX, int containerY,int index);
     
-    void AddToArea(int x, int y,Item* i);
+    void AddToContainer(int x, int y,Item* i);
     
     //Returns whether there is an area at x,y, and if it contains items
-    int AreaProc (int x ,int y); 
+    int ContainerProc (int x ,int y); 
 
-    Area* GetArea(int x, int y);
-    void SetArea(int x, int y, Area* a);
+    Container* GetContainer(int x, int y);
+    void SetContainer(int x, int y, Container* a);
     
     int GetGridX();
     int GetGridY();

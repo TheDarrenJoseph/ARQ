@@ -3,12 +3,12 @@
 
 bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
 {
-    //return true; //DEBUGGING!
-
+    bool canPlace = false;
+ 
     if (roomCount == 0) return true;
 
     else if (roomCount < MAX_ROOMS) {
-
+        
         int newRoomEndX = newRoomStartX + newRoomSize;
         int newRoomEndY = newRoomStartY + newRoomSize;
 
@@ -19,23 +19,33 @@ bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
         int endX;
         int endY;
 
+        
+        
         //Order/Sort a room list this to compare rooms in the area?? (EFFICIENCY??)
         for (int i = 0; i < roomCount; i++) {
-
+            canPlace = false; //Assume false
+            
             startX = rooms[i].GetStartPos().first;
             startY = rooms[i].GetStartPos().second;
 
             endX = rooms[i].GetEndPos().first;
             endY = rooms[i].GetEndPos().second;
-
-
-            if ((newRoomStartX > endX || newRoomStartY > endY) && (newRoomEndX > endX || newRoomEndY > endY)) return true;
-            else if ((newRoomStartX < startX || newRoomStartY < startY) && (newRoomEndX < startX || newRoomEndY < startY)) return true;
+            
+            if (newRoomStartX != startX && newRoomStartY != startY && newRoomEndX != endX && newRoomEndY != endY) {
+            
+            //For each room, check to see if our new one doesn't intersect it
+            if (newRoomStartX > endX && newRoomEndX > endX) canPlace = true;   
+            if (newRoomStartY > endY && newRoomEndY > endY) canPlace = true;   
+            
+            if (newRoomStartX < startX && newRoomEndX < startX) canPlace = true;   
+            if (newRoomStartY < startY && newRoomEndY < startY) canPlace = true;   
+            }
+        
         }
 
     }
 
-    return false;
+    return canPlace;
 }
 
 void Map::CreateWall(int x, int y, int size, bool horizontal)
@@ -81,11 +91,10 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
             CreateWall(x + size - 1, y + 1, size - 2, false);
 
             rooms[roomCount] = Room(x, y, size); //add our new room and increase the count
-            room = &rooms[roomCount++];
-
+            room = &rooms[roomCount];
+            roomCount++;
+            
             //Door addition algorithm
-
-
             int doorNo = rand() % 4 + 1; //rand number from 1 to 8
 
 
@@ -168,14 +177,12 @@ void Map::CreateMap(int seed)
 
 bool Map::IsTraversable(int x, int y)
 {
-
     if ((x < 0) || (x > gridX) || (y < 0) || (y > gridY)) {
         return false;
+    } else {
+        tile t = game_grid[y][x];
+        return tile_library[t].traversible;
     }
-
-    tile t = game_grid[y][x];
-
-    return tile_library[t].traversible;
 }
 
 int Map::EnvironmentCheck(int x, int y)
@@ -275,7 +282,8 @@ int Map::MoveCharacter(Character* c, int x, int y)
  */
 int Map::MovePlayer(int x, int y, int* npcID)
 {
-    if ((x < 0) || (y < 0) || (x > GRID_X - 1) || (y > GRID_Y - 1)) {
+   
+    if ((x > 0) || (y > 0) || (x < GRID_X) || (y < GRID_Y)) {
         switch (EncounterCheck(x, y, npcID)) {
         case 1:
             return 3;
@@ -317,24 +325,24 @@ int Map::MoveNPCS()
 void Map::DropCharacterItems(Character* c)
 {
 
-    Area* body = c->DropItems();
+    Container* body = c->DropItems();
 
     int x, y;
     c->GetPos(&x, &y);
 
-    SetArea(x, y, body);
+    SetContainer(x, y, body);
 }
 
-int Map::DropPlayerItem(Player* p, Item* thisItem, int invX, int invY)
+int Map::DropPlayerItem(Player* p, Item* thisItem, int index)
 {
     int x, y;
     p->GetPos(&x, &y);
 
     //if the player is at an area where items can be placed, add the item
     if (CanPlaceItems(x, y)) {
-        AddToArea(x, y, thisItem); //replace the map tile with the item
+        AddToContainer(x, y, thisItem); //replace the map tile with the item
 
-        p->SetInventoryTile(invX, invY, new Item(item_library[no_item])); //clear the inventory tile
+        p->SetInventory(index, new Item(item_library[no_item])); //clear the inventory tile
 
         return 0;
     }
@@ -357,29 +365,37 @@ void Map::SetTile(int x, int y, tile t)
 
 Item* Map::GetItem(int x, int y)
 {
-    return container_grid[y][x]->GetItem(0, 0);
-}
+    int status = container_grid[y][x]->HasItems();
+    switch (status) {
+        case 1 :
+          return container_grid[y][x]->GetItem(0);
 
-Item* Map::GetContainerItem(int containerX, int containerY, int x, int y)
+        default :
+            return (Item*)container_grid[y][x];
+    }
+
+}    
+
+Item* Map::GetContainerItem(int containerX, int containerY, int index)
 {
-    return container_grid[containerY][containerX]->GetItem(x, y);
+    return container_grid[containerY][containerX]->GetItem(index);
 }
 
 //Adds an item to the area
 
-void Map::AddToArea(int x, int y, Item* i)
+void Map::AddToContainer(int x, int y, Item* i)
 {
     container_grid[y][x]->AddItem(i);
 }
 
-Area* Map::GetArea(int x, int y)
+Container* Map::GetContainer(int x, int y)
 {
     return container_grid[y][x];
 }
 
-void Map::SetArea(int x, int y, Area* a)
+void Map::SetContainer(int x, int y, Container* c)
 {
-    container_grid[y][x] = a;
+    container_grid[y][x] = c;
 }
 
 int Map::GetGridX()
@@ -396,7 +412,7 @@ void Map::InitAreas()
 {
     for (int x = 0; x < GRID_X; x++) {
         for (int y = 0; y < GRID_Y; y++) {
-            container_grid[y][x] = new Area(99, "Empty", " ", 0, 0, false);
+            container_grid[y][x] = new Container(99, "Empty", " ", 0, 0, false);
         }
     }
 }
@@ -430,7 +446,7 @@ void DrawInv(area* a)
  */
 
 
-int Map::AreaProc(int x, int y)
+int Map::ContainerProc(int x, int y)
 {
-    return GetArea(x, y)->HasItems();
+    return GetContainer(x, y)->HasItems();
 }

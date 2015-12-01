@@ -53,7 +53,6 @@ class GameEngine
             this->displayUI = ui;
             this->playerUI = playerUI;
         }
-
 };
 
 #endif

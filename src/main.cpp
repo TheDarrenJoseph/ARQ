@@ -45,25 +45,32 @@ int main()
     as a local variable in this scope so that we can save on memory management.
      */
     
-    const int MAX_NPCS = 0; //Number-1 to allow for 0 indexing
+    const int MAX_NPCS = 1; //Number-1 to allow for 0 indexing
     
     NPC npcs[MAX_NPCS] = Goblin();
 
-    Player thisPlayer = Warrior();
-    thisPlayer.SetPos (1,1);
+    Player* thisPlayer = new Warrior();
+    thisPlayer->SetPos (1,1);
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
     Container c = Container(98,"Bag","X",2,0,true); //inventory testing
-    thisPlayer.AddToInventory(&c);
+    thisPlayer->AddToInventory(&c);
             
-    Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],&thisPlayer);
+    Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],thisPlayer);
     CursesUI thisUI = CursesUI();
-    PlayerUI playerUI = PlayerUI(MAX_NPCS,&thisUI,&thisMap,&thisPlayer,&npcs[0]);
+    PlayerUI playerUI = PlayerUI(MAX_NPCS,&thisUI,&thisMap,thisPlayer,&npcs[0]);
     
-    GameEngine thisGame = GameEngine(&thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
-
+    GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
     
     thisGame.StartGame();
-
+    
+    free(thisPlayer);
+    
+    //Free each npc?
+    //for (int npcNo=0; npcNo<MAX_NPCS; npcNo++) {
+     //   free(&npcs[npcNo]);
+    //}
+            
+    
     return 0;
 };

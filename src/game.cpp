@@ -13,10 +13,11 @@ void GameEngine :: InitNPCS()
 
 int GameEngine :: MainMenu() {
     
-    //const int menuSize = 3;
-    //const char* text [menuSize] = {"Play!","Settings","Info"};
     
-    //return displayUI->Menu(&text[0],menuSize);
+    const int menuSize = 3;
+    const char* text [menuSize] = {"Play! -> ","Settings ->","Info ->"};
+    
+    return displayUI->Menu(&text[0],menuSize);
     return 0;
 }
 
@@ -33,6 +34,7 @@ void GameEngine :: StartGame()
   
   switch (MainMenu()) {
   case 0 :
+     
       displayUI->ShowNotification("Welcome To ARQ! \n "
       "You are a humble warrior hoping to earn prestige "
       "and bring fame and fortune to your family! "
@@ -48,9 +50,7 @@ void GameEngine :: StartGame()
           break;
       
   default :
-      
       break;
-      
   }
   
   
@@ -125,7 +125,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 		  if (chance<=thisChance)  
 		    {
 		      //then add it to the item grid
-		      map.AddToArea(x,y,new Item(thisItem));
+		      map.AddToContainer(x,y,new Item(thisItem));
 	        
 		      //break the for loop
 		      break; 
@@ -155,7 +155,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 																	
 	  else
 	    {
-	      map.AddToArea(x,y,new Item(item_library[no_item]));
+	      map.AddToContainer(x,y,new Item(item_library[no_item]));
 	    }
 	}
     }
