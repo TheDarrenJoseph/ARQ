@@ -98,7 +98,7 @@ class Player : public Character
 {
  private:
 
-  Inventory* inventory;
+  Container* inventory ;
   NPC* npcs;
   
   int loot;
@@ -110,7 +110,7 @@ class Player : public Character
   int AddToInventory(Item* i);
   void SetInventory(int index, Item* i);
 
-  Inventory* GetInventory();
+  Container* GetInventory();
   Item* GetFromInventory(int index);
   
   void SetLoot(int x);
@@ -125,14 +125,18 @@ class Player : public Character
   Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
     {
       //initialise the item inventory
-      inventory = new Inventory();
-      
-	  for (i=0; i<INV_SIZE; i++)
+      inventory = new Container(0, "Player's Inventory","X",2,0,0,true);
+  
+	  for (long unsigned int i=0; i<INV_SIZE; i++)
 	    {
-	      inventory->AddItem(new Item(item_library[no_item]));
+	      //inventory->AddItem(new Item(item_library[no_item]));
 	    }
 	
     };
+    
+    ~Player() {
+        free(inventory);
+    }
 };
 
 class Warrior : public Player

@@ -111,7 +111,7 @@ Container* Character :: DropItems()
 {
  std::string name = this->name.c_str();
  std::string thisName = "Dead " + name;
-  Container* body = new Container(1,thisName,"X",1,0,true);
+  Container* body = new Container(1,thisName,"X",1,6,0,true);
   
   body->AddItem(new weapon(this->weps[1]));
   body->AddItem(new weapon(this->weps[2]));
@@ -137,13 +137,13 @@ void Character :: SetOutfit(outfit o)
 {
   //remove the current AP buff
   this->max_health -= currentOutfit.armourPoints;
-  cout << max_health;
+ 
   
   //remove any extra health gained from the armour if it exceeds the buff
   if (GetHealth()>max_health)
     {
       SetHealth(health-currentOutfit.armourPoints);
-      cout <<health << "-" << currentOutfit.armourPoints; 
+ 
     }
    
   this->currentOutfit = o;
@@ -165,22 +165,22 @@ outfit Character :: GetOutfit()
 
 int Player :: AddToInventory(Item* i)
 {
-  return this->inventory->AddItem(i);
+  return inventory->AddItem(i);
 }
 
 void Player :: SetInventory(int index, Item* item)
 {
-  this->inventory->ReplaceItem(index,item); 
+  inventory->ReplaceItem(index,item); 
 }
 
 Item* Player :: GetFromInventory(int index)
 {
-  return this->inventory->GetItem(index);
+  return inventory->GetItem(index);
 }
 
-Inventory* Player :: GetInventory()
+Container* Player :: GetInventory()
 {
-  return this->inventory;
+  return inventory;
 }  
 
 

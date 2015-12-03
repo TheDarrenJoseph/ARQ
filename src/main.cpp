@@ -53,7 +53,7 @@ int main()
     thisPlayer->SetPos (1,1);
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container c = Container(98,"Bag","X",2,0,true); //inventory testing
+    Container c = Container(98,"Bag","X",2,2,0,true); //inventory testing
     thisPlayer->AddToInventory(&c);
             
     Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],thisPlayer);

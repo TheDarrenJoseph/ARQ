@@ -4,15 +4,15 @@
 #include <string>
 #include "ui.h"
 
-#define MAINWIN_REAR_X     GRID_X+2
-#define MAINWIN_REAR_Y     GRID_Y+2
-#define MAINWIN_FRONT_X    GRID_X
-#define MAINWIN_FRONT_Y    GRID_Y
+#define MAINWIN_REAR_X     stdscr->_maxx
+#define MAINWIN_REAR_Y     stdscr->_maxy
+#define MAINWIN_FRONT_X    MAINWIN_REAR_X-2
+#define MAINWIN_FRONT_Y    MAINWIN_REAR_Y-2
 
-#define CONSOLEWIN_REAR_X  GRID_X*2+7 
+#define CONSOLEWIN_REAR_X  MAINWIN_REAR_X-2
 #define CONSOLEWIN_REAR_Y  6
-#define CONSOLEWIN_FRONT_X GRID_X*2+5
-#define CONSOLEWIN_FRONT_Y 4
+#define CONSOLEWIN_FRONT_X CONSOLEWIN_REAR_X-2
+#define CONSOLEWIN_FRONT_Y CONSOLEWIN_REAR_Y-2
 
 #define INVWINS_REAR_X GRID_X
 #define INVWINS_REAR_Y GRID_Y
@@ -34,9 +34,6 @@ private:
     WINDOW* invwins_front;
     WINDOW* invwins_rear;
 
-    int UI_X = GRID_X * 2 + 7;
-    int UI_Y = GRID_Y + 6;
-
 public:
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
     int wprint_at(WINDOW* winchoice, const char* text, int pos_y, int pos_x);
@@ -54,12 +51,13 @@ public:
     virtual void DecorateWindows();
 
     virtual void DrawItems(Map* m);
-    virtual void DrawAreas(Map* m);
+    virtual void DrawContainers(Map* m);
 
     virtual void DrawPlayerStats(std::string name, int health, int loot);
 
+    void wDrawInvList(WINDOW* nWin, Container* a, long unsigned int invIndex);
     virtual void ListInv(Container* c);
-    virtual void ListInv(Inventory* a);
+//    virtual void ListInv(Inventory* a);
     virtual void ClearInvHighlighting();
     virtual void HighlightInv(int index);
 

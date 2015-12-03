@@ -119,9 +119,10 @@ void PlayerUI::Battle(int npc_id)
 
 }
 
-void PlayerUI::DrawPlayerInv()
+void PlayerUI::AccessPlayerInv()
 {
     mainUI->ListInv(player->GetInventory());
+    mainUI->UpdateUI();
 };
 
 void PlayerUI::DrawPlayerEquipment()
@@ -159,7 +160,7 @@ int PlayerUI::BattleTurn(int npc_id)
         mainUI->HighlightConsole(scr_x, scr_y);
 
         mainUI->ConsolePrint("Use A and D to choose a weapon, 'use' to select", 1, 0);
-        mainUI->ConsolePrint("ARQ:~$ ", 2, 0); //give us a prompt
+        mainUI->ConsolePrint(PROMPT_TEXT, 2, 0); //give us a prompt
 
         std::string choice = mainUI->ConsoleGetString();
         if ((choice == "a") && (index > 0)) {
@@ -496,7 +497,7 @@ bool PlayerUI::TextInput()
     std::string answer;
 
     mainUI->ClearConsole();
-    mainUI->ConsolePrint("ARQ:~$ ", 0, 0);
+    mainUI->ConsolePrint(PROMPT_TEXT, 0, 0);
     answer = mainUI->ConsoleGetString();
 
     if (answer == "help") {
@@ -523,10 +524,8 @@ bool PlayerUI::TextInput()
 
 void PlayerUI::ShowControls()
 {
-    mainUI->ConsolePrint("i - command prompt",0,0);
+    mainUI->ConsolePrint("c - command prompt",0,0);
     mainUI->ConsolePrint("Arrow Keys to move.. ", 0, 1);
-    DrawPlayerInv();
-    
 }
 
 bool PlayerUI::Input()
@@ -549,7 +548,8 @@ bool PlayerUI::Input()
     else if (choice == KEY_DOWN || choice == 's') thisY++;
     else if (choice == KEY_LEFT || choice == 'a') thisX--;
     else if (choice == 'q') return false;
-    else if (choice == 'i') return TextInput();
+    else if (choice == 'c') return TextInput();
+    else if (choice == 'i') AccessPlayerInv();
 
     //handle any movement input
     if ((x != thisX) || (y != thisY)) {
@@ -590,89 +590,89 @@ void PlayerUI::DrawPlayer()
      mainUI->DrawCharacter(x, y, colour, symbol);
 }
 
-int PlayerUI::AccessArea(Inventory * a)
-{
-//    int loc_x = 0;
-//    int loc_y = 0;
+//int PlayerUI::AccessArea(Container * a)
+//{
+////    int loc_x = 0;
+////    int loc_y = 0;
+////
+////    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
+////    bool selection = true;
+////
+////    while (selection == true) {
+////        Item* thisItem = a->GetItem(loc_x, loc_y);
+////        
+////        mainUI->ClearInvHighlighting();
+////
+////
+////        //area b = *a;
+////        mainUI->ListInv(a);
+////        mainUI->UpdateUI(); //ensures items display propely
+////
+////        mainUI->HighlightInv(loc_x,loc_y);
+////
+////        mainUI->ClearConsole();
+////        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
+////        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
+////
+////        std::string input = mainUI->ConsoleGetString();
+////        mainUI->ClearConsole(); //Get ready for our output!
+////        
+////        if ((input == "W") || (input == "w")) {
+////            if (loc_x != 0) {
+////                loc_x--;
+////            };
+////        } else if ((input == "A") || (input == "a")) {
+////            if (loc_y != 0) {
+////                loc_y--;
+////            };
+////        } else if ((input == "S") || (input == "s")) {
+////            if (loc_x != 2) {
+////                loc_x++;
+////            };
+////        } else if ((input == "D") || (input == "d")) {
+////            if (loc_y != 2) {
+////                loc_y++;
+////            }
+////        } else if (input == "close") {
+////            selection = false;
+////
+////            return (0);
+////        } else if (input == "what") {
+////            std::string output = "This is a "+thisItem->name+".";
+////            mainUI->ConsolePrintWithWait(output,0,0);
+////        } else if (input == "take") {
+////            if (IsLootable(thisItem)) {
+////                player->AddToInventory(thisItem);
+////                a->RemoveItem(loc_x, loc_y);
+////                
+////                std::string output = "You put the "+thisItem->name+" into your inventory.";
+////
+////                mainUI->ConsolePrintWithWait(output,0,0);
+////            }
+////        } else if (input== "put") {
+////            Item* thisItem = player->GetFromInventory(loc_y, loc_x);
+////            std::string output = "You put the "+thisItem->name+" inside.";
+////
+////            mainUI->ConsolePrintWithWait(output,0,0);
+////
+////            if (thisItem != NULL) {
+////                a->AddItem(thisItem);
+////            }
+////        } else if (input== "help") {
+////            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
+////        } else {
+////            mainUI->ConsolePrintWithWait("Not a correct selection, try again.",0,0);
+////        };
+////
+////        //std::cout << "\n " << loc_x << " " << loc_y;
+////    };
 //
-//    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
-//    bool selection = true;
-//
-//    while (selection == true) {
-//        Item* thisItem = a->GetItem(loc_x, loc_y);
-//        
-//        mainUI->ClearInvHighlighting();
-//
-//
-//        //area b = *a;
-//        mainUI->ListInv(a);
-//        mainUI->UpdateUI(); //ensures items display propely
-//
-//        mainUI->HighlightInv(loc_x,loc_y);
-//
-//        mainUI->ClearConsole();
-//        mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
-//        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
-//
-//        std::string input = mainUI->ConsoleGetString();
-//        mainUI->ClearConsole(); //Get ready for our output!
-//        
-//        if ((input == "W") || (input == "w")) {
-//            if (loc_x != 0) {
-//                loc_x--;
-//            };
-//        } else if ((input == "A") || (input == "a")) {
-//            if (loc_y != 0) {
-//                loc_y--;
-//            };
-//        } else if ((input == "S") || (input == "s")) {
-//            if (loc_x != 2) {
-//                loc_x++;
-//            };
-//        } else if ((input == "D") || (input == "d")) {
-//            if (loc_y != 2) {
-//                loc_y++;
-//            }
-//        } else if (input == "close") {
-//            selection = false;
-//
-//            return (0);
-//        } else if (input == "what") {
-//            std::string output = "This is a "+thisItem->name+".";
-//            mainUI->ConsolePrintWithWait(output,0,0);
-//        } else if (input == "take") {
-//            if (IsLootable(thisItem)) {
-//                player->AddToInventory(thisItem);
-//                a->RemoveItem(loc_x, loc_y);
-//                
-//                std::string output = "You put the "+thisItem->name+" into your inventory.";
-//
-//                mainUI->ConsolePrintWithWait(output,0,0);
-//            }
-//        } else if (input== "put") {
-//            Item* thisItem = player->GetFromInventory(loc_y, loc_x);
-//            std::string output = "You put the "+thisItem->name+" inside.";
-//
-//            mainUI->ConsolePrintWithWait(output,0,0);
-//
-//            if (thisItem != NULL) {
-//                a->AddItem(thisItem);
-//            }
-//        } else if (input== "help") {
-//            mainUI->ConsolePrintWithWait("what - display item name\ndrop - drop item\nwear - wear outfit\nclose - close this container",0,0);
-//        } else {
-//            mainUI->ConsolePrintWithWait("Not a correct selection, try again.",0,0);
-//        };
-//
-//        //std::cout << "\n " << loc_x << " " << loc_y;
-//    };
-
-    return (0);
-};
+//    return (0);
+//};
 
 int accessList(int* index, UI* mainUI) {
         mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands", 0, 0);
-        mainUI->ConsolePrintWithWait("ARQ:~$ ", 2, 0);
+        mainUI->ConsolePrintWithWait(PROMPT_TEXT, 2, 0);
         std::string input = mainUI->ConsoleGetString();
         mainUI->ClearConsole(); //Clear ready for output
         
@@ -731,7 +731,7 @@ int PlayerUI::AccessInventory()
         mainUI->UpdateUI();
         mainUI->ClearConsole();
         mainUI->ConsolePrint("Select an item with WASD.. 'help' for commands.", 0, 0);
-        mainUI->ConsolePrint("ARQ:~$ ", 2, 0);
+        mainUI->ConsolePrint(PROMPT_TEXT, 2, 0);
 
         std::string input = mainUI->ConsoleGetString();
 

@@ -10,15 +10,13 @@ void CursesUI::InitWindows()
 {
     //newwin(size y, size x, pos y, pos x) 
     
-    titlewin = newwin(1, stdscr->_maxx, 0, 0); //Creates the stats window for content
+    titlewin = newwin(1, stdscr->_maxx, 0, stdscr->_maxx/3); //Creates the stats window for content
 
-       // mainwin_rear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1); //Creates a new window called new win at 1,1 that has the dimensions of GRID_X, and GRID_Y.
-    mainwin_rear = newwin(stdscr->_maxy, stdscr->_maxx, 1, 1); 
-    mainwin_front = newwin(GRID_Y, GRID_X, 2, 2); //Creates a new window called new win at 2,2 that has the dimensions of GRID_X, and GRID_Y.
+    mainwin_rear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1); 
+    mainwin_front = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2); //Creates a new window called new win at 2,2 that has the dimensions of GRID_X, and GRID_Y.
 
-    
-    consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_FRONT_X, stdscr->_maxy-5, 1); //Creates the console window for deco
-    consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X-2, stdscr->_maxy-4, 2); //Creates the console window for content
+    consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, stdscr->_maxy-6, 2); //Creates the console window for deco
+    consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, stdscr->_maxy-5, 3); //Creates the console window for content
 
     invwins_rear = newwin(INVWINS_REAR_Y, INVWINS_REAR_X, 11, GRID_X+4);
 
@@ -61,14 +59,14 @@ void CursesUI::ShowInfo()
 
 void CursesUI::ShowNotification(const char* text)
 {
-    WINDOW* nWinRear = newwin(UI_Y + 2, UI_X + 2, 1, 1);
-    WINDOW* nWin = newwin(UI_Y, UI_X, 2, 2);
+    WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
+    WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
 
     box(nWinRear, 0, 0);
     wrefresh(nWinRear);
 
     wprint_at(nWin, text, 5, 5);
-    wprint_at(nWin, "[Enter]", UI_Y - 1, UI_X - 12);
+    //wprint_at(nWin, "[Enter]", UI_Y-1, UI_X-12);
 
 
     wrefresh(nWin);
@@ -79,9 +77,8 @@ void CursesUI::ShowNotification(const char* text)
 /** Displays a simple vertical menu of choices and returns the number of the chosen element */
 int CursesUI::Menu(const char** text, int buttons)
 {
-
-    WINDOW* nWinRear = newwin(UI_Y + 2, UI_X + 2, 1, 1);
-    WINDOW* nWin = newwin(UI_Y, UI_X, 2, 2);
+    WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
+    WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
 
     keypad(nWin, TRUE);
     noecho(); //stops input printing on screen
@@ -91,18 +88,18 @@ int CursesUI::Menu(const char** text, int buttons)
 
     werase(nWin);
 
-    int scr_x = UI_X / 2 - 8; //ui size/2 - 8 (8 being maximum letters displayed)
+    int scr_x = 12; //ui size/2 - 8 (8 being maximum letters displayed)
 
     int index = 0;
 
     for (int i = 0; i < buttons; i++) {
-        wprint_at(nWin, text[i], i, scr_x);
+        wprint_at(nWin,text[i],i,scr_x);
     }
 
     while (true) {
         wchgat(nWin, 12, A_NORMAL, 0, NULL);
 
-        mvwchgat(nWin, index, scr_x, 9, A_NORMAL, 1, NULL); //add red blink to the current item
+        mvwchgat(nWin, index, scr_x, 12, A_NORMAL, 1, NULL); //add red blink to the current item
         wrefresh(nWin);
 
         int choice = wgetch(nWin);
@@ -179,7 +176,7 @@ void CursesUI::DrawItems(Map* m)
     return;
 }
 
-void CursesUI::DrawAreas(Map* m)
+void CursesUI::DrawContainers(Map* m)
 {
     //iterate through the rows of the grid/map
     for (int y = 0; y < GRID_Y; y++) {
@@ -281,11 +278,12 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
 {
     WINDOW* winchoice = mainwin_rear;
 
-    werase(winchoice);
+    //werase(winchoice);
+    //box(winchoice,0,12);
     wmove(winchoice, 15, 0);
     wprintw(winchoice, "%s", name.c_str());
 
-    wmove(winchoice, 0, 0);
+    wmove(winchoice, 0, 1);
     wprintw_col(winchoice, "Health: ", 4);
     wprintw(winchoice, "%d", health);
 
@@ -294,13 +292,13 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
     wprintw(winchoice, "%d", loot);
     
     wrefresh(winchoice);
-
+    
     return;
 }
 
 //make sure any overloads of this func are up-to-date with the header
-void CursesUI::ListInv(Container* c)
-{
+//void CursesUI::ListInv(Container* c)
+//{
 //    for (int y = 0; y < 3; y++) {
 //        //draw each item on this row to the screen
 //        for (int x = 0; x < 3; x++) {
@@ -320,52 +318,117 @@ void CursesUI::ListInv(Container* c)
 //            //wrefresh(thisWindow);
 //        };
 //    };
-    return;
+ //   return;
+//}
+
+
+void CursesUI :: wDrawInvList(WINDOW* nWin, Container* a, long unsigned int invIndex) {
+    //For each line of the window
+    wprint_at(nWin,"NAME",0,0);
+    wprint_at(nWin,"WEIGHT",0,12);
+    wprint_at(nWin,"VALUE",0,24);
+    
+    int thisIndex=0;
+        for (long unsigned int i=0;  i<(long unsigned int)MAINWIN_FRONT_Y; i++) {
+            if ((invIndex+i)<a->GetSize()){
+                thisIndex += i;
+               wprint_at(nWin,a->GetItem(thisIndex)->name.c_str(),i+1,0);
+               char buffer[6];
+               sprintf(buffer,"%d",a->GetItem(thisIndex)->value);
+               wprint_at(nWin,buffer,i+1,24);
+                //std::cout << a->GetItem(thisIndex)->name.c_str() << "\n";
+            } else {
+                wprint_at(nWin,"---",i+1,0);
+            }
+                
+            
+        }
 }
 
+void wHighlightInvList(WINDOW* nWin, int i, int max_x, int max_y) {
+    //Clear other highlighting
+    for (int y=0; y<max_y; y++) {
+        mvwchgat(nWin, 0, y, max_x, A_NORMAL, 0, NULL);
+    }
+    
+    //Index/Selection highlight
+    mvwchgat(nWin, i, max_x, GRID_X, A_BLINK, 1, NULL); //add red blink to the current item
+    wrefresh(nWin);
+}
 
 //make sure any overloads of this func are up-to-date with the header
-void CursesUI::ListInv(Inventory* a)
-{
-//    for (int y = 0; y < 3; y++) {
-//        //draw each item on this row to the screen
-//        for (int x = 0; x < 3; x++) {
-//            WINDOW* thisWindow = invwins_front[y][x];
-//
-//            werase(thisWindow);
-//            wmove(thisWindow, 0, 0);
-//
-//            Item* itm = a->GetItem(x, y); //works
-//
-//            int colour = itm->colour;
-//
-//            const char* name = itm->name.c_str();
-//
-//            wprintw_col(thisWindow, name, colour);
-//            wrefresh(thisWindow);
-//        };
-//    };
+void CursesUI::ListInv(Container* c)
+{   
+    WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
+    WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
+
+    box(nWinRear, 0, 0);
+    wrefresh(nWinRear);
+    
+    wprint_at(nWinRear,c->name.c_str(),0,1);
+    wrefresh(nWinRear);
+    
+    bool selection = true;
+    int index = 0;
+    long unsigned int invIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    
+    //Selection loop
+    while(selection == true) {
+        
+        wDrawInvList(nWin, c, invIndex);
+        wHighlightInvList(nWin,index,MAINWIN_FRONT_X,MAINWIN_FRONT_Y);      
+        
+        //Grabbing keypress
+        keypad(nWin, TRUE);
+        int choice = wgetch(nWin); 
+        
+        switch(choice) {
+            case (KEY_UP | 'w') : {
+                if (index>0) {
+                    if (invIndex==0) {
+                        invIndex--;
+                    }
+                    index--; 
+                }
+                break;
+            }
+            case (KEY_DOWN | 's') : { 
+                if (index<MAINWIN_FRONT_Y) {
+                     if (invIndex<c->GetSize()) {
+                        invIndex++;
+                    }
+                    index++; 
+                }
+                break;
+            }
+            case ('q') : {
+                selection = false;
+                break;
+            }
+        }
+
+    }
+    
     return;
 }
 
 void CursesUI :: ClearInvHighlighting() {
-//    for (int x = 0; x < 3; x++) {
-//        for (int y = 0; y < 3; y++) {
-//            WINDOW* thisWin = invwins_front[y][x];
-//            
-//            mvwchgat(thisWin, 0, 0, 9, A_NORMAL, 0, NULL);
-//            wrefresh(thisWin);
-//        }
-//    }
+    //    for (int x = 0; x < 3; x++) {
+    //        for (int y = 0; y < 3; y++) {
+    //            WINDOW* thisWin = invwins_front[y][x];
+    //            
+    //            mvwchgat(thisWin, 0, 0, 9, A_NORMAL, 0, NULL);
+    //            wrefresh(thisWin);1
+    //        }
+    //    }
 }
 
 void CursesUI :: ClearConsoleHighlighting() {
-    
-//    for (int x = 0; x < 3; x++) {
-//        for (int y = 0; y < 3; y++) {
-//  
-//        }
-//    }
+    //    for (int x = 0; x < 3; x++) {
+    //        for (int y = 0; y < 3; y++) {
+    //  
+    //        }
+    //    }
 }
 
 void CursesUI :: HighlightInv(int index) {
@@ -381,7 +444,7 @@ void CursesUI :: HighlightConsole(int scr_x, int scr_y) {
 
 int CursesUI::InitScreen()
 {
-    std::cout << "Starting ncurses";
+    std::cout << "Starting ncurses\n";
     initscr();
 
     if (has_colors() == FALSE) {

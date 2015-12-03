@@ -1,56 +1,71 @@
 #include "containers.h"
+#include <iostream>
 
-std::list<Item*>::iterator Container :: indexToIterator(int i) {
+/** Creates an iterator for this container's inv, and moves it to the needed position.
+ * DO NOT CALL THIS FUNCTION UNLESS THE INV CONTAINS SOMETHING
+ * 
+ * @param i
+ * @return 
+ */
+std::list<Item*>::iterator Container :: indexToIterator(long unsigned i) {
     
-    if (i>0 && (long unsigned int)i<inv.size()) { 
+    if (i>0 && i<inv.size()) { 
         std::list<Item*>::iterator it = inv.begin();
         
         for (long unsigned int i=0; i<inv.size(); it++){} //Iterate
-        
         return it;
-        
+    } else {
+        return inv.begin();
     }
-    
-    return inv.end();
 }
 
-std::list<Item*>::iterator Inventory :: indexToIterator(int i) {
-    
-    if (i>0 && (long unsigned int)i<inv.size()) { 
-        std::list<Item*>::iterator it = inv.begin();
-        
-        for (long unsigned int i=0; i<inv.size(); it++){} //Iterate
-        
-        return it;
-        
-    }
-    
-    return inv.end();
+long unsigned int Container :: GetSize() {
+    return inv.size();
 }
+
+//std::list<Item*>::iterator Inventory :: indexToIterator(int i) {
+//    
+//    if (i>0 && (long unsigned int)i<inv.size()) { 
+//        std::list<Item*>::iterator it = inv.begin();
+//        
+//        for (long unsigned int i=0; i<inv.size(); it++){} //Iterate
+//        
+//        return it;
+//        
+//    }
+//    
+//    return inv.end();
+//}
 
 int Container :: AddItem(Item* i) {
   inv.push_front(i);
   return 0;
 }
 
-void Container :: ReplaceItem(int i, Item* item) {
+void Container :: ReplaceItem(long unsigned int i, Item* item) {
     if (i>0 && (long unsigned int)i<inv.size()) {
     (*indexToIterator(i)) = item;
    }
 }
 
-void Container :: RemoveItem(int i) {
+void Container :: RemoveItem(long unsigned int i) {
       //inv[index] = new invItem(inv_item_library[no_item]);
    
     if (i>0 && (long unsigned int)i<inv.size()) {
-       
        inv.erase(indexToIterator(i));
    }
 
 }  
 
-Item* Container :: GetItem(int i) {
-     return (*indexToIterator(i));
+Item* Container :: GetItem(long unsigned int i) {
+    //std::cout << "ui int" << (unsigned int) i;
+   // return (Item*) &item_library[0];
+    
+    if (i>0 && (unsigned int)i<inv.size()) {
+        return (*indexToIterator(i));
+    } else {
+        return (Item*) &item_library[0];
+    }
 }
 
 //Returns an integer to determine the contents of this area
@@ -78,29 +93,6 @@ int Container :: HasItems()
     }
 }
 
-Item* Inventory :: GetItem(int i) {
-     return (*indexToIterator(i));
-}
-
-
-int Inventory :: AddItem(Item* item)
-{
-  inv.push_front(item);
-  return 0;
-}
-
-void Inventory :: ReplaceItem(int i, Item* item) {
-   if (i>0 && (long unsigned int)i<inv.size()) {
-    (*indexToIterator(i)) = item;
-   }
-}
-
-void Inventory :: RemoveItem(int i)
-{
-  if (i>0 && (long unsigned int)i<inv.size()) {  
-      inv.erase(indexToIterator(i));
-  }
-}
 
 
 

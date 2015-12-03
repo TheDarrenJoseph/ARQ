@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 
+#define PROMPT_TEXT "ARQ: "
 
 class PlayerUI {
     
@@ -30,10 +31,10 @@ public:
     bool Input ();
     void DrawNPCS();
     void DrawPlayer();
-    void DrawPlayerInv();
+    void AccessPlayerInv();
     void DrawPlayerEquipment();
 
-    int AccessArea (Inventory* a);
+//    int AccessArea (Inventory* a);
     int AccessContainer (Container* c);
     int AccessInventory ();
 

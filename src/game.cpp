@@ -70,18 +70,14 @@ bool GameEngine :: GameLoop()
   
   displayUI->DrawMap (&map,false,playerX,playerY,3); 
   displayUI->DrawItems (&map); 
-  //DrawAreas();
+  displayUI->DrawContainers(&map);
   playerUI->DrawNPCS();
   
   //Draw player UI elements
-  playerUI->DrawPlayerInv();
-  playerUI->DrawPlayerEquipment();
-  
-  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());  
-
-  playerUI->DrawPlayer(); //Draw the player
-
+   playerUI->DrawPlayer(); //Draw the player
+   
   displayUI->UpdateUI(); //refresh all windows
+  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());   
   
   return playerUI->Input(); //take input from the player
 }

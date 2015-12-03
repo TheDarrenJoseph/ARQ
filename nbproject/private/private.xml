@@ -12,13 +12,21 @@
         <group>
             <file>file:/home/darren/Documents/ARQ/ARQ/arq.make</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/src/game.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/characters.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/characters.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/containers.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/map.cpp</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/map.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/room.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/items.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/src/containers.cpp</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/src/cursesUI.cpp</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/include/ui.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/include/playerUI.h</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/include/game.h</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/include/cursesUI.h</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/src/playerUI.cpp</file>
-            <file>file:/home/darren/Documents/ARQ/ARQ/src/map.cpp</file>
-            <file>file:/home/darren/Documents/ARQ/ARQ/include/room.h</file>
+            <file>file:/home/darren/Documents/ARQ/ARQ/README.md</file>
             <file>file:/home/darren/Documents/ARQ/ARQ/src/main.cpp</file>
         </group>
     </open-files>

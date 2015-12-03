@@ -11,12 +11,12 @@ public:
     virtual void DecorateWindows() = 0;
 
     virtual void DrawItems(Map* m) = 0; //Draw an assortment of items that will only ever have items (e.g inside of a chest)
-    virtual void DrawAreas(Map* m) = 0; //Draw an assortment of items that may contain containers (e.g a room)
+    virtual void DrawContainers(Map* m) = 0; //Draw an assortment of items that may contain containers (e.g a room)
 
     virtual void DrawPlayerStats (std::string name, int health, int loot) = 0;
 
     virtual void ListInv(Container* c) = 0;
-    virtual void ListInv(Inventory* a) = 0;
+    //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;
     virtual void HighlightInv(int index) = 0;
 

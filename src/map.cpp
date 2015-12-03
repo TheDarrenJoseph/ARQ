@@ -376,7 +376,7 @@ Item* Map::GetItem(int x, int y)
 
 }    
 
-Item* Map::GetContainerItem(int containerX, int containerY, int index)
+Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
 {
     return container_grid[containerY][containerX]->GetItem(index);
 }
@@ -412,7 +412,7 @@ void Map::InitAreas()
 {
     for (int x = 0; x < GRID_X; x++) {
         for (int y = 0; y < GRID_Y; y++) {
-            container_grid[y][x] = new Container(99, "Empty", " ", 0, 0, false);
+            container_grid[y][x] = new Container();
         }
     }
 }
