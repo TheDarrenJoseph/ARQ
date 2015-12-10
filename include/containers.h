@@ -14,34 +14,49 @@
 struct Container : public Item
 {  
     
-    private:
-        std::list<Item*>::iterator indexToIterator(long unsigned int i);
+  private:
+    std::list<const Item*>::iterator indexToIterator(long unsigned int i);
+    bool sizeCheck(long unsigned int i);
 
-    public:
-  std::list<Item*> inv;
+  public:
+  std::list<const Item*> inv;
 
   Item* GetInv();
-
   
-  int AddItem(Item* i);
-  void ReplaceItem(long unsigned int it,Item* i);
+ 
+  void AddItem(const Item* i);
+ // void AddItem(Item* i);
+  void ReplaceItem(long unsigned int it,const Item* i);
+  
+  
   
   void RemoveItem(long unsigned int i);
  
-  Item* GetItem(long unsigned int i);
+  const Item* GetItem(long unsigned int i);
   long unsigned int GetSize();
   
   int HasItems();
- 
-  Container() : Item (99,"None"," ",0,0,0,false)
+  
+  itemType getType()  {
+      return CONTAINER;
+  }
+  
+  Container() : Container (99,"None"," ",0,0,0,false)
     {
-      id = 99;
+      
     };
   
   Container(int i, std::string n, const char* s, int col, int weight, int val,bool lootable) : Item(i,n,s,col, weight, val,lootable)
     {
-
+     
     };
+    
+  virtual ~Container() {
+//      while (!inv.empty()) {
+//          delete(inv.front());
+//      }
+          
+  }
 
 };
 

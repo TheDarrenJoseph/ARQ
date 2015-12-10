@@ -10,6 +10,8 @@ enum outfitIndex {no_outfit,warrior,goblin,outfit_size};
 
 enum lootChance {noLoot,lowLoot,mediumLoot,highLoot};
 
+enum itemType{ITEM,CONTAINER};
+
 struct Item
 {
   int id;
@@ -19,6 +21,8 @@ struct Item
   int weight;
   int value;
   bool lootable;
+  
+  virtual itemType getType() const { return ITEM; } 
 
   Item()
   {
@@ -40,6 +44,10 @@ struct Item
     this->weight = weight;
     value = val;
     this->lootable = lootable;
+  }
+  
+  virtual ~Item() {
+      
   }
        
 };
@@ -76,9 +84,9 @@ struct outfit : public Item
 
 
 
-bool IsLootable(Item* i);
+bool IsLootable(const Item* i);
 
-bool CanDropItem(Item* thisItem);
+bool CanDropItem(const Item* thisItem);
 
 const Item item_library[item_size] =
   { 

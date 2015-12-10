@@ -18,7 +18,8 @@ void CursesUI::InitWindows()
     consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, stdscr->_maxy-6, 2); //Creates the console window for deco
     consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, stdscr->_maxy-5, 3); //Creates the console window for content
 
-    invwins_rear = newwin(INVWINS_REAR_Y, INVWINS_REAR_X, 11, GRID_X+4);
+    invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 0, 0);
+    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X,2,2);
 
     std::cout << "Display Initialised\n";
 }
@@ -157,7 +158,7 @@ void CursesUI::DrawItems(Map* m)
             const char *symbol;
 
             //grab the info for each item from the library
-            Item* i = m->GetItem(x, y);
+            const Item* i = m->GetItem(x, y);
 
             if ((i != NULL) && (IsLootable(i))) //Check for an item type, && it not being an empty item 
             {
@@ -186,12 +187,12 @@ void CursesUI::DrawContainers(Map* m)
             const char *symbol;
 
             //grab the info for each item from the library
-            Container* c = m->GetContainer(x, y);
+            Container c = m->GetContainer(x, y);
 
-            if (c->id == 98) //Check for an item type, && it not being an empty item 
+            if (c.id == 98) //Check for an item type, && it not being an empty item 
             {
-                colour = c->colour;
-                symbol = c->symbol;
+                colour = c.colour;
+                symbol = c.symbol;
 
                 //draw the tile to the screen
                 wmove(mainwin_front, y, x);
@@ -322,92 +323,66 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
 //}
 
 
-void CursesUI :: wDrawInvList(WINDOW* nWin, Container* a, long unsigned int invIndex) {
-    //For each line of the window
-    wprint_at(nWin,"NAME",0,0);
-    wprint_at(nWin,"WEIGHT",0,12);
-    wprint_at(nWin,"VALUE",0,24);
+
+void CursesUI :: HighlightInvList(int i, int max_x, int max_y) {
+    //Clear other highlighting
+    for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
+        mvwchgat(invwin_front, y, 0, INVWIN_FRONT_X, A_NORMAL, 0, NULL);
+    }
     
-    int thisIndex=0;
-        for (long unsigned int i=0;  i<(long unsigned int)MAINWIN_FRONT_Y; i++) {
-            if ((invIndex+i)<a->GetSize()){
-                thisIndex += i;
-               wprint_at(nWin,a->GetItem(thisIndex)->name.c_str(),i+1,0);
-               char buffer[6];
-               sprintf(buffer,"%d",a->GetItem(thisIndex)->value);
-               wprint_at(nWin,buffer,i+1,24);
-                //std::cout << a->GetItem(thisIndex)->name.c_str() << "\n";
+    //Index/Selection highlight
+    mvwchgat(invwin_front, i, 0, max_x, A_BLINK, 1, NULL); //add red blink to the current item
+    wrefresh(invwin_front);
+   // wgetch(invwin_front);
+}
+
+/**
+ * 
+ * @param c The container to list
+ * @param invIndex the top index of the list, so that the list can scroll down
+ */
+void CursesUI::ListInv(Container* c, long unsigned int invIndex)
+{   
+    box(invwin_rear, 0, 0);
+    wrefresh(invwin_rear);
+    
+    wprint_at(invwin_rear,c->name.c_str(),0,1);
+    wrefresh(invwin_rear);
+    
+     //For each line of the window
+    wprint_at(invwin_rear,"NAME",1,1);
+    wprint_at(invwin_rear,"WEIGHT",1,12);
+    wprint_at(invwin_rear,"VALUE",1,24);
+    
+    //long unsigned int thisIndex=0;
+        for (long unsigned int i=0;  i<(long unsigned int)INVWIN_FRONT_Y-1; i++) {
+            
+            if ((invIndex+i)<c->GetSize()) {
+                //thisIndex += i;
+                char buffer[20];
+            
+                const Item* thisItem = c->GetItem(invIndex+i);
+                
+                sprintf(buffer,"%12s",thisItem->name.c_str());
+                wprint_at(invwin_front,buffer,i,0);
+               
+                //Weight
+                sprintf(buffer,"%4d",c->weight);
+                wprint_at(invwin_front,buffer,i,14);
+               
+                //Value
+                sprintf(buffer,"%4d",c->value);
+                wprint_at(invwin_front,buffer,i,20);
             } else {
-                wprint_at(nWin,"---",i+1,0);
+                wprint_at(invwin_front,"------------",i,0); //12 blank spaces
+                wprint_at(invwin_front,"----",i,14); //+12+2 space
+                wprint_at(invwin_front,"----",i,20); //4+4 space]
             }
                 
             
         }
-}
-
-void wHighlightInvList(WINDOW* nWin, int i, int max_x, int max_y) {
-    //Clear other highlighting
-    for (int y=0; y<max_y; y++) {
-        mvwchgat(nWin, 0, y, max_x, A_NORMAL, 0, NULL);
-    }
     
-    //Index/Selection highlight
-    mvwchgat(nWin, i, max_x, GRID_X, A_BLINK, 1, NULL); //add red blink to the current item
-    wrefresh(nWin);
-}
-
-//make sure any overloads of this func are up-to-date with the header
-void CursesUI::ListInv(Container* c)
-{   
-    WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
-    WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
-
-    box(nWinRear, 0, 0);
-    wrefresh(nWinRear);
-    
-    wprint_at(nWinRear,c->name.c_str(),0,1);
-    wrefresh(nWinRear);
-    
-    bool selection = true;
-    int index = 0;
-    long unsigned int invIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    
-    //Selection loop
-    while(selection == true) {
-        
-        wDrawInvList(nWin, c, invIndex);
-        wHighlightInvList(nWin,index,MAINWIN_FRONT_X,MAINWIN_FRONT_Y);      
-        
-        //Grabbing keypress
-        keypad(nWin, TRUE);
-        int choice = wgetch(nWin); 
-        
-        switch(choice) {
-            case (KEY_UP | 'w') : {
-                if (index>0) {
-                    if (invIndex==0) {
-                        invIndex--;
-                    }
-                    index--; 
-                }
-                break;
-            }
-            case (KEY_DOWN | 's') : { 
-                if (index<MAINWIN_FRONT_Y) {
-                     if (invIndex<c->GetSize()) {
-                        invIndex++;
-                    }
-                    index++; 
-                }
-                break;
-            }
-            case ('q') : {
-                selection = false;
-                break;
-            }
-        }
-
-    }
+   
     
     return;
 }
@@ -567,13 +542,8 @@ int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
     answer = (answerchar);
 
     if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
-        if (p->AddToInventory(itm) == (1)) //If addToInventory unsuccessful
-        {
-            werase(consolewin_front);
-            wprint_at(consolewin_front, (const char *) "Inventory full..", 0, 0);
-            wgetch(consolewin_front);
-            return (1);
-        } else {
+        p->AddToInventory(itm);
+
             wmove(consolewin_front, 0, 0);
             werase(consolewin_front);
             wprintw(consolewin_front, "You pick up the %s..", itm_name.c_str());
@@ -584,7 +554,7 @@ int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
             p->SetPos(x, y);
 
             return (0);
-        };
+ 
     } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
         wmove(consolewin_front, 0, 0);
         werase(consolewin_front);
@@ -629,8 +599,7 @@ void CursesUI::ConsolePrintWithWait(std::string text, int posX, int posY)
  */
 int CursesUI::ConsoleGetInput() {
     keypad(consolewin_front, TRUE);
-    int choice = wgetch(consolewin_front); 
-    return choice;
+    return wgetch(consolewin_front); 
 }
 
 std::string CursesUI::ConsoleGetString()
@@ -639,7 +608,7 @@ std::string CursesUI::ConsoleGetString()
 
     wgetstr(consolewin_front, answerchar);
 
-   std::string output;
+    std::string output;
     output += answerchar;
     return output;
 }

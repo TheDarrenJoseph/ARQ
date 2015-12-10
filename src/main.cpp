@@ -50,25 +50,41 @@ int main()
     NPC npcs[MAX_NPCS] = Goblin();
 
     Player* thisPlayer = new Warrior();
+    
     thisPlayer->SetPos (1,1);
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container c = Container(98,"Bag","X",2,2,0,true); //inventory testing
-    thisPlayer->AddToInventory(&c);
+    Container* c = new Container(98,"Bag","X",2,2,0,true); //inventory testing
+    thisPlayer->AddToInventory(c);
+    
+    Container* ct = new Container(98,"Box","X",2,2,0,true); //inventory testing
+    thisPlayer->AddToInventory(ct);
             
-    Map thisMap =  Map(30,15,MAX_NPCS,&npcs[0],thisPlayer);
+    Item* i = new Item(98,"Swoop","X",2,2,0,true); //inventory testing
+    thisPlayer->AddToInventory(i);
+    
+    Map thisMap =  Map(50,15,MAX_NPCS,&npcs[0],thisPlayer);
     CursesUI thisUI = CursesUI();
     PlayerUI playerUI = PlayerUI(MAX_NPCS,&thisUI,&thisMap,thisPlayer,&npcs[0]);
     
     GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
     
+    //npcs[MAX_NPCS].Kill();
+    
     thisGame.StartGame();
     
-    free(thisPlayer);
+    //Why does a delete fail here??
+   // free(thisPlayer);
+    delete(thisPlayer);
+    
+    //Clean up our container mess
+    delete(c);
+    delete(ct);
+    delete(i);
     
     //Free each npc?
     //for (int npcNo=0; npcNo<MAX_NPCS; npcNo++) {
-     //   free(&npcs[npcNo]);
+     //   delete(&npcs[npcNo]);
     //}
             
     

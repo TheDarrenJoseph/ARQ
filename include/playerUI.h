@@ -35,8 +35,8 @@ public:
     void DrawPlayerEquipment();
 
 //    int AccessArea (Inventory* a);
-    int AccessContainer (Container* c);
-    int AccessInventory ();
+    void accessListCommand(Container* c,int index);
+    void AccessContainer (Container* c,bool playerInv);
 
     
     void TileProc(int y, int x,tile t);

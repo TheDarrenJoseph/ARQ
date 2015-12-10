@@ -20,6 +20,7 @@ class GameEngine
         NPC* npcs;
         UI* displayUI;
         PlayerUI* playerUI; 
+        std::list<Item*> generatedItems; //A list of all items generated (memory allocated instead of references)
         
     public:
         void InitNPCS();

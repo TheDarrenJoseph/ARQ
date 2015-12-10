@@ -85,8 +85,8 @@ std::string Character :: GetName()
 
 void Character :: GetPos (int* x, int* y)
 {
-  (*x = this->i);
-  (*y = this->y);
+  (*x = this->posX);
+  (*y = this->posY);
 }
 
 int Character :: GetHealth ()
@@ -102,19 +102,19 @@ void Character :: SetHealth(int i)
 
 void Character :: SetPos(int x, int y)
 {
-      this->i = x;
-      this->y = y;
+      this->posX = x;
+      this->posY = y;
 }
 
 /* Returns an area/dead body that contains the characters possesions*/
-Container* Character :: DropItems()
+Container Character :: DropItems()
 {
  std::string name = this->name.c_str();
  std::string thisName = "Dead " + name;
-  Container* body = new Container(1,thisName,"X",1,6,0,true);
+  Container body = Container(1,thisName,"X",1,6,0,true);
   
-  body->AddItem(new weapon(this->weps[1]));
-  body->AddItem(new weapon(this->weps[2]));
+  body.AddItem(&(*weps[1]));
+  body.AddItem(&(*weps[2]));
 
   //thisContainer->ReplaceItem(1,1,new outfit(this->currentOutfit));
 
@@ -123,14 +123,14 @@ Container* Character :: DropItems()
  
 void Character :: SetWeps (weaponIndex one, weaponIndex two, weaponIndex three)
 {  
-  this->weps[0] = weapon_library[one];
-  this->weps[1] = weapon_library[two];
-  this->weps[2] = weapon_library[three];
+  this->weps[0] = &weapon_library[one];
+  this->weps[1] = &weapon_library[two];
+  this->weps[2] = &weapon_library[three];
 }
   
-weapon* Character :: GetWeps()
+const weapon* Character :: GetWeps()
 {
-  return this->weps;
+  return weps[0];
 }
  
 void Character :: SetOutfit(outfit o)
@@ -163,17 +163,17 @@ outfit Character :: GetOutfit()
 
 /////////////////////////////////////////////////
 
-int Player :: AddToInventory(Item* i)
+void Player :: AddToInventory(Item* i)
 {
-  return inventory->AddItem(i);
+  inventory->AddItem(i);
 }
 
-void Player :: SetInventory(int index, Item* item)
+void Player :: SetInventory(int index, const Item* item)
 {
   inventory->ReplaceItem(index,item); 
 }
 
-Item* Player :: GetFromInventory(int index)
+const Item* Player :: GetFromInventory(int index)
 {
   return inventory->GetItem(index);
 }
@@ -206,7 +206,7 @@ int Player :: GetLootCount ()
 }
 
 int Player :: GetKeyCount() {
-    Item* invTile;
+    const Item* invTile;
     int keyCount = 0;
     
         for(int i = 0; i < INV_SIZE; i++)
@@ -223,7 +223,7 @@ int Player :: GetKeyCount() {
 
 
 void Player :: RemoveKeyCount(int keyCount) {
-    Item* invTile;
+    const Item* invTile;
     int removedCount = 0;
     
     for(int i = 0; i < INV_SIZE; i++)
@@ -233,7 +233,7 @@ void Player :: RemoveKeyCount(int keyCount) {
             if (removedCount == keyCount) {
                 return;
             } else  if (invTile->id == key) {
-               SetInventory(i, new Item(item_library[no_item]));
+               inventory->RemoveItem(i);
             };
             
         };
@@ -256,8 +256,8 @@ void NPC :: Move(int* x, int* y) {
         int xOffset = ((rand() % 3 - 1)); //generates a random number to offset current position by
         int yOffset = ((rand() % 3 - 1));
         
-        int pos_x = this->i;
-        int pos_y = this->y;
+        int pos_x = this->posX;
+        int pos_y = this->posY;
        
         //Sets the pointed-to values of the passed pointers to our new value
         (*x) = (pos_x+xOffset); 

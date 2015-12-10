@@ -14,9 +14,11 @@
 #define CONSOLEWIN_FRONT_X CONSOLEWIN_REAR_X-2
 #define CONSOLEWIN_FRONT_Y CONSOLEWIN_REAR_Y-2
 
-#define INVWINS_REAR_X GRID_X
-#define INVWINS_REAR_Y GRID_Y
+#define INVWIN_REAR_X MAINWIN_REAR_X
+#define INVWIN_REAR_Y MAINWIN_REAR_Y-CONSOLEWIN_REAR_Y
 
+#define INVWIN_FRONT_X INVWIN_REAR_X-2
+#define INVWIN_FRONT_Y INVWIN_REAR_Y-2
 
 #define INV_ITEM_Y 10 //The number of chars wide an inventory slot should be (How much text it can hold)
 
@@ -31,9 +33,10 @@ private:
     WINDOW* consolewin_rear; //Creates the console window for deco
     WINDOW* consolewin_front; //Creates the console window for content
 
-    WINDOW* invwins_front;
-    WINDOW* invwins_rear;
-
+    WINDOW* invwin_front;
+    WINDOW* invwin_rear;
+    
+    
 public:
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
     int wprint_at(WINDOW* winchoice, const char* text, int pos_y, int pos_x);
@@ -55,8 +58,8 @@ public:
 
     virtual void DrawPlayerStats(std::string name, int health, int loot);
 
-    void wDrawInvList(WINDOW* nWin, Container* a, long unsigned int invIndex);
-    virtual void ListInv(Container* c);
+    void HighlightInvList(int i, int max_x, int max_y);
+    virtual void ListInv(Container* c,long unsigned int invIndex);
 //    virtual void ListInv(Inventory* a);
     virtual void ClearInvHighlighting();
     virtual void HighlightInv(int index);

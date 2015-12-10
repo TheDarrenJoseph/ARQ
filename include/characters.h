@@ -14,8 +14,8 @@
 class Character
 {
  protected:
-  int i;
-  int y;
+  int posX;
+  int posY;
   
   char symbol;
   int colour;
@@ -25,7 +25,7 @@ class Character
   
   bool alive;
 
-  weapon weps [3];
+  const weapon* weps [3];
   outfit currentOutfit;
 
  public:
@@ -52,27 +52,27 @@ class Character
   int GetHealth ();
 
   void SetWeps(weaponIndex one, weaponIndex two, weaponIndex three);
-  weapon* GetWeps(); //returns a pointer to a 1D array of weapons
-
+  const weapon* GetWeps(); //returns a pointer to a 1D array of weapons
+  
   void SetOutfit(outfit o);
   outfit GetOutfit();
   
   void SetPos(int x, int y);
   void SetHealth(int);
 
-  Container* DropItems(); //Drops the players inv on death as a dead body
+  Container DropItems(); //Drops the players inv on death as a dead body
    
   Character (char c, int col, std::string name, int health) 
     {
-      i=0;
-      y=0;
+      posX=0;
+      posY=0;
            
       max_health = health;
       SetCharacter(c,col,name,health);
    	
       for (int i=0; i<3; i++)
 	{
-   	  weps[i] = weapon(weapon_library[no_weapon]);
+   	  weps[i] = &weapon_library[no_weapon];
 	}
    	 
       SetOutfit(outfit_library[no_outfit]);
@@ -107,11 +107,11 @@ class Player : public Character
   public :
   int DropItem(Item* thisItem, int invX, int invY);
   
-  int AddToInventory(Item* i);
-  void SetInventory(int index, Item* i);
+  void AddToInventory(Item* i);
+  void SetInventory(int index, const Item* i);
 
   Container* GetInventory();
-  Item* GetFromInventory(int index);
+  const Item* GetFromInventory(int index);
   
   void SetLoot(int x);
   int GetLootScore();
@@ -129,13 +129,16 @@ class Player : public Character
   
 	  for (long unsigned int i=0; i<INV_SIZE; i++)
 	    {
-	      //inventory->AddItem(new Item(item_library[no_item]));
+	      //inventory->AddItem(new Item(item_library[2]));
+            //  inventory->AddItem ((Item*) &item_library[2]);
+            // Item itm = Item(98,"Shoop","X",2,2,0,true); //inventory testing
+             // inventory->AddItem(&itm);
 	    }
 	
     };
     
     ~Player() {
-        free(inventory);
+        delete(inventory); //Calls the destructor for this container
     }
 };
 

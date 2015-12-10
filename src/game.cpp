@@ -114,15 +114,15 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 		  //generate a random chance out of 100 for each item
 		  int chance = rand() %100+1;
 	      
-		  //convert the current index in the library to an item enum 
 		  Item thisItem = item_library[i];
 	      
 		  //if the random chance < the number of items (e.g 10, 10%)
 		  if (chance<=thisChance)  
 		    {
 		      //then add it to the item grid
-		      map.AddToContainer(x,y,new Item(thisItem));
-	        
+		     // map.AddToContainer(x,y,new Item(thisItem));
+                      map.AddToContainer(x,y,&item_library[i]);
+                   
 		      //break the for loop
 		      break; 
 		    }
@@ -151,7 +151,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 																	
 	  else
 	    {
-	      map.AddToContainer(x,y,new Item(item_library[no_item]));
+	      map.AddToContainer(x,y,&item_library[no_item]);
 	    }
 	}
     }

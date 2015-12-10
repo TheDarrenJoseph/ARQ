@@ -3,9 +3,9 @@
 #include "map.h"
 #include "items.h"
 
-bool IsLootable(Item* i) { return i->lootable; };
+bool IsLootable(const Item* i) { return i->lootable; };
 
-bool CanDropItem(Item* thisItem)
+bool CanDropItem(const Item* thisItem)
 {
   if (thisItem->lootable)
     {    
@@ -17,4 +17,3 @@ bool CanDropItem(Item* thisItem)
       return false;
     }
 }
-

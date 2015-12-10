@@ -325,7 +325,7 @@ int Map::MoveNPCS()
 void Map::DropCharacterItems(Character* c)
 {
 
-    Container* body = c->DropItems();
+    Container body = c->DropItems();
 
     int x, y;
     c->GetPos(&x, &y);
@@ -342,7 +342,7 @@ int Map::DropPlayerItem(Player* p, Item* thisItem, int index)
     if (CanPlaceItems(x, y)) {
         AddToContainer(x, y, thisItem); //replace the map tile with the item
 
-        p->SetInventory(index, new Item(item_library[no_item])); //clear the inventory tile
+        p->GetInventory()->RemoveItem(index); //clear the inventory tile
 
         return 0;
     }
@@ -363,37 +363,35 @@ void Map::SetTile(int x, int y, tile t)
     game_grid[y][x] = t;
 };
 
-Item* Map::GetItem(int x, int y)
+const Item* Map::GetItem(int x, int y)
 {
-    int status = container_grid[y][x]->HasItems();
-    switch (status) {
-        case 1 :
-          return container_grid[y][x]->GetItem(0);
-
-        default :
-            return (Item*)container_grid[y][x];
+    int size = container_grid[y][x].GetSize();
+    if(size>0) {
+          return &container_grid[y][x];
+    } else {
+        return &item_library[0];
     }
 
 }    
 
-Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
+const Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
 {
-    return container_grid[containerY][containerX]->GetItem(index);
+    return container_grid[containerY][containerX].GetItem(index);
 }
 
 //Adds an item to the area
 
-void Map::AddToContainer(int x, int y, Item* i)
+void Map::AddToContainer(int x, int y, const Item* i)
 {
-    container_grid[y][x]->AddItem(i);
+    container_grid[y][x].AddItem(i);
 }
 
-Container* Map::GetContainer(int x, int y)
+Container Map::GetContainer(int x, int y)
 {
     return container_grid[y][x];
 }
 
-void Map::SetContainer(int x, int y, Container* c)
+void Map::SetContainer(int x, int y, Container c)
 {
     container_grid[y][x] = c;
 }
@@ -410,11 +408,7 @@ int Map::GetGridY()
 
 void Map::InitAreas()
 {
-    for (int x = 0; x < GRID_X; x++) {
-        for (int y = 0; y < GRID_Y; y++) {
-            container_grid[y][x] = new Container();
-        }
-    }
+   
 }
 
 /*
@@ -448,5 +442,5 @@ void DrawInv(area* a)
 
 int Map::ContainerProc(int x, int y)
 {
-    return GetContainer(x, y)->HasItems();
+    return GetContainer(x, y).HasItems();
 }

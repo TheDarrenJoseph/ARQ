@@ -15,7 +15,8 @@ public:
 
     virtual void DrawPlayerStats (std::string name, int health, int loot) = 0;
 
-    virtual void ListInv(Container* c) = 0;
+    virtual void HighlightInvList(int i, int max_x, int max_y)=0;
+    virtual void ListInv(Container* c,unsigned long int invIndex) = 0;
     //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;
     virtual void HighlightInv(int index) = 0;
