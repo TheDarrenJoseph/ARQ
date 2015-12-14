@@ -3,9 +3,9 @@
 
 #include <string>
 #include "ui.h"
-
-#define MAINWIN_REAR_X     stdscr->_maxx
-#define MAINWIN_REAR_Y     stdscr->_maxy
+ 
+#define MAINWIN_REAR_X     getMaxX()
+#define MAINWIN_REAR_Y     getMaxY()
 #define MAINWIN_FRONT_X    MAINWIN_REAR_X-2
 #define MAINWIN_FRONT_Y    MAINWIN_REAR_Y-2
 
@@ -37,7 +37,10 @@ private:
     WINDOW* invwin_rear;
     
     
+    
+    
 public:
+    
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
     int wprint_at(WINDOW* winchoice, const char* text, int pos_y, int pos_x);
     int wprintNoRefresh(WINDOW* win, std::string text);

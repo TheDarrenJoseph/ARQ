@@ -49,11 +49,11 @@ public:
     bool AddDoor(tile doorType, side s, int* x, int* y);
     
     
-    Room(int x, int y, int s) {
+    Room(int x, int y, int size) {
         doorNo = 0;
         startPos = std::make_pair(x,y);
-        endPos   = std::make_pair(x+s,y+s);
-        size = s;
+        endPos   = std::make_pair(x+size,y+size);
+        this->size = size;
     }
     
     Room() : Room(0,0,0) {

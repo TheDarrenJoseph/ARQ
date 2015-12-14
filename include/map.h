@@ -16,7 +16,7 @@ class Map
     tile game_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
-    static const int MAX_ROOMS=((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
+    static const int MAX_ROOMS=4; //((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
     
     //Room list
@@ -150,8 +150,8 @@ class Map
         
         roomCount = 0;
         
-        int seed = x*y;
-        CreateMap(seed);
+        int roomChance = rand()%100-50; //Between 0-49% chance of rooms
+        CreateMap(roomChance);
         
 //        //Initialise container spaces
 //        for (int x = 0; x < GRID_X; x++) {

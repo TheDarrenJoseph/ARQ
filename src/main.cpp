@@ -1,23 +1,17 @@
-/////////////The ASCII Roguelike Quester -- Experimental project////////
-/////////////////////////////////LINUX BUILD////////////////////////////
-//                                                                    //
-//  Author: Rave Kutsuu              Version : 0.89                   //
-//  Created: Dec 16, 2012            Last Modified: 20 July, 2014     //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
-//LICENSE
-// See the "LICENSE" file (in root directory of ARQ) for details
-////////////////////////////////////////////////////////////////////////
-//CREDITS                                                            
-// 1. The Beginner's Guide to Roguelike Development in C/C++ --       
-// http://www.kathekonta.com/rlguide/index.html //(28/08/2013)        
-                                                                 
-// 3. NCURSES Programming HOWTO --                                    
-//http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/               
-                                                       
-////////////////////////////////////////////////////////////////////////
+//The ASCII Roguelike Quester -- Experimental project
+//LINUX BUILD
+//                                                                    
+// Author: Rave Kutsuu             
+// Version : 0.89                   
+// Created: Dec 16, 2012           
+// Last Modified: 20 July, 2014     
+// LICENSE -- See the "LICENSE" file (in root directory of ARQ) for details
 
-//BULD COMMANDS
+//CREDITS --                                                             
+// 1. The Beginner's Guide to Roguelike Development in C/C++ -- http://www.kathekonta.com/rlguide/index.html (11/12/2015)        
+// 2. NCURSES Programming HOWTO -- http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/ (11/12/2015))
+                                                       
+//BULD COMMANDS --
 //Linux G++ -- "g++ -Wall -I../include -o "%e" "%f" -lncurses -std=gnu++11 characters.cpp ui.cpp grid.cpp items.cpp"
 
 #include <cstdlib>
@@ -41,9 +35,7 @@ void Quit()
 
 int main()
 {
-    /*Main initialisation of the game, use of new is avoided, instead creating every element for the game
-    as a local variable in this scope so that we can save on memory management.
-     */
+    srand(time(NULL));
     
     const int MAX_NPCS = 1; //Number-1 to allow for 0 indexing
     
@@ -69,12 +61,8 @@ int main()
     
     GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
     
-    //npcs[MAX_NPCS].Kill();
-    
     thisGame.StartGame();
     
-    //Why does a delete fail here??
-   // free(thisPlayer);
     delete(thisPlayer);
     
     //Clean up our container mess

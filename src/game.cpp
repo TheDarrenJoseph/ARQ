@@ -46,6 +46,8 @@ void GameEngine :: StartGame()
       "The deeper you go, the more valuable the prizes that await you, "
       "but beware what lurks in the deeper levels! Good Luck!");
       
+      npcs[0].Kill();
+      
       while (GameLoop()); //Main game loop
           break;
       

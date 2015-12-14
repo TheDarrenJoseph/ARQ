@@ -64,6 +64,8 @@ class Character
    
   Character (char c, int col, std::string name, int health) 
     {
+      alive = true;
+      health=0;
       posX=0;
       posY=0;
            

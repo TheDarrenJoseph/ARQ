@@ -9,14 +9,16 @@ using std::string;
 void CursesUI::InitWindows()
 {
     //newwin(size y, size x, pos y, pos x) 
+    int maxX, maxY;
+    getmaxyx(stdscr, maxY, maxX);
     
-    titlewin = newwin(1, stdscr->_maxx, 0, stdscr->_maxx/3); //Creates the stats window for content
+    titlewin = newwin(1, maxX, 0, maxX/3); //Creates the stats window for content
 
     mainwin_rear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1); 
     mainwin_front = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2); //Creates a new window called new win at 2,2 that has the dimensions of GRID_X, and GRID_Y.
 
-    consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, stdscr->_maxy-6, 2); //Creates the console window for deco
-    consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, stdscr->_maxy-5, 3); //Creates the console window for content
+    consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, maxY-6, 2); //Creates the console window for deco
+    consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, maxY-5, 3); //Creates the console window for content
 
     invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 0, 0);
     invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X,2,2);

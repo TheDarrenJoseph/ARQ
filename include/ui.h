@@ -4,6 +4,20 @@
 #include <curses.h>  
 #include "map.h"
 
+ static int getMaxX() {
+    int x, y;
+    getmaxyx(stdscr, y, x);
+    
+    return x;
+}
+
+static int getMaxY() {
+    int x, y;
+    getmaxyx(stdscr, y, x);
+    
+    return x;
+}
+
 class UI {
 public:
     virtual void InitWindows() = 0;

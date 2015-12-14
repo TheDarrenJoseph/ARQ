@@ -443,15 +443,15 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
     //main movement check
     if (map->IsTraversable(x, y)) {
-
         output = "You walk along the " + move_tilename;
+
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         //player->SetPos(x,y);  
     } else {
-
         output = "There's a " + move_tilename + " here";
+
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
@@ -467,7 +467,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
         //Trap    
     case 2:
-        //Trap found!!
+        break;
 
     //Enemy    
     case 3:
@@ -483,6 +483,10 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
         std::string enemy_name = npcs[eid].GetName();
 
         output = "There is the corpse of a" + enemy_name + "here..";
+        
+        //Do you want to search it?
+        //mainUI->AccessContainer(container_grid[x][y]);
+        
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 

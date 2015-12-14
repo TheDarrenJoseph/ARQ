@@ -2,27 +2,28 @@
 #include "room.h"
 
 bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
-{
+{ 
+    if (roomCount == 0) {
+        return true;
+    }
+    
     bool canPlace = false;
- 
-    if (roomCount == 0) return true;
-
+    int newRoomEndX = newRoomStartX + newRoomSize;
+    int newRoomEndY = newRoomStartY + newRoomSize;
+    
+    if (newRoomStartX<0 || newRoomEndX>GRID_X || newRoomStartY<0 || newRoomEndY>GRID_Y) {
+        return false;
+    }
+    
     else if (roomCount < MAX_ROOMS) {
-        
-        int newRoomEndX = newRoomStartX + newRoomSize;
-        int newRoomEndY = newRoomStartY + newRoomSize;
-
-
         int startX;
         int startY;
 
         int endX;
         int endY;
 
-        
-        
         //Order/Sort a room list this to compare rooms in the area?? (EFFICIENCY??)
-        for (int i = 0; i < roomCount; i++) {
+        for (int i=0; i < roomCount; i++) {
             canPlace = false; //Assume false
             
             startX = rooms[i].GetStartPos().first;
@@ -30,16 +31,21 @@ bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
 
             endX = rooms[i].GetEndPos().first;
             endY = rooms[i].GetEndPos().second;
-            
-            if (newRoomStartX != startX && newRoomStartY != startY && newRoomEndX != endX && newRoomEndY != endY) {
-            
-            //For each room, check to see if our new one doesn't intersect it
-            if (newRoomStartX > endX && newRoomEndX > endX) canPlace = true;   
-            if (newRoomStartY > endY && newRoomEndY > endY) canPlace = true;   
-            
-            if (newRoomStartX < startX && newRoomEndX < startX) canPlace = true;   
-            if (newRoomStartY < startY && newRoomEndY < startY) canPlace = true;   
+
+            //Check if the start co-ordinates are NOT within this room's area
+            if (!(newRoomStartX>=startX && newRoomStartX<=endX && newRoomStartY>=startY && newRoomStartY<=endY)) {
+                
+                if ((newRoomStartX>endX && newRoomStartY>endY)) {
+                    canPlace = true;
+                }
+                //Check endX and endY against each room's end X and Y to be sure it doesn't start before it but overlap it
+                if (!(endX-newRoomEndX>0) && !(endY-newRoomEndY>0)) {
+                    canPlace = true;
+                } 
+               
             }
+            
+            
         
         }
 
@@ -79,7 +85,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
     //Min area for a room = 9
 
     //Sanity check
-    if (x > 0 && x < GRID_X - size && y > 0 && y < GRID_Y - size && size >= 3) {
+    if (x >= 0 && x < GRID_X - size && y >= 0 && y < GRID_Y-size && size >= 3) {
 
         if (CanPlaceRoom(x, y, size)) {
             //Create first half/corner
@@ -95,7 +101,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
             roomCount++;
             
             //Door addition algorithm
-            int doorNo = rand() % 4 + 1; //rand number from 1 to 8
+            int doorNo = rand() % 4 + 1; //rand number from 1 to 3
 
 
             tile doorTile = cd1; //default door tile
@@ -133,13 +139,20 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
 }
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
-void Map::CreateMap(int seed)
+void Map::CreateMap(int roomChance)
 {
+    int randChance = 0;
     //Inefficient, try to set all tiles by default
     for (int x = 0; x < GRID_X; x++) {
         for (int y = 0; y < GRID_Y; y++) {
-            game_grid[y][x] = cor; //make every tile a corridor to begin with
-
+          //  game_grid[y][x] = cor; //make every tile a corridor to begin with
+            randChance = rand() % 100+1; //rand 1-100
+            int size = rand() % 8+3;
+            
+            if (roomCount<MAX_ROOMS && randChance > roomChance ) {
+                CreateRoom(x, y, size, NULL);
+                
+            }
             //int roomChance = rand();
             //int size = rand(); //size>=4
 
@@ -168,9 +181,9 @@ void Map::CreateMap(int seed)
 
 
     //testing room creation
-    CreateRoom(1, 2, 5, NULL);
-    CreateRoom(7, 7, 3, NULL);
-    CreateRoom(1, 3, 3, NULL);
+    
+    CreateRoom(1, 2, 3, NULL);
+    CreateRoom(7, 2, 3, NULL);
 
 
 }
@@ -206,8 +219,14 @@ bool Map::CanPlaceItems(int x, int y)
     else return false;
 }
 
-int Map::EncounterCheck(int x, int y, int* npcID)
-{
+/** Checks every NPC's pos to see if you've walked into them, also checks if they're alive
+ * 
+ * @param x
+ * @param y
+ * @param npcID
+ * @return 
+ */
+int Map::EncounterCheck(int x, int y, int* npcID) {
 
     for (int e_id = 0; e_id < MAX_NPCS; e_id++) {
         if (npcs[e_id].IsAlive()) {
