@@ -5,17 +5,11 @@
 #include "map.h"
 
  static int getMaxX() {
-    int x, y;
-    getmaxyx(stdscr, y, x);
-    
-    return x;
+     return getmaxx(stdscr);
 }
 
 static int getMaxY() {
-    int x,y;
-    getmaxyx(stdscr, y, x);
-    
-    return x;
+    return getmaxy(stdscr);
 }
 
 class UI {
