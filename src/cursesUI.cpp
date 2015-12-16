@@ -20,8 +20,8 @@ void CursesUI::InitWindows()
     consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, maxY-6, 2); //Creates the console window for deco
     consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, maxY-5, 3); //Creates the console window for content
 
-    invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 0, 0);
-    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X,2,2);
+    invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
+    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X,4,4);
 
     std::cout << "Display Initialised\n";
 }
@@ -284,16 +284,16 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
 
     //werase(winchoice);
     //box(winchoice,0,12);
-    wmove(winchoice, 15, 0);
-    wprintw(winchoice, "%s", name.c_str());
-
     wmove(winchoice, 0, 1);
-    wprintw_col(winchoice, "Health: ", 4);
-    wprintw(winchoice, "%d", health);
+    wprintw(winchoice, "%-12s", name.c_str());
 
-    wmove(winchoice, 0, 24);
-    wprintw_col(winchoice, "Loot:   ", 4);
-    wprintw(winchoice, "%d", loot);
+    wmove(winchoice, 0, 14);
+    wprintw_col(winchoice, "Health: ", 2);
+    wprintw(winchoice, "%-4d", health);
+
+    wmove(winchoice, 0, 28);
+    wprintw_col(winchoice, "Loot: ", 4);
+    wprintw(winchoice, "%06d", loot);
     
     wrefresh(winchoice);
     
@@ -326,18 +326,30 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
 //}
 
 
-
-void CursesUI :: HighlightInvList(int i, int max_x, int max_y) {
+void CursesUI :: ClearInvHighlighting() {
     //Clear other highlighting
     for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
         mvwchgat(invwin_front, y, 0, INVWIN_FRONT_X, A_NORMAL, 0, NULL);
     }
+}
+
+/** Highlights xChars characters at the specified x,yIndex
+ * 
+ * @param xChars
+ * @param yIndex
+ */
+void CursesUI :: HighlightInv(int xChars, int xIndex, int yIndex) {
+   
     
     //Index/Selection highlight
-    mvwchgat(invwin_front, i, 0, max_x, A_BLINK, 1, NULL); //add red blink to the current item
+    mvwchgat(invwin_front, yIndex, xIndex, xChars, A_BLINK, 1, NULL); 
     wrefresh(invwin_front);
-   // wgetch(invwin_front);
 }
+
+void CursesUI :: HighlightInvLine(int index) {
+    mvwchgat(invwin_front, index, 0,INVWIN_FRONT_X, A_BLINK, 1, NULL); //add red blink to the current line
+    wrefresh(invwin_front);
+ }
 
 /**
  * 
@@ -347,59 +359,40 @@ void CursesUI :: HighlightInvList(int i, int max_x, int max_y) {
 void CursesUI::ListInv(Container* c, long unsigned int invIndex)
 {   
     box(invwin_rear, 0, 0);
-    wrefresh(invwin_rear);
-    
     wprint_at(invwin_rear,c->name.c_str(),0,1);
-    wrefresh(invwin_rear);
     
-     //For each line of the window
+      //For each line of the window
     wprint_at(invwin_rear,"NAME",1,1);
     wprint_at(invwin_rear,"WEIGHT",1,12);
     wprint_at(invwin_rear,"VALUE",1,24);
     
-    //long unsigned int thisIndex=0;
-        for (long unsigned int i=0;  i<(long unsigned int)INVWIN_FRONT_Y-1; i++) {
-            
-            if ((invIndex+i)<c->GetSize()) {
+    wrefresh(invwin_rear);
+    
+    long unsigned int invSize = c->GetSize();    
+    
+    for (long unsigned int i=0;  i<(long unsigned int)INVWIN_FRONT_Y-1 && (invIndex+i)<invSize; i++) {
                 //thisIndex += i;
                 char buffer[20];
             
                 const Item* thisItem = c->GetItem(invIndex+i);
                 
-                sprintf(buffer,"%12s",thisItem->name.c_str());
+                sprintf(buffer,"%-12s",thisItem->name.c_str());
                 wprint_at(invwin_front,buffer,i,0);
                
                 //Weight
-                sprintf(buffer,"%4d",c->weight);
+                sprintf(buffer,"%-4d",c->weight);
                 wprint_at(invwin_front,buffer,i,14);
                
                 //Value
-                sprintf(buffer,"%4d",c->value);
+                sprintf(buffer,"%-4d",c->value);
                 wprint_at(invwin_front,buffer,i,20);
-            } else {
-                wprint_at(invwin_front,"------------",i,0); //12 blank spaces
-                wprint_at(invwin_front,"----",i,14); //+12+2 space
-                wprint_at(invwin_front,"----",i,20); //4+4 space]
-            }
-                
-            
-        }
-    
-   
-    
+    }
+        
+    //wrefresh(invwin_front);
     return;
 }
 
-void CursesUI :: ClearInvHighlighting() {
-    //    for (int x = 0; x < 3; x++) {
-    //        for (int y = 0; y < 3; y++) {
-    //            WINDOW* thisWin = invwins_front[y][x];
-    //            
-    //            mvwchgat(thisWin, 0, 0, 9, A_NORMAL, 0, NULL);
-    //            wrefresh(thisWin);1
-    //        }
-    //    }
-}
+
 
 void CursesUI :: ClearConsoleHighlighting() {
     //    for (int x = 0; x < 3; x++) {
@@ -407,11 +400,6 @@ void CursesUI :: ClearConsoleHighlighting() {
     //  
     //        }
     //    }
-}
-
-void CursesUI :: HighlightInv(int index) {
-   // mvwchgat(consolewin_front, scr_y, scr_x, GRID_X, A_BLINK, 1, NULL); //add red blink to the current item
-   // wrefresh(consolewin_front);
 }
 
 void CursesUI :: HighlightConsole(int scr_x, int scr_y) {
@@ -607,12 +595,14 @@ int CursesUI::ConsoleGetInput() {
 
 std::string CursesUI::ConsoleGetString()
 {
+    echo();
     char answerchar[20];
-
     wgetstr(consolewin_front, answerchar);
-
+    noecho();
+    
     std::string output;
     output += answerchar;
+    
     return output;
 }
 

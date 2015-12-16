@@ -4,14 +4,6 @@
 #include <curses.h>  
 #include "map.h"
 
- static int getMaxX() {
-     return getmaxx(stdscr);
-}
-
-static int getMaxY() {
-    return getmaxy(stdscr);
-}
-
 class UI {
 public:
     virtual void InitWindows() = 0;
@@ -23,12 +15,12 @@ public:
 
     virtual void DrawPlayerStats (std::string name, int health, int loot) = 0;
 
-    virtual void HighlightInvList(int i, int max_x, int max_y)=0;
+    virtual void HighlightInv(int xChars, int xIndex, int yIndex)=0;
+    virtual void HighlightInvLine(int index)=0;
     virtual void ListInv(Container* c,unsigned long int invIndex) = 0;
     //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;
-    virtual void HighlightInv(int index) = 0;
-
+    
     virtual int DrawMap (Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance) = 0;
     virtual void DrawCharacter (int x, int y, int colour, char symbol) = 0;
 

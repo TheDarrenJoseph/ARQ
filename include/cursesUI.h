@@ -4,8 +4,8 @@
 #include <string>
 #include "ui.h"
  
-#define MAINWIN_REAR_X     getMaxX()
-#define MAINWIN_REAR_Y     getMaxY()
+#define MAINWIN_REAR_X     getmaxx(stdscr)-2
+#define MAINWIN_REAR_Y     getmaxy(stdscr)-1
 #define MAINWIN_FRONT_X    MAINWIN_REAR_X-2
 #define MAINWIN_FRONT_Y    MAINWIN_REAR_Y-2
 
@@ -14,8 +14,8 @@
 #define CONSOLEWIN_FRONT_X CONSOLEWIN_REAR_X-2
 #define CONSOLEWIN_FRONT_Y CONSOLEWIN_REAR_Y-2
 
-#define INVWIN_REAR_X MAINWIN_REAR_X
-#define INVWIN_REAR_Y MAINWIN_REAR_Y-CONSOLEWIN_REAR_Y
+#define INVWIN_REAR_X MAINWIN_REAR_X-2
+#define INVWIN_REAR_Y MAINWIN_REAR_Y-CONSOLEWIN_REAR_Y-1
 
 #define INVWIN_FRONT_X INVWIN_REAR_X-2
 #define INVWIN_FRONT_Y INVWIN_REAR_Y-2
@@ -61,12 +61,13 @@ public:
 
     virtual void DrawPlayerStats(std::string name, int health, int loot);
 
-    void HighlightInvList(int i, int max_x, int max_y);
+    virtual void HighlightInv(int xChars, int xIndex, int yIndex);
+    virtual void HighlightInvLine(int index);
+    
     virtual void ListInv(Container* c,long unsigned int invIndex);
 //    virtual void ListInv(Inventory* a);
     virtual void ClearInvHighlighting();
-    virtual void HighlightInv(int index);
-
+   
     virtual int DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance);
     virtual void DrawCharacter(int x, int y, int colour, char symbol);
 

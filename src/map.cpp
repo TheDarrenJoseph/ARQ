@@ -7,51 +7,23 @@ bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
         return true;
     }
     
-    bool canPlace = false;
     int newRoomEndX = newRoomStartX + newRoomSize;
     int newRoomEndY = newRoomStartY + newRoomSize;
     
+  
     if (newRoomStartX<0 || newRoomEndX>GRID_X || newRoomStartY<0 || newRoomEndY>GRID_Y) {
         return false;
-    }
-    
-    else if (roomCount < MAX_ROOMS) {
-        int startX;
-        int startY;
-
-        int endX;
-        int endY;
-
-        //Order/Sort a room list this to compare rooms in the area?? (EFFICIENCY??)
-        for (int i=0; i < roomCount; i++) {
-            canPlace = false; //Assume false
-            
-            startX = rooms[i].GetStartPos().first;
-            startY = rooms[i].GetStartPos().second;
-
-            endX = rooms[i].GetEndPos().first;
-            endY = rooms[i].GetEndPos().second;
-
-            //Check if the start co-ordinates are NOT within this room's area
-            if (!(newRoomStartX>=startX && newRoomStartX<=endX && newRoomStartY>=startY && newRoomStartY<=endY)) {
-                
-                if ((newRoomStartX>endX && newRoomStartY>endY)) {
-                    canPlace = true;
-                }
-                //Check endX and endY against each room's end X and Y to be sure it doesn't start before it but overlap it
-                if (!(endX-newRoomEndX>0) && !(endY-newRoomEndY>0)) {
-                    canPlace = true;
-                } 
-               
-            }
-            
-            
+    } else if (roomCount < MAX_ROOMS) {
+        Room newRoom = Room(newRoomStartX, newRoomStartY, newRoomSize);
         
+        for (int i=0; i < roomCount; i++) {
+            if (rooms[i].intersects(newRoom)) return false;
         }
 
+        return true;
     }
 
-    return canPlace;
+    return false;
 }
 
 void Map::CreateWall(int x, int y, int size, bool horizontal)
@@ -142,15 +114,27 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
 void Map::CreateMap(int roomChance)
 {
     int randChance = 0;
+    int roomArea =0;
+    int tryCount=0;
+    
     //Inefficient, try to set all tiles by default
-    for (int x = 0; x < GRID_X; x++) {
-        for (int y = 0; y < GRID_Y; y++) {
-          //  game_grid[y][x] = cor; //make every tile a corridor to begin with
-            randChance = rand() % 100+1; //rand 1-100
-            int size = rand() % 8+3;
+    while(roomCount<7) {
+       // srand(time(NULL));
+        
+   // for (int x = 0; x < GRID_X; x++) {
+     //   for (int y = 0; y < GRID_Y; y++) {
+            //game_grid[y][x] = cor; //make every tile a corridor to begin with
             
-            if (roomCount<MAX_ROOMS && randChance > roomChance ) {
-                CreateRoom(x, y, size, NULL);
+        int x = rand() % GRID_X;
+        int y = rand() % GRID_Y;
+            
+            randChance = rand() % 100+1; //rand 1-100
+            int size = rand() % 10+3;
+            
+            if (roomCount<MAX_ROOMS && randChance > 40 ) {
+                if (CreateRoom(x, y, size, NULL)) {
+                    roomArea += size;
+                }
                 
             }
             //int roomChance = rand();
@@ -175,15 +159,28 @@ void Map::CreateMap(int roomChance)
             //corner x,y + this number
             //}
 
+       // }
+            
+        if (tryCount>50) {
+            for (int x=0; x<GRID_X; x++) {
+                for (int y=0; y<GRID_Y; y++) {
+                    game_grid[y][x] = ntl;
+                }
+            }
+            
+            roomCount=0;
+            roomArea=0;
+            tryCount = 0;
+           
+        } else {
+            tryCount++;
         }
-
+    
     }
 
 
     //testing room creation
-    
-    CreateRoom(1, 2, 3, NULL);
-    CreateRoom(7, 2, 3, NULL);
+
 
 
 }

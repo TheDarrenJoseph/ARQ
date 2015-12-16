@@ -16,7 +16,7 @@ class Map
     tile game_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
-    static const int MAX_ROOMS=4; //((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
+    static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
     
     //Room list

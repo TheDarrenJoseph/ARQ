@@ -42,6 +42,7 @@ class Room {
         
 public:
     
+    bool intersects(Room r);
     std::pair<int,int> GetStartPos();
     std::pair<int,int> GetEndPos();
     int GetSize();

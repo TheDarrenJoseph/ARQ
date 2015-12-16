@@ -161,7 +161,7 @@ int PlayerUI::BattleTurn(int npc_id)
 
         mainUI->ConsolePrint("Use A and D to choose a weapon, 'use' to select", 1, 0);
         mainUI->ConsolePrint(PROMPT_TEXT, 2, 0); //give us a prompt
-
+        
         std::string choice = mainUI->ConsoleGetString();
         if ((choice == "a") && (index > 0)) {
             index--;
@@ -523,8 +523,8 @@ bool PlayerUI::TextInput()
     } else if (answer == "inventory") AccessPlayerInv();
 
     else {
-        mainUI->ConsolePrintWithWait("unrecognised input, please input a command, or use 'help' for a list. ", 0, 0);
-        TextInput();
+        mainUI->ConsolePrintWithWait("unrecognised input, use 'help' for a examples. ", 0, 0);
+        //TextInput();
     }
 
     return true;
@@ -653,19 +653,19 @@ void PlayerUI :: accessListCommand(Container* c, int index) {
  */
 void PlayerUI::AccessContainer(Container * c, bool playerInv)
 {
-    
-    bool selection = true;
-    int index = 0;
+        bool selection = true;
+    long unsigned int index = 0;
     long unsigned int invIndex = 0; //The index of the topmost item on the screen, alows scrolling
     
     //Selection loop
     while(selection == true) {
         
         mainUI->ListInv(c,invIndex);
-        mainUI->HighlightInvList(index,MAINWIN_FRONT_X,MAINWIN_FRONT_Y);      
-   
+        mainUI->HighlightInvLine(index);      
+           
         int choice =mainUI->ConsoleGetInput();
-       // index++;
+        long unsigned int invSize = c->GetSize()-1; 
+        // index++;
         switch(choice) {
             case (KEY_UP) : {
                 if (index>0) {
@@ -676,11 +676,15 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
                 break;
             }
             case (KEY_DOWN) : { 
-                if (index<INVWIN_FRONT_Y-2) {
-                    index++; 
-                } else if (invIndex<c->GetSize() && index==INVWIN_FRONT_Y-2) {
-                    invIndex++;
-                }
+                long unsigned int invWindowLimit = INVWIN_FRONT_Y-2;
+                //Checking against the window boundary. invSize-1 allows
+                if (index<invWindowLimit && index<invSize) {
+                    if (index==invWindowLimit-1 && invIndex<invSize) {
+                        invIndex++;
+                    } else {
+                        index++; 
+                    }
+                } 
                 break;
             }
             case ('q') : {
