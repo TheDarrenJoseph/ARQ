@@ -9,7 +9,7 @@
  */
 std::list<const Item*>::iterator Container :: indexToIterator(long unsigned i) {
     
-    if (i>=0 && i<inv.size()) { 
+    if (i<inv.size()) { 
         std::list<const Item*>::iterator it = inv.begin();
         
         for (long unsigned int index=0; index<i ; index++){
@@ -27,7 +27,7 @@ long unsigned int Container :: GetSize() {
 }
 
 bool Container :: sizeCheck(long unsigned int i) {
-    return ((!inv.empty()) && i>=0 && i<inv.size());
+    return ((!inv.empty()) && i<inv.size());
 }
 
 void Container :: AddItem(const Item* i) {

@@ -14,9 +14,9 @@ class Room {
     private:
         
         struct Door {
-            tile doorType;
-            int posX;
-            int posY;
+            tile doorType=od0; 
+            int posX=0;
+            int posY=0;
             
             Door() : Door(cd1,0,0) {
             }
@@ -29,13 +29,13 @@ class Room {
         };   
         
         //Top-left corner/starting co-ordinates for a room
-        std::pair<int,int> startPos;
+        std::pair<int,int> startPos = std::make_pair(0,0);
         
         //Size of each wall/overall square size
-        int size;
+        int size=3;
         
         //Co-ordinates for the bottom-right corner of a room
-        std::pair<int,int> endPos;
+        std::pair<int,int> endPos = std::make_pair(0,0);
         
         Door doors[8];
         int doorNo = 0;

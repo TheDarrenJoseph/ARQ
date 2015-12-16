@@ -14,20 +14,20 @@
 class Character
 {
  protected:
-  int posX;
-  int posY;
+  int posX = 0;
+  int posY = 0;
   
-  char symbol;
-  int colour;
-  std::string name;
-  int health;
-  int max_health;
+  char symbol = ' ';
+  int colour  = 0;
+  std::string name = "";
+  int health = 0;
+  int max_health = 0;
   
-  bool alive;
+  bool alive = true;
 
   const weapon* weps [3];
-  outfit currentOutfit;
-
+  outfit currentOutfit = outfit();
+  
  public:
   
   bool IsAlive();
@@ -49,6 +49,7 @@ class Character
   char GetSymbol();
 
   std::string GetName();
+  int GetMaxHealth();
   int GetHealth ();
 
   void SetWeps(weaponIndex one, weaponIndex two, weaponIndex three);
@@ -62,7 +63,7 @@ class Character
 
   Container DropItems(); //Drops the players inv on death as a dead body
    
-  Character (char c, int col, std::string name, int health) 
+  Character (char charSymbol, int col, std::string name, int health) 
     {
       alive = true;
       health=0;
@@ -70,7 +71,7 @@ class Character
       posY=0;
            
       max_health = health;
-      SetCharacter(c,col,name,health);
+      SetCharacter(charSymbol,col,name,health);
    	
       for (int i=0; i<3; i++)
 	{
@@ -79,12 +80,44 @@ class Character
    	 
       SetOutfit(outfit_library[no_outfit]);
     };
+    
+  void copyCharacter(const Character& c) {  
+      alive =c.alive;
+      health=c.health;
+      this->posX = c.posX;
+      this->posY = c.posY;
+      
+      max_health = c.max_health;
+      
+      //assigning pointers
+      for (int i=0; i<3; i++)
+	{
+   	  weps[i] = c.weps[i];
+	}
+   	 
+      this->currentOutfit = c.currentOutfit;
+  }
+    
+  //Override assignment operator
+  Character& operator=(const Character& c) {  
+      copyCharacter(c);
+      
+      return *this;
+  }
+    
+  //Copy constructor  
+  Character(const Character& c) {  
+      copyCharacter(c);
+  }
+    
+  virtual ~Character() {  
+  }
 };
 
 class NPC : public Character
 {
  private:
-    NPC* npcs;
+   // NPC* npcs;
     
  public :
   int BattleTurn ();
@@ -100,10 +133,10 @@ class Player : public Character
 {
  private:
 
-  Container* inventory ;
-  NPC* npcs;
+  Container* inventory = NULL;
+ // NPC* npcs;
   
-  int loot;
+  int loot=0;
   
   
   public :
@@ -138,6 +171,20 @@ class Player : public Character
 	    }
 	
     };
+    
+  Player& operator=(const Player& c) {  
+      this->inventory = c.inventory;
+      this->loot = c.loot;
+      
+      return *this;
+  }
+    
+  //Copy constructor  
+  Player(const Player& p) : Character(p.symbol,p.colour,p.name,p.health) {  
+      
+      this->inventory = p.inventory;
+      this->loot = p.loot;
+  }
     
     ~Player() {
         delete(inventory); //Calls the destructor for this container

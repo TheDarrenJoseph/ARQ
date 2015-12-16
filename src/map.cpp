@@ -380,7 +380,7 @@ tile Map::GetTile(int x, int y)
 void Map::SetTile(int x, int y, tile t)
 {
     game_grid[y][x] = t;
-};
+}
 
 const Item* Map::GetItem(int x, int y)
 {

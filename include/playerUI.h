@@ -10,14 +10,14 @@
 class PlayerUI {
     
 public:
-    UI* mainUI;
+    UI* mainUI = NULL;
     
-    Map* map;
+    Map* map = NULL;
     
-    NPC* npcs;
-    Player* player;
+    NPC* npcs = NULL;
+    Player* player = NULL;
     
-    int MAX_NPCS;
+    int MAX_NPCS=0;
     
     void Battle (int npc_id);
     int BattleTurn (int npc_id);

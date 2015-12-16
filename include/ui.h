@@ -12,7 +12,7 @@
 }
 
 static int getMaxY() {
-    int x, y;
+    int x,y;
     getmaxyx(stdscr, y, x);
     
     return x;

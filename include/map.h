@@ -23,14 +23,15 @@ class Map
     //Sort rooms by co-ordinates?
     //When creating a room, you can check against co-ordinates and size
     
-    int gridX, gridY;
+    int gridX=0;
+    int gridY=0;
     
-    int MAX_NPCS;
+    int MAX_NPCS=0;
   
-    int roomCount;
+    int roomCount=0;
     
-    Player* player;
-    NPC* npcs;
+    Player* player=NULL;
+    NPC* npcs     =NULL;
     
     public:
 
@@ -161,6 +162,32 @@ class Map
 //         }
         
     }
+    
+    void copyMap(const Map& m) {
+         this->MAX_NPCS = m.MAX_NPCS;
+
+        //container grid
+        for (int x=0; x<GRID_X; x++) {
+            for(int y=0; y<GRID_Y; y++) {
+                this->container_grid[y][x] = m.container_grid[y][x];
+                this->game_grid[y][x] = m.game_grid[y][x];
+            }
+        }
+        
+        this->npcs = m.npcs;
+        this->player = m.player;
+    }
+    
+    //Overriding assignment operator
+    Map& operator=(const Map& m) {  
+        copyMap(m);
+        return *this;
+    }
+    
+  //Copy constructor  
+  Map(const Map& m) {  
+      copyMap(m);
+  }
     
     ~Map()
     {

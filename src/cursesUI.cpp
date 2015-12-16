@@ -127,7 +127,7 @@ int CursesUI::wprintw_col(WINDOW* winchoice, const char *text, int color_choice)
     wprintw(winchoice, text);
     wattroff(winchoice, COLOR_PAIR(color_choice)); //turns off the chosen colour pair
     return (0);
-};
+}
 
 int CursesUI::wprint_at(WINDOW* winchoice, const char *text, int pos_y, int pos_x)
 {
@@ -157,7 +157,7 @@ void CursesUI::DrawItems(Map* m)
         for (int x = 0; x < GRID_X; x++) {
             //create variables to hold item info
             int colour;
-            const char *symbol;
+            char symbol;
 
             //grab the info for each item from the library
             const Item* i = m->GetItem(x, y);
@@ -170,26 +170,28 @@ void CursesUI::DrawItems(Map* m)
                 //draw the tile to the screen
                 wmove(mainwin_front, y, x);
 
-                wprintw_col(mainwin_front, symbol, colour);
+                wprintw_col(mainwin_front, &symbol, colour);
                 //	      wrefresh(mainwin_front);
             }
-        };
-    };
+        }
+    }
 
     return;
 }
 
 void CursesUI::DrawContainers(Map* m)
 {
+     //create variables to hold item info
+     int colour;
+     char symbol;
+     Container c;
+     
     //iterate through the rows of the grid/map
     for (int y = 0; y < GRID_Y; y++) {
         for (int x = 0; x < GRID_X; x++) {
-            //create variables to hold item info
-            int colour;
-            const char *symbol;
-
+           
             //grab the info for each item from the library
-            Container c = m->GetContainer(x, y);
+            c = m->GetContainer(x, y);
 
             if (c.id == 98) //Check for an item type, && it not being an empty item 
             {
@@ -198,12 +200,11 @@ void CursesUI::DrawContainers(Map* m)
 
                 //draw the tile to the screen
                 wmove(mainwin_front, y, x);
-
-                wprintw_col(mainwin_front, symbol, colour);
+                wprintw_col(mainwin_front, &symbol, colour);
             }
-        };
-    };
-   
+        }
+    }
+
     return;
 }
 
@@ -258,7 +259,7 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewD
 
 
     return (0);
-};
+}
 
 void CursesUI::DrawCharacter(int x, int y, int colour, char symbol)
 {
@@ -275,7 +276,7 @@ void CursesUI::DrawCharacter(int x, int y, int colour, char symbol)
     };
 
     return;
-};
+}
 
 void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
 {
@@ -448,7 +449,7 @@ int CursesUI::InitScreen()
 
     keypad(consolewin_front, TRUE);
     return (0);
-};
+}
 
 void CursesUI::UpdateUI()
 {
@@ -522,7 +523,7 @@ Item* CursesUI::AccessPlayerInventory(Player* p)
 //    };
 
     return (NULL);
-};
+}
 
 int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
 {
@@ -570,10 +571,10 @@ int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
         wgetch(consolewin_front);
 
         PlayerItemProc(p, itm, x, y);
-    };
+    }
 
     return (0);
-};
+}
 
 void CursesUI::ConsolePrint(std::string text, int posX, int posY)
 {

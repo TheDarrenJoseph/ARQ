@@ -19,7 +19,7 @@ struct Container : public Item
     bool sizeCheck(long unsigned int i);
 
   public:
-  std::list<const Item*> inv;
+  std::list<const Item*> inv = std::list<const Item*>();
 
   Item* GetInv();
   

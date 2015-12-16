@@ -25,16 +25,16 @@
 class CursesUI : public UI {
 private:
 
-    WINDOW* titlewin; //Creates the stats window for content
+    WINDOW* titlewin=NULL; //Creates the stats window for content
 
-    WINDOW* mainwin_rear; //Creates a new window called new win at 0,1 that has the dimensions of grid_x, and grid_y.
-    WINDOW* mainwin_front; //Creates a new window called new win at 1,2 that has the dimensions of grid_x, and grid_y.
+    WINDOW* mainwin_rear =NULL; //Creates a new window called new win at 0,1 that has the dimensions of grid_x, and grid_y.
+    WINDOW* mainwin_front=NULL; //Creates a new window called new win at 1,2 that has the dimensions of grid_x, and grid_y.
 
-    WINDOW* consolewin_rear; //Creates the console window for deco
-    WINDOW* consolewin_front; //Creates the console window for content
+    WINDOW* consolewin_rear=NULL; //Creates the console window for deco
+    WINDOW* consolewin_front=NULL; //Creates the console window for content
 
-    WINDOW* invwin_front;
-    WINDOW* invwin_rear;
+    WINDOW* invwin_front=NULL;
+    WINDOW* invwin_rear=NULL;
     
     
     
@@ -84,7 +84,28 @@ public:
     
     virtual void ClearConsoleHighlighting();
     virtual void HighlightConsole(int scr_x, int scr_y);
-
+    
+    void copyUI(const CursesUI& ui) {
+        this->consolewin_front = ui.consolewin_front;
+        this->consolewin_rear = ui.consolewin_rear;
+        this->invwin_front = ui.invwin_front;
+        this->invwin_rear = ui.invwin_rear;
+        this->mainwin_front = ui.mainwin_front;
+        this->mainwin_rear = ui.mainwin_rear;
+        this->titlewin = ui.titlewin;
+    }
+    
+    //Overriding assignment operator
+    CursesUI& operator=(const CursesUI& ui) {  
+        copyUI(ui);
+        return *this;
+    }
+    
+    //Copy constructor  
+    CursesUI(const CursesUI& ui) {  
+        copyUI(ui);
+    }
+    
     CursesUI() {
         raw(); //stops needing [Enter] to input text
     }

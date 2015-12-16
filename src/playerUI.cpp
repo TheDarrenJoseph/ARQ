@@ -123,7 +123,7 @@ void PlayerUI::AccessPlayerInv()
 {
     AccessContainer(player->GetInventory(),true);
     mainUI->UpdateUI();
-};
+}
 
 void PlayerUI::DrawPlayerEquipment()
 {
@@ -135,7 +135,7 @@ void PlayerUI::DrawPlayerEquipment()
 //    };
 //
 //    mainUI->DrawPlayerEquipmentSlot(INV_SIZE, player->GetOutfit().name);
-};
+}
 
 int PlayerUI::BattleTurn(int npc_id)
 {
@@ -424,7 +424,7 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
     };
 
     return;
-};
+}
 
 /*Wrapper for the Player Move() method, making use of return values for UI context*/
 void PlayerUI::PlayerMoveTurn(int x, int y)
@@ -565,7 +565,7 @@ bool PlayerUI::Input()
     }
 
     return true;
-};
+}
 
 void PlayerUI::DrawNPCS()
 {
@@ -695,7 +695,7 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
         
     }
     
-};
+}
 
 
 void PlayerUI::TileProc(int y, int x, tile t)

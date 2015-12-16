@@ -70,6 +70,10 @@ void Character :: Kill()
   DropItems();
 }
 
+int Character :: GetMaxHealth() {
+    return max_health;
+}
+
 int Character :: GetColour() {
     return colour;
 }

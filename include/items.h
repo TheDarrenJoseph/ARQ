@@ -14,13 +14,13 @@ enum itemType{ITEM,CONTAINER};
 
 struct Item
 {
-  int id;
-  std::string name;
-  const char* symbol;
-  int colour;
-  int weight;
-  int value;
-  bool lootable;
+  int id=0;
+  std::string name="";
+  char symbol= ' ';
+  int colour=0;
+  int weight=0;
+  int value=0;
+  bool lootable=false;
   
   virtual itemType getType() const { return ITEM; } 
 
@@ -28,7 +28,7 @@ struct Item
   {
     id = 0;
     name = "None";
-    symbol = " ";
+    symbol = ' ';
     colour = 0;
     weight = 0;
     value = 0;
@@ -39,7 +39,7 @@ struct Item
   {
     id = i;
     name = n;
-    symbol = s;
+    symbol = (*s);
     colour = col;
     this->weight = weight;
     value = val;
@@ -54,7 +54,7 @@ struct Item
  
 struct weapon : public Item
 {
-  int damage;
+  int damage=0;
  
  weapon() : Item(0,"None"," ",0,0,0,false)
     {
@@ -69,7 +69,7 @@ struct weapon : public Item
  
 struct outfit : public Item
 {
-  int armourPoints;
+  int armourPoints=0;
     
  outfit() : Item(0,"None"," ",0,0,0,false)
     {

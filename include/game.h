@@ -14,13 +14,13 @@ std::string GetVersion();
 class GameEngine
 {  
     private:
-        int MAX_NPCS;
-        Map map;
-        Player* player;
-        NPC* npcs;
-        UI* displayUI;
-        PlayerUI* playerUI; 
-        std::list<Item*> generatedItems; //A list of all items generated (memory allocated instead of references)
+        int MAX_NPCS=0;
+        Map map = Map();
+        Player* player=NULL;
+        NPC* npcs=NULL;
+        UI* displayUI=NULL;
+        PlayerUI* playerUI=NULL; 
+        std::list<Item*> generatedItems = std::list<Item*>(); //A list of all items generated (memory allocated instead of references)
         
     public:
         void InitNPCS();
@@ -39,6 +39,34 @@ class GameEngine
         int EncounterCheck(int x, int y, int* npcID);
         
         void GenerateItems(lootChance thisChance);
+        
+        /** Shallow-copies from another game-engine to preserve external data control
+         * 
+         * 
+         * @param engine Another game engine to copy from
+         */
+        void copyGameEngine(const GameEngine& engine) {
+            this->MAX_NPCS = engine.MAX_NPCS;
+                        
+            this->displayUI = engine.displayUI;
+            this->generatedItems = engine.generatedItems;
+            this->map = engine.map;
+            this->npcs = engine.npcs;
+            this->player = engine.player;
+            this->playerUI = engine.playerUI;
+        }
+    
+    //Overriding assignment operator
+    GameEngine& operator=(const GameEngine& engine) {  
+        copyGameEngine(engine);
+        return *this;
+    }
+    
+    //Copy constructor  
+    GameEngine(const GameEngine& engine) {  
+        copyGameEngine(engine);
+    }
+        
     
         GameEngine(Player* p, NPC* n, const int maxNPCS, Map* m, UI* ui, PlayerUI* playerUI) {
             
@@ -54,6 +82,12 @@ class GameEngine
             this->displayUI = ui;
             this->playerUI = playerUI;
         }
+        
+        ~GameEngine() {
+            
+        }
+     
+  
 };
 
 #endif
