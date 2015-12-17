@@ -439,7 +439,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
     }
 
     std::string move_tilename = tile_library [map->GetTile(x, y)].name;
-    std::string enemy_name = npcs[eid].GetName();
+    std::string enemy_name;// = npcs[eid].GetName(); // eid is undefined this is dangerous
 
     //main movement check
     if (map->IsTraversable(x, y)) {
@@ -471,6 +471,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
     //Enemy    
     case 3:
+        enemy_name = npcs[eid].GetName();
         output = "You are confronted by a " + enemy_name;
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
@@ -480,7 +481,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
 
       //Dead body
     case 4:
-        std::string enemy_name = npcs[eid].GetName();
+        enemy_name = npcs[eid].GetName();
 
         output = "There is the corpse of a" + enemy_name + "here..";
         

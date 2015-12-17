@@ -1,2 +1,3 @@
 #Ignore build objects
 *.o
+src/arq

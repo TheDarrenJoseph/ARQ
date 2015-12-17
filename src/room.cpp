@@ -33,24 +33,17 @@ bool Room :: intersects(Room r) {
     }
     
     //Same x
-    if(newRoomStartX<endX && newRoomStartX>startY) {
-        if (newRoomStartY>endY || newRoomEndY<startY) {
-            return false;
-        }
+    if( (newRoomStartX<endX && newRoomStartX>startY) && (newRoomStartY>endY || newRoomEndY<startY) ) {
+        return false;
     }
     
-    
-    //Simmilar y
-    if(newRoomStartY<endY && newRoomStartY>startY) {
-        if (newRoomStartX>endX || newRoomEndX<startX) {
-            return false;
-        }
+    //Simmilar y (should be compound?)
+    if( (newRoomStartY<endY && newRoomStartY>startY) && (newRoomStartX>endX || newRoomEndX<startX) ) {
+        return false;
     }
     
-    else {
-        return true;
-    }
-               
+    // Must collide...
+    return true;           
 }
 
 std::pair<int,int> Room :: GetStartPos() {return startPos;}
@@ -69,8 +62,6 @@ bool Room :: AddDoor(tile doorType, side s, int* x, int* y) {
     case (LEFT) :
         (*x) = startPos.first;
         (*y) = startPos.second+size/2;
-        
-        
         break;
         
     case (BOTTOM) :
@@ -86,7 +77,6 @@ bool Room :: AddDoor(tile doorType, side s, int* x, int* y) {
     }
 
     doors[doorNo++] = Door(cd1,(*x),(*y));
-
     
     return true;
 }
