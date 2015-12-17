@@ -31,6 +31,7 @@ void GameEngine :: spawnPlacePlayer() {
          for (int y=roomPos.second; y<(room->GetEndPos().second); y++) {
              if (map.GetTile(x,y) == cor) {
                  player->SetPos(x,y);
+                 return;
              } 
          }
         
