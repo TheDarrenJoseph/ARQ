@@ -8,6 +8,7 @@
 #include "containers.h"
 #include "characters.h"
 #include "room.h"
+#include <cstdlib>
 
 class Map
 {

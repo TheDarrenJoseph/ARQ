@@ -39,7 +39,7 @@ int main()
     
     const int MAX_NPCS = 1; //Number-1 to allow for 0 indexing
     
-    NPC npcs[MAX_NPCS] = Goblin();
+    NPC npcs[MAX_NPCS] = {Goblin()};
 
     Player* thisPlayer = new Warrior();
     
