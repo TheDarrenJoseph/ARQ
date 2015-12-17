@@ -13,15 +13,6 @@ bool Room :: intersects(Room r) {
     int newRoomEndX = r.GetEndPos().first;
     int newRoomEndY = r.GetEndPos().second;
     
-    int newRoomTotalX = newRoomStartX+newRoomEndX;
-    int newRoomTotalY = newRoomStartY+newRoomEndY;
-    
-    int roomTotalX = startX+endX;
-    int roomTotalY = startY+endY;
-    
-    int totalX = newRoomTotalX-roomTotalX;
-    int totalY = newRoomTotalY-roomTotalY;
-
     //Room starts after this one
     if(newRoomStartX>endX && newRoomStartY>endY && newRoomEndX>endX && newRoomEndY>endY) {  
         return false;
@@ -37,7 +28,7 @@ bool Room :: intersects(Room r) {
         return false;
     }
     
-    //Simmilar y (should be compound?)
+    //Same y 
     if( (newRoomStartY<endY && newRoomStartY>startY) && (newRoomStartX>endX || newRoomEndX<startX) ) {
         return false;
     }

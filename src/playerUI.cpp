@@ -250,11 +250,13 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
             return (0);
         } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
             std::string output = "You leave the " + door_name + " untouched";
-
+            
+            mainUI->ClearConsole();
             mainUI->ConsolePrintWithWait(output, 0, 0);
 
             return (0);
         } else {
+            mainUI->ClearConsole();
             mainUI->ConsolePrintWithWait("Not a yes or no answer, try again..", 0, 0);
 
             DoorProc(y, x, map->GetTile(x, y));

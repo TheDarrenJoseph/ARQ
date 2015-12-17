@@ -46,7 +46,16 @@ class Map
      * 
      * @return returns an integer code for if an environment object is encounterred
      */
-    int EnvironmentCheck(int x, int y); 
+    int EnvironmentCheck(int x, int y);
+
+    int GetRoomCount() const {
+        return roomCount;
+    }
+
+    Room* GetRooms() {
+        return &rooms[0];
+    }
+
     
     bool CanPlaceItems(int x, int y);
     
@@ -92,6 +101,10 @@ class Map
     int MoveNPCS ();
     void DropCharacterItems(Character* c);
     int DropPlayerItem(Player* p, Item* thisItem, int index);
+   
+    void  LevelPathValid();
+    void PaveRoom(Room r);
+    void PathRooms();
     
         
     tile GetTile(int x, int y);

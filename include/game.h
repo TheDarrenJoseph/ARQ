@@ -27,6 +27,8 @@ class GameEngine
         
         int MainMenu();
         
+        void spawnPlacePlayer();
+
         void StartGame();
         
         bool GameLoop();

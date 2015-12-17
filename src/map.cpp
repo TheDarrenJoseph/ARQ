@@ -74,10 +74,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
             
             //Door addition algorithm
             int doorNo = rand() % 4 + 1; //rand number from 1 to 3
-
-
             tile doorTile = cd1; //default door tile
-
             int doorX, doorY;
 
             //rooms[i].GetStartPos();
@@ -137,30 +134,7 @@ void Map::CreateMap(int roomChance)
                 }
                 
             }
-            //int roomChance = rand();
-            //int size = rand(); //size>=4
-
-            //Run over the map
-            //Start at top-left corner of the map
-            //if (roomChance>50) {
-            //1. generate a room
-            //2. pick random side of the room (non-diagonal, south, or east) 
-            //3. create a door at that location
-            //4. create a path and repeat 
-
-            //random No from 4 up
-            //random wall type
-            //set all 4 sides to a wall type
-
-            //Finding a door location
-            //pick a corner
-            //size of a wall-2
-            //random number in this range
-            //corner x,y + this number
-            //}
-
-       // }
-            
+              
         if (tryCount>50) {
             for (int x=0; x<GRID_X; x++) {
                 for (int y=0; y<GRID_Y; y++) {
@@ -175,14 +149,48 @@ void Map::CreateMap(int roomChance)
         } else {
             tryCount++;
         }
-    
+
     }
 
-
+    PathRooms();
     //testing room creation
 
 
 
+}
+
+/** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
+ * 
+ */
+void Map :: LevelPathValid() {
+    //Plot a level path? (from the first room to the last, and include an exit?)
+    
+}
+
+void Map :: PaveRoom(Room r) {
+    std::pair<int,int> startPos = r.GetStartPos();
+    std::pair<int,int> endPos = r.GetEndPos();
+    
+    for (int y=startPos.second+1; y<endPos.second-1; y++) {
+        for (int x=startPos.first+1; x<endPos.first-1; x++) {
+            
+            if (game_grid[y][x] == ntl) {
+                game_grid[y][x] = rom;
+            }
+        }
+    }
+}
+
+void Map :: PathRooms(){
+    for (int i=0; i<roomCount; i++) {
+        PaveRoom(rooms[i]);
+        
+    }
+    //start at rooms[0]
+    
+    //Link to every room if possible
+    //Pathfind to one of the room's doors
+    
 }
 
 bool Map::IsTraversable(int x, int y)

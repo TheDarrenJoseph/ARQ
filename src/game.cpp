@@ -21,11 +21,29 @@ int GameEngine :: MainMenu() {
     return 0;
 }
 
+void GameEngine :: spawnPlacePlayer() {
+    //int roomCount = map.GetRoomCount();
+    Room* room = map.GetRooms();
+
+    std::pair<int,int> roomPos = room->GetStartPos();
+    
+    for (int x=roomPos.first; x<(room->GetEndPos().first); x++) {
+         for (int y=roomPos.second; y<(room->GetEndPos().second); y++) {
+             if (map.GetTile(x,y) == cor) {
+                 player->SetPos(x,y);
+             } 
+         }
+        
+    }
+}
+
 void GameEngine :: StartGame()
 {
   InitNPCS(); //inititalise all NPCs before doing anything
     
   map.InitAreas();
+  
+  spawnPlacePlayer();
  // GenerateItems(mediumLoot); 
  
   displayUI->InitScreen (); //prep display
