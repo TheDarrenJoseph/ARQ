@@ -141,7 +141,6 @@ void Map::CreateMap(int roomChance)
                     game_grid[y][x] = ntl;
                 }
             }
-            
             roomCount=0;
             roomArea=0;
             tryCount = 0;
@@ -154,8 +153,6 @@ void Map::CreateMap(int roomChance)
 
     PathRooms();
     //testing room creation
-
-
 
 }
 

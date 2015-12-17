@@ -15,7 +15,7 @@ class GameEngine
 {  
     private:
         int MAX_NPCS=0;
-        Map map = Map();
+        Map* map;// = Map();
         Player* player=NULL;
         NPC* npcs=NULL;
         UI* displayUI=NULL;
@@ -79,7 +79,7 @@ class GameEngine
             
             srand(time(NULL)); //set time for randomiser
             
-            map = (*m);
+            map = (m);
             
             this->displayUI = ui;
             this->playerUI = playerUI;

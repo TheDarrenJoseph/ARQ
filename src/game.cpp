@@ -1,5 +1,5 @@
-#include <iostream>
 #include "game.h"
+#include <vector>
 
 void GameEngine :: InitNPCS()
 {
@@ -23,18 +23,25 @@ int GameEngine :: MainMenu() {
 
 void GameEngine :: spawnPlacePlayer() {
     //int roomCount = map.GetRoomCount();
-    Room* room = map.GetRooms();
+    Room* room = map->GetRooms();
+    std::vector<std::pair<int,int>> possibleSpawns;
 
     std::pair<int,int> roomPos = room->GetStartPos();
     
     for (int x=roomPos.first; x<(room->GetEndPos().first); x++) {
          for (int y=roomPos.second; y<(room->GetEndPos().second); y++) {
-             if (map.GetTile(x,y) == cor) {
-                 player->SetPos(x,y);
-                 return;
+             if (map->GetTile(x,y) == rom) {
+                // player->SetPos(x,y);
+                // return;
+                possibleSpawns.push_back(std::make_pair(x, y));
              } 
          }
         
+    }
+
+    if( possibleSpawns.size() > 0 ) {
+      std::pair<int,int> chosen = possibleSpawns[rand()%possibleSpawns.size()];
+      player->SetPos(chosen.first, chosen.second);
     }
 }
 
@@ -42,7 +49,7 @@ void GameEngine :: StartGame()
 {
   InitNPCS(); //inititalise all NPCs before doing anything
     
-  map.InitAreas();
+  map->InitAreas();
   
   spawnPlacePlayer();
  // GenerateItems(mediumLoot); 
@@ -89,9 +96,9 @@ bool GameEngine :: GameLoop()
   
   player->GetPos(&playerX, &playerY);
   
-  displayUI->DrawMap (&map,false,playerX,playerY,3); 
-  displayUI->DrawItems (&map); 
-  displayUI->DrawContainers(&map);
+  displayUI->DrawMap (map,false,playerX,playerY,3); 
+  displayUI->DrawItems (map); 
+  displayUI->DrawContainers(map);
   playerUI->DrawNPCS();
   
   //Draw player UI elements
@@ -117,17 +124,17 @@ bool GameEngine :: GameLoop()
  
  Map* GameEngine :: GetMap()
  {
-     return &map;
+     return map;
  }
  
 void GameEngine :: GenerateItems(lootChance thisChance)
 {
-  for (int y = 0; y < map.GetGridY(); y++)
+  for (int y = 0; y < map->GetGridY(); y++)
     {
-      for (int x = 0; x < map.GetGridX(); x++)
+      for (int x = 0; x < map->GetGridX(); x++)
 	{
 	  //add items to room tiles
-	  if (map.GetTile(x,y) == rom)
+	  if (map->GetTile(x,y) == rom)
 	    {
 	      //for each of the items in the library
 	      for (int  i=0; i<item_size; i++)
@@ -142,7 +149,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 		    {
 		      //then add it to the item grid
 		     // map.AddToContainer(x,y,new Item(thisItem));
-                      map.AddToContainer(x,y,&item_library[i]);
+                      map->AddToContainer(x,y,&item_library[i]);
                    
 		      //break the for loop
 		      break; 
@@ -172,7 +179,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 																	
 	  else
 	    {
-	      map.AddToContainer(x,y,&item_library[no_item]);
+	      map->AddToContainer(x,y,&item_library[no_item]);
 	    }
 	}
     }

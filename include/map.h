@@ -9,6 +9,7 @@
 #include "characters.h"
 #include "room.h"
 #include <cstdlib>
+#include <iostream>
 
 class Map
 {
@@ -154,6 +155,7 @@ class Map
             gridX = x;
             gridY = y;
         } else {
+          std::cout << "MESSY" << std::endl;
            Map();
         }
         
