@@ -1,48 +1,33 @@
 #include "map.h"
 #include "room.h"
 
-bool Map::CanPlaceRoom(int newRoomStartX, int newRoomStartY, int newRoomSize)
-{ 
-    if (roomCount == 0) {
-        return true;
+bool Map::CanPlaceRoom(Room* room)
+{
+  if ( !(room->GetStartPos().first<0 || room->GetEndPos().first>GRID_X || room->GetStartPos().second<0 || room->GetEndPos().second>GRID_Y)) {
+    if (roomCount < MAX_ROOMS) {
+      for (int i=0; i < roomCount; i++) {
+        if (rooms[i].intersects(*room))
+          return false;
+      }
+      
+      return true;
     }
-    
-    int newRoomEndX = newRoomStartX + newRoomSize;
-    int newRoomEndY = newRoomStartY + newRoomSize;
-    
+  }
   
-    if (newRoomStartX<0 || newRoomEndX>GRID_X || newRoomStartY<0 || newRoomEndY>GRID_Y) {
-        return false;
-    } else if (roomCount < MAX_ROOMS) {
-        Room newRoom = Room(newRoomStartX, newRoomStartY, newRoomSize);
-        
-        for (int i=0; i < roomCount; i++) {
-            if (rooms[i].intersects(newRoom)) return false;
-        }
-
-        return true;
-    }
-
-    return false;
+  return false;
 }
 
-void Map::CreateWall(int x, int y, int size, bool horizontal)
+void Map::CreateWalls(Room* room)
 {
-
-    //offset position and size to give proper room coordinates
-    int xSize = x + size;
-    int ySize = y + size;
-
-    if (horizontal) {
-        for (; x < xSize; x++) {
-            game_grid[y][x] = wa1;
-        }
-    }
-    else {
-        for (; y < ySize; y++) {
-            game_grid[y][x] = wa1;
-        }
-    }
+  for(int x = room->GetStartPos().first; x < room->GetEndPos().first; x++) {
+    game_grid[room->GetStartPos().second][x] = wa1;
+    game_grid[room->GetEndPos().second-1][x] = wa1;
+  }
+  
+  for(int y = room->GetStartPos().second + 1; y < room->GetEndPos().second - 1; y++) {
+    game_grid[y][room->GetStartPos().first] = wa1;
+    game_grid[y][room->GetEndPos().first-1] = wa1;
+  }
 }
 
 /**
@@ -52,59 +37,27 @@ void Map::CreateWall(int x, int y, int size, bool horizontal)
  */
 bool Map::CreateRoom(int x, int y, int size, Room* room)
 {
-
-    //min size 3x3 acceptable
-    //Min area for a room = 9
-
-    //Sanity check
-    if (x >= 0 && x < GRID_X - size && y >= 0 && y < GRID_Y-size && size >= 3) {
-
-        if (CanPlaceRoom(x, y, size)) {
-            //Create first half/corner
-            CreateWall(x, y, size, true);
-            CreateWall(x, y, size, false);
-
-            //Create the opposite half/opposing corner of the room
-            CreateWall(x + 1, y + size - 1, size - 1, true);
-            CreateWall(x + size - 1, y + 1, size - 2, false);
-
-            rooms[roomCount] = Room(x, y, size); //add our new room and increase the count
-            room = &rooms[roomCount];
-            roomCount++;
-            
-            //Door addition algorithm
-            int doorNo = rand() % 4 + 1; //rand number from 1 to 3
-            tile doorTile = cd1; //default door tile
-            int doorX, doorY;
-
-            //rooms[i].GetStartPos();
-
-            for (int i = 0; i < doorNo; i++) {
-                side roomSide;
-
-                switch (rand() % 4 + 1) {
-                case 1: roomSide = LEFT;
-                    break;
-                case 2: roomSide = RIGHT;
-                    break;
-                case 3: roomSide = TOP;
-                    break;
-                case 4: roomSide = BOTTOM;
-                    break;
-                }
-
-                if (room->AddDoor(doorTile, roomSide, &doorX, &doorY)) {
-                    game_grid[doorY][doorX] = doorTile;
-                }
-
-            }
-
-
-            return true;
-        }
-    }
-
+  Room newRoom = Room(x, y, size);
+  
+  //min size 3x3 acceptable
+  //Min area for a room = 9
+  if (size < 3 || !CanPlaceRoom(&newRoom))
     return false;
+  
+  CreateWalls(&newRoom);
+  
+  rooms[roomCount] = newRoom; //add our new room and increase the count
+  room = &rooms[roomCount++];
+  
+  //Door addition algorithm
+  tile doorTile = cd1;
+  int doorX, doorY;
+  
+  for (int doorNo = (rand() % 4 + 1); doorNo > 0; doorNo--)
+    if (room->AddDoor(doorTile, static_cast<side>(rand()%4), &doorX, &doorY))
+      game_grid[doorY][doorX] = doorTile;
+  
+  return true;
 }
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/

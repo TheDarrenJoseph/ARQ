@@ -125,9 +125,8 @@ class Map
     int GetGridX();
     int GetGridY();
     
-    bool CanPlaceRoom(int x, int y, int size);
-    
-    void CreateWall(int x, int y, int size, bool horizontal);
+    bool CanPlaceRoom(Room* room);
+    void CreateWalls(Room* room);
     
     /**
      *  x - the x of the top-left of the room
