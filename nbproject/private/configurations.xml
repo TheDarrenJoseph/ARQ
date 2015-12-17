@@ -12,6 +12,7 @@
         <in>items.h</in>
         <in>map.h</in>
         <in>playerUI.h</in>
+        <in>position.h</in>
         <in>room.h</in>
         <in>tile.h</in>
         <in>ui.h</in>
