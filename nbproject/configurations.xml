@@ -41,8 +41,8 @@
       <makefileType>
         <makeTool>
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
-          <buildCommand>${MAKE} -f arq.make</buildCommand>
-          <cleanCommand>${MAKE} -f arq.make clean</cleanCommand>
+          <buildCommand>${MAKE} </buildCommand>
+          <cleanCommand>${MAKE} </cleanCommand>
           <executablePath>src/arq</executablePath>
           <ccTool>
             <incDir>
