@@ -3,11 +3,10 @@
 
 bool Map::CanPlaceRoom(Room* room)
 {
-  if ( !(room->GetStartPos().first<0 || room->GetEndPos().first>GRID_X || room->GetStartPos().second<0 || room->GetEndPos().second>GRID_Y)) {
+  if ( !(room->GetEndPos().x>GRID_X || room->GetEndPos().y>GRID_Y) ) {
     if (roomCount < MAX_ROOMS) {
       for (int i=0; i < roomCount; i++) {
-        if (rooms[i].intersects(*room))
-          return false;
+        if (rooms[i].intersects(*room)) return false;
       }
       
       return true;
@@ -19,14 +18,14 @@ bool Map::CanPlaceRoom(Room* room)
 
 void Map::CreateWalls(Room* room)
 {
-  for(int x = room->GetStartPos().first; x < room->GetEndPos().first; x++) {
-    game_grid[room->GetStartPos().second][x] = wa1;
-    game_grid[room->GetEndPos().second-1][x] = wa1;
+  for(int x = room->GetStartPos().x; x < room->GetEndPos().x; x++) {
+    game_grid[room->GetStartPos().y][x] = wa1;
+    game_grid[room->GetEndPos().y-1][x] = wa1;
   }
   
-  for(int y = room->GetStartPos().second + 1; y < room->GetEndPos().second - 1; y++) {
-    game_grid[y][room->GetStartPos().first] = wa1;
-    game_grid[y][room->GetEndPos().first-1] = wa1;
+  for(int y = room->GetStartPos().y + 1; y < room->GetEndPos().y - 1; y++) {
+    game_grid[y][room->GetStartPos().x] = wa1;
+    game_grid[y][room->GetEndPos().x-1] = wa1;
   }
 }
 
@@ -41,8 +40,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   
   //min size 3x3 acceptable
   //Min area for a room = 9
-  if (size < 3 || !CanPlaceRoom(&newRoom))
-    return false;
+  if (size < 3 || !CanPlaceRoom(&newRoom)) return false;
   
   CreateWalls(&newRoom);
   
@@ -53,16 +51,17 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   tile doorTile = cd1;
   int doorX, doorY;
   
-  for (int doorNo = (rand() % 4 + 1); doorNo > 0; doorNo--)
-    if (room->AddDoor(doorTile, static_cast<side>(rand()%4), &doorX, &doorY))
-      game_grid[doorY][doorX] = doorTile;
+  for (int doorNo = (rand() % 4 + 1); doorNo > 0; doorNo--) {
+    if (room->AddDoor(doorTile, static_cast<side>(rand()%4), &doorX, &doorY)) {
+        game_grid[doorY][doorX] = doorTile;
+    }
+  }
   
   return true;
 }
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
-void Map::CreateMap(int roomChance)
-{
+void Map::CreateMap(int roomChance) {
     int randChance = 0;
     int roomArea =0;
     int tryCount=0;
@@ -81,7 +80,7 @@ void Map::CreateMap(int roomChance)
             randChance = rand() % 100+1; //rand 1-100
             int size = rand() % 10+3;
             
-            if (roomCount<MAX_ROOMS && randChance > 40 ) {
+            if (roomCount<MAX_ROOMS && randChance > roomChance ) {
                 if (CreateRoom(x, y, size, NULL)) {
                     roomArea += size;
                 }
@@ -112,17 +111,17 @@ void Map::CreateMap(int roomChance)
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
  * 
  */
-void Map :: LevelPathValid() {
+bool Map :: LevelPathValid() {
     //Plot a level path? (from the first room to the last, and include an exit?)
-    
+    return false;
 }
 
 void Map :: PaveRoom(Room r) {
-    std::pair<int,int> startPos = r.GetStartPos();
-    std::pair<int,int> endPos = r.GetEndPos();
+    Position startPos = r.GetStartPos();
+    Position endPos = r.GetEndPos();
     
-    for (int y=startPos.second+1; y<endPos.second-1; y++) {
-        for (int x=startPos.first+1; x<endPos.first-1; x++) {
+    for (int y=startPos.y+1; y<endPos.y-1; y++) {
+        for (int x=startPos.x+1; x<endPos.x-1; x++) {
             
             if (game_grid[y][x] == ntl) {
                 game_grid[y][x] = rom;
@@ -131,20 +130,77 @@ void Map :: PaveRoom(Room r) {
     }
 }
 
+
+
 void Map :: PathRooms(){
-    for (int i=0; i<roomCount; i++) {
+  //Pave our rooms  
+  for (int i=0; i<roomCount; i++) {
         PaveRoom(rooms[i]);
-        
-    }
+  }
+  
+  Room initialRoom = rooms[0];
+  int doorCount=0;
+  Door* startDoors = initialRoom.getDoors(&doorCount);
+
+  //int randDoorChoice = rand() % doorCount; //pick a door at random to pathfind from
+  
+  Path doorPath;
+  
+  //while (!LevelPathValid()) {
+     for (int i=0; i<roomCount; i++) {      
+         int startX = startDoors[0].posX;
+         int startY = startDoors[0].posY;
+         
+         int pathX = startX;
+         int pathY = startY;
+         
+         int previousX = startX;
+         int previousY = startY;
+         
+         int targetDoorCount;
+         Door* targetDoors = rooms[i].getDoors(&targetDoorCount);
+         int targetX = targetDoors[0].posX;
+         int targetY = targetDoors[0].posY;
+         
+         while (pathX != targetX && pathY != targetY) {
+             //Check area
+             if(targetX > pathX) {
+                 pathX++;
+             } else if (targetX < pathX) {
+                 pathX--;
+             }
+             
+             if (targetY> pathY) {
+                 pathY++;
+             } else if (targetY< pathY) {
+                 pathY--;
+             }
+             
+             if(IsTraversable(pathX,pathY)) {
+                 doorPath.push_back(Position(pathX,pathY));
+                 
+             } else {
+                 if (pathX>previousX) {
+                     
+                 } 
+                 
+                 if (pathY>previousY) {
+                     
+                 }
+             }
+
+         }
+         
+     }
+  //}
+  
     //start at rooms[0]
     
     //Link to every room if possible
-    //Pathfind to one of the room's doors
-    
+    //Pathfind to one of the room's doors7
 }
 
-bool Map::IsTraversable(int x, int y)
-{
+bool Map::IsTraversable(int x, int y) {
     if ((x < 0) || (x > gridX) || (y < 0) || (y > gridY)) {
         return false;
     } else {

@@ -15,7 +15,7 @@ class GameEngine
 {  
     private:
         int MAX_NPCS=0;
-        Map* map;// = Map();
+        Map* map=NULL;
         Player* player=NULL;
         NPC* npcs=NULL;
         UI* displayUI=NULL;
@@ -34,7 +34,7 @@ class GameEngine
         bool GameLoop();
         
         Player* GetPlayer();
-        NPC* GetNPCS(const int* size);
+        NPC* GetNPCS(int* size);
         
         Map* GetMap();
         

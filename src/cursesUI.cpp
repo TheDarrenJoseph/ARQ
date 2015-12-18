@@ -146,9 +146,6 @@ int CursesUI::wprintNoRefresh(WINDOW* win, std::string text)
     return 0;
 }
 
-void ListItem(std::string name, std::string weight, std::string value) {
-    
-}
 
 void CursesUI::DrawItems(Map* m)
 {
@@ -450,67 +447,6 @@ void CursesUI::UpdateUI()
 
     wrefresh(mainwin_front);
     wrefresh(consolewin_front);
-}
-
-Item* CursesUI::AccessPlayerInventory(Player* p)
-{
-//    Area* a = p->GetInventory();
-//
-//    std::string slc_string;
-//    char slc_char[20];
-//
-//    int loc_x = 0;
-//    int loc_y = 0;
-//
-//    //IF INV IS EMPTY, DO NOT ALLOW SELECTION?
-//    bool selection = true;
-//
-//    while (selection == true) {
-//        ListInv(a);
-//        UpdateUI();
-//
-//        werase(consolewin_front);
-//        wprint_at(consolewin_front, "Select an item with WASD.. 'put' to transfer to the container.", 0, 0);
-//
-//        wprint_at(consolewin_front, "ARQ:~$ ", 2, 0);
-//
-//        wgetstr(consolewin_front, slc_char);
-//        slc_string = slc_char;
-//
-//        if ((slc_string == "W") || (slc_string == "w")) {
-//            if (loc_x != 0) {
-//                loc_x--;
-//            };
-//        } else if ((slc_string == "A") || (slc_string == "a")) {
-//            if (loc_y != 0) {
-//                loc_y--;
-//            };
-//        } else if ((slc_string == "S") || (slc_string == "s")) {
-//            if (loc_x != 2) {
-//                loc_x++;
-//            };
-//        } else if ((slc_string == "D") || (slc_string == "d")) {
-//            if (loc_y != 2) {
-//                loc_y++;
-//            }
-//        } else if ((slc_string == "Exit") || (slc_string == "exit") || (slc_string == "EXIT")) {
-//            selection = false;
-//            return (NULL);
-//        } else if (slc_string == "put") {
-//            Item* thisItem = a->GetItem(loc_x, loc_y);
-//            a->RemoveItem(loc_x, loc_y);
-//
-//            return thisItem;
-//        } else {
-//            werase(consolewin_front);
-//            wprint_at(consolewin_front, "Not a correct selection, try again.", 0, 0);
-//            wgetch(consolewin_front);
-//        };
-//
-//        std::cout << "\n " << loc_x << " " << loc_y;
-//    };
-
-    return (NULL);
 }
 
 int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)

@@ -30,8 +30,8 @@ void GameEngine :: spawnPlacePlayer() {
 
     Position roomPos = room->GetStartPos();
     
-    for (int x=roomPos.x; x<(room->GetEndPos().x); x++) {
-         for (int y=roomPos.y; y<(room->GetEndPos().y); y++) {
+    for (int x=roomPos.posX; x<(room->GetEndPos().posX); x++) {
+         for (int y=roomPos.posY; y<(room->GetEndPos().posY); y++) {
              if (map->GetTile(x,y) == rom) {
                 // player->SetPos(x,y);
                 // return;
@@ -43,7 +43,7 @@ void GameEngine :: spawnPlacePlayer() {
 
     if( possibleSpawns.size() > 0 ) {
       Position chosen = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
-      player->SetPos(chosen.x, chosen.y); //place the player there
+      player->SetPos(chosen.posX, chosen.posY); //place the player there
     }
 }
 
@@ -118,9 +118,9 @@ bool GameEngine :: GameLoop()
  }
  
  /* Sets the passed pointer to the maximum NPC number, and returns a pointer to the first index of the npcs array*/
- NPC* GameEngine :: GetNPCS(int* size)
+ NPC* GameEngine :: GetNPCS(const int* size)
  {
-     (*size) = MAX_NPCS;
+     size = &MAX_NPCS;
      return &this->npcs[0];
  }
  

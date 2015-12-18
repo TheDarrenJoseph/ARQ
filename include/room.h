@@ -2,6 +2,7 @@
 #define	ROOM_H
 
 #include "tile.h"
+#include "position.h"
 
 enum side{TOP,BOTTOM,LEFT,RIGHT};
 
@@ -9,11 +10,7 @@ enum side{TOP,BOTTOM,LEFT,RIGHT};
  *  isn't tied to the creation of rooms on the map (e.g the walls that form it), 
  * this allows "zones" or special room implementations, while still sectioning off parts of the map as rooms.
  */
-class Room {
-    
-    private:
-        
-        struct Door {
+ struct Door {
             tile doorType=od0; 
             int posX=0;
             int posY=0;
@@ -26,16 +23,23 @@ class Room {
                 posX = x;
                 posY = y;
             }
-        };   
+        };  
+   
+
+class Room {
+    
+    private:
+        
+       
         
         //Top-left corner/starting co-ordinates for a room
-        std::pair<int,int> startPos = std::make_pair(0,0);
+        Position startPos = Position(0,0);
         
         //Size of each wall/overall square size
         int size=3;
         
         //Co-ordinates for the bottom-right corner of a room
-        std::pair<int,int> endPos = std::make_pair(0,0);
+        Position endPos = Position(0,0);
         
         Door doors[8];
         int doorNo = 0;
@@ -43,17 +47,17 @@ class Room {
 public:
     
     bool intersects(Room r);
-    std::pair<int,int> GetStartPos();
-    std::pair<int,int> GetEndPos();
+    Position GetStartPos();
+    Position GetEndPos();
     int GetSize();
     
     bool AddDoor(tile doorType, side s, int* x, int* y);
-    
+    Door* getDoors(int* doorCount);
     
     Room(int x, int y, int size) {
         doorNo = 0;
-        startPos = std::make_pair(x,y);
-        endPos   = std::make_pair(x+size,y+size);
+        startPos = Position(x,y);
+        endPos   = Position(x+size,y+size);
         this->size = size;
     }
     

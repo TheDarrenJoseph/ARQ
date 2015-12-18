@@ -4,6 +4,7 @@
 #define GRID_X 50 //Fallback/default size values
 #define GRID_Y 15
 
+#include "position.h"
 #include "tile.h"
 #include "containers.h"
 #include "characters.h"
@@ -103,7 +104,7 @@ class Map
     void DropCharacterItems(Character* c);
     int DropPlayerItem(Player* p, Item* thisItem, int index);
    
-    void  LevelPathValid();
+    bool  LevelPathValid();
     void PaveRoom(Room r);
     void PathRooms();
     
