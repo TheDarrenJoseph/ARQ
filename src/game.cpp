@@ -30,8 +30,8 @@ void GameEngine :: spawnPlacePlayer() {
 
     Position roomPos = room->GetStartPos();
     
-    for (int x=roomPos.x; x<(room->GetEndPos().x); x++) {
-         for (int y=roomPos.y; y<(room->GetEndPos().y); y++) {
+    for (unsigned int x=roomPos.x; x<(room->GetEndPos().x); x++) {
+         for (unsigned int y=roomPos.y; y<(room->GetEndPos().y); y++) {
              if (map->GetTile(x,y) == rom) {
                 // player->SetPos(x,y);
                 // return;

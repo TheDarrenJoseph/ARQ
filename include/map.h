@@ -11,16 +11,24 @@
 #include "room.h"
 #include <cstdlib>
 #include <iostream>
+#include <set>
+#include <map>
+#include <algorithm> 
 
 class Map
 {
     private:
-    
     tile game_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
+    
+    //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
+    static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
+        return (lval.second < rval.second); //compares the int costs of the two PositionCosts, allowing sorting of positions by their movement cost
+    }
+
     
     //Room list
     //Sort rooms by co-ordinates?
@@ -37,7 +45,7 @@ class Map
     NPC* npcs     =NULL;
     
     public:
-
+    bool IsInBoundaries(int x, int y);
     bool IsTraversable(int x, int y);
     
     /**
@@ -58,6 +66,7 @@ class Map
         return &rooms[0];
     }
 
+    std::list<Position> GetNeighbors(int x, int y);
     
     bool CanPlaceItems(int x, int y);
     
@@ -106,6 +115,8 @@ class Map
    
     bool  LevelPathValid();
     void PaveRoom(Room r);
+    
+    void AStarSearch(Position startPos, Position endPos, Path* endPath);
     void PathRooms();
     
         
