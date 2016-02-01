@@ -116,6 +116,8 @@ class Map
     bool  LevelPathValid();
     void PaveRoom(Room r);
     
+    int ManhattanPathCostEstimate(Position startPos, Position endPos);
+    void EvaluatePathNeighbor(Position neighbor, Position endPos, Position currentNode, int* nonHeuristicScore, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes, std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap,std::map<Position,int>* heuristicCostMap );
     void AStarSearch(Position startPos, Position endPos, Path* endPath);
     void PathRooms();
     
