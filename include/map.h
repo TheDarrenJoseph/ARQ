@@ -46,6 +46,7 @@ class Map
     
     public:
     bool IsInBoundaries(int x, int y);
+    bool IsWall(int x, int y);
     bool IsTraversable(int x, int y);
     
     /**
@@ -117,8 +118,9 @@ class Map
     void PaveRoom(Room r);
     
     int ManhattanPathCostEstimate(Position startPos, Position endPos);
-    void EvaluatePathNeighbor(Position neighbor, Position endPos, Position currentNode, int* nonHeuristicScore, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes, std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap,std::map<Position,int>* heuristicCostMap );
-    void AStarSearch(Position startPos, Position endPos, Path* endPath);
+    bool EvaluateNodes(Position currentNode, Position previousNode, Position endPos ,std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes,std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap, std::map<Position,int>* heuristicCostMap );
+    void EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes, std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap,std::map<Position,int>* heuristicCostMap );
+    bool AStarSearch(Position startPos, Position endPos, Path* endPath);
     void PathRooms();
     
         
@@ -141,6 +143,8 @@ class Map
     
     bool CanPlaceRoom(Room* room);
     void CreateWalls(Room* room);
+    
+    void AddOppositeDoors(Room* room, tile doorTile, side one, side two);
     
     /**
      *  x - the x of the top-left of the room
