@@ -23,27 +23,43 @@ int GameEngine :: MainMenu() {
     return 0;
 }
 
+/** Sets the entry and exit points for this level, also places the player at the entry position  */
 void GameEngine :: spawnPlacePlayer() {
     //int roomCount = map.GetRoomCount();
-    Room* room = map->GetRooms();
-    std::vector<Position> possibleSpawns;
-
-    Position roomPos = room->GetStartPos();
+    Room* rooms = map->GetRooms();
+    int roomCount = map->GetRoomCount();
     
-    for (unsigned int x=roomPos.x; x<(room->GetEndPos().x); x++) {
-         for (unsigned int y=roomPos.y; y<(room->GetEndPos().y); y++) {
-             if (map->GetTile(x,y) == rom) {
-                // player->SetPos(x,y);
-                // return;
-                possibleSpawns.push_back(Position(x,y));
-             } 
-         }
+    std::vector<Position> possibleSpawns;
+    
+    //int randomRoom = rooms[rand()%roomCount];
+    
+    //Save the co-ordinates of every room's tiles
+    for (int roomNo=0; roomNo<roomCount; roomNo++) {
+        Room room = rooms[roomNo];
+        Position roomPos = room.GetStartPos();
         
+        for (unsigned int x=roomPos.x; x<(room.GetEndPos().x); x++) {
+            for (unsigned int y=roomPos.y; y<(room.GetEndPos().y); y++) {
+                if (map->GetTile(x,y) == rom) {
+                    possibleSpawns.push_back(Position(x,y));
+                } 
+            }
+            
+        }
+    
     }
 
     if( possibleSpawns.size() > 0 ) {
-      Position chosen = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
-      player->SetPos(chosen.x, chosen.y); //place the player there
+      Position chosenEntry = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
+      player->SetPos(chosenEntry.x, chosenEntry.y); //place the player there
+      map->SetTile(chosenEntry.x,chosenEntry.y,ent);
+      
+      Position chosenExit = chosenEntry;
+      while (chosenExit == chosenEntry) {
+          chosenExit = possibleSpawns[rand()%possibleSpawns.size()]; //pick another for our exit
+      }
+      
+      map->SetTile(chosenExit.x,chosenExit.y,ext);
     }
 }
 

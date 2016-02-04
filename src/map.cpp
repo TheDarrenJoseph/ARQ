@@ -220,44 +220,28 @@ int Map :: ManhattanPathCostEstimate(Position startPos, Position endPos) {
     int absoluteCost = (abs(endPos.x-startPos.x)+abs(endPos.y-startPos.y));
     //std::cout << "abs cost of \n" << absoluteCost;
     return absoluteCost;
-    
-//    //Check for obstacles, if found set the path cost to something unrealistic
-//    int x,y;
-//    for (int i=0; i<absoluteCost; i++) {
-//        x = startPos.x+i;
-//        y = startPos.y+i;
-//        
-//        if(game_grid[y][x] == wa1) return 999;
-//       // if (!IsTraversable(x,y)) return 9999;
-//    }
-//    
-//    return absoluteCost;
 }
 
-/** Evaluates a single neighbor node, defined as a position in our game grid.
+/** Part of A* Implementation. Evaluates a single neighbor node, defined as a position in our game grid.
  * 
- * @param neighbor
- * @param endPos
- * @param currentNode
- * @param nonHeuristicScore
- * @param visitedNodes
- * @param unvisitedNodes
- * @param navigatedNodes
- * @param nonHeuristicCostMap
- * @param heuristicCostMap
+ * @param neighbor The position of the node to evaluate
+ * @param endPos   The target position for the path
+ * @param currentNode the current node, which the neighbor is adjacent to (costs go between these two)
+ * @param visitedNodes a set of all visited nodes, this function will add the neighbor to this set if not already in there (The node will only be evaluated if it's not in the set)
+ * @param unvisitedNodes a set of all nodes available to be evaluated, this function will add the neighbor to it so that it can become the currentNode for later evaluations (assuming currentNode is passed as the lowest cost position in the unvisited set/the start position)
+ * @param navigatedNodes a map of all nodes that have been evaluated and their distances saved, acting as a linked list from any point in the map back to the original currentNode
+ * @param nonHeuristicCostMap a map of integer costs from our start position (based purely on distance) (requires all nodes with int max/infinity values by default, and a value of 0 for our start position)
+ * @param heuristicCostMap a map of costs using our heuristic (requires all nodes with int max/infinity values by default, and a heuristic cost applied to our start position)
  */
 void Map :: EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes, std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap,std::map<Position,int>* heuristicCostMap ) {
-    int nonHeuristicScore;
    
-    
-    
     //If the node has not been "visited"/evaluated, evaluate it's cost
     if (visitedNodes->count(neighbor) == 0) {
         visitedNodes->insert(neighbor); //add this node straight to the visited list
 
-        std::cout << "evaluating " << neighbor.x << ","<< neighbor.y << "\n";
+        //std::cout << "evaluating " << neighbor.x << ","<< neighbor.y << "\n";
         
-        nonHeuristicScore = (nonHeuristicCostMap->at(currentNode))+(abs(currentNode.x-neighbor.x)+abs(currentNode.y-neighbor.y)); //add a constant factor of 1 tile distance to the current path score
+        int nonHeuristicScore = (nonHeuristicCostMap->at(currentNode))+(abs(currentNode.x-neighbor.x)+abs(currentNode.y-neighbor.y)); //add a constant factor of 1 tile distance to the current path score
         if (IsWall(neighbor.x,neighbor.y) || IsWall(currentNode.x,currentNode.y)) return; //nonHeuristicScore = std::numeric_limits<int>::max(); //Increase cost for walls
         
         //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later
@@ -286,16 +270,31 @@ void Map :: EvaluatePathNeighborNode(Position neighbor, Position endPos, Positio
  * @return The path followed from the position passed
  */
 void ConstructPath(std::map<Position,Position> navigated, Position pathPosition, Path* endPath) {
-
     while (navigated.count(pathPosition) > 0) {
-        std::cout << "Path node " << pathPosition.x << " " << pathPosition.y << "\n"; 
+        //std::cout << "Path node " << pathPosition.x << " " << pathPosition.y << "\n"; 
         pathPosition= navigated.at(pathPosition); //next node navigated to
         (*endPath).push_back(pathPosition);
     }
-
 }
 
-bool Map :: EvaluateNodes(Position currentNode, Position previousNode, Position endPos, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes,std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap, std::map<Position,int>* heuristicCostMap ) {
+
+/** Part of A* Implementation.
+ * Evaluates all unvisited nodes based on the heuristicCostMap (the lowest heuristic cost nodes are picked and evaluated)
+ * 
+ * @param currentNode the startPosition 
+ * @param previousNode
+ * @param endPos
+ * @param visitedNodes
+ * @param unvisitedNodes
+ * @param navigatedNodes
+ * @param nonHeuristicCostMap
+ * @param heuristicCostMap
+ * 
+ * @return true if the destination was reached (should mean a complete path), false otherwise
+ */
+bool Map :: EvaluateNodes(Position currentNode, Position endPos, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes,std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap, std::map<Position,int>* heuristicCostMap ) {
+    Position previousNode = Position(-1,-1); //-1 to fail boundary check, and not be checked on the first pass-through
+    
     //While we haven't run out of nodes to visit, grab the lowest cost, and try to build our path
     while(!unvisitedNodes->empty()) {
         std::map<Position,int> possibleNewNodes = (*heuristicCostMap); //create a new map as a copy of all heuristic scores for nodes, so we can modify it
@@ -318,26 +317,26 @@ bool Map :: EvaluateNodes(Position currentNode, Position previousNode, Position 
             
         }
         
+        //Check that we've looped once (by the pos now being valid), if so make sure we haven't repeated the node search
+        if (IsInBoundaries(previousNode.x,previousNode.y)) {
         if (currentNode == previousNode) {
             std::cout << "Node repeated! Aborting pathing here..";
             return false;
         } else { 
-            
+        }
+        
             //Print data about the current node
-            std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
+            //std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
             unvisitedNodes->erase(currentNode);
             visitedNodes->insert(currentNode);    
             
-            //Check for reaching our goal, or a repeat  
+            //Check for reaching our goal
             if (currentNode == endPos) { 
                 return true;
-            } else {
-                
-                //Evaluate all 4 neighbors of the current node
+            } else { //Evaluate all neighbors of the current node
                 for (Position p : GetNeighbors(currentNode.x,currentNode.y)) {
                     EvaluatePathNeighborNode(p,endPos,currentNode, visitedNodes, unvisitedNodes, navigatedNodes, nonHeuristicCostMap, heuristicCostMap );
                 }
-                
             }
             
             previousNode = currentNode;
@@ -355,39 +354,32 @@ bool Map :: EvaluateNodes(Position currentNode, Position previousNode, Position 
  * @param endPath a pointer to the finished path from the result of our search
  */
 bool Map :: AStarSearch(Position startPos, Position endPos, Path* endPath) {
-   // if (startPos<endPos) {
         if (IsInBoundaries(startPos.x,startPos.y) && IsInBoundaries(endPos.x, endPos.y) && !IsWall(startPos.x,startPos.y) && !IsWall(endPos.x,endPos.y)) {
             std::set<Position> visitedNodes;
             std::set<Position> unvisitedNodes;
           
             std::map<Position,Position> navigatedNodes; //A map of which node was navigated to from each node
-            std::map<Position,int> nonHeuristicCostMap;//costs without our heuristic applied??? (just based on distance) 
+            std::map<Position,int> nonHeuristicCostMap;//costs without our heuristic applied (just based on absolute distance) 
             std::map<Position,int> heuristicCostMap; //a map of costs with heuristics applied for estimated total cost to endPos, with infinity default vals
             
-            for (unsigned int x=0; x<GRID_X; x++) {
+            for     (unsigned int x=0; x<GRID_X; x++) {
                 for (unsigned int y=0; y<GRID_Y; y++) {
-                     // if (!IsWall(x,y)) {
-                   // unvisitedNodes.insert(Position(x,y));
                     heuristicCostMap[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
                     nonHeuristicCostMap[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
-                    // }
                 }
             }
             
             unvisitedNodes.insert(Position(startPos.x,startPos.y));
             heuristicCostMap[startPos] = ManhattanPathCostEstimate(startPos, endPos); //Manhattan cost the startPos default cost (the distance between the two points absolutely)
             nonHeuristicCostMap[startPos] = 0; //assign the starPos to have a cost of 0
-            Position currentNode = Position(startPos.x,startPos.y);
+            
             Position previousNode = Position(0,0);
 
-            if (EvaluateNodes(currentNode,previousNode,endPos,&visitedNodes,&unvisitedNodes,& navigatedNodes, &nonHeuristicCostMap, &heuristicCostMap) == true) { 
+            if (EvaluateNodes(startPos,endPos,&visitedNodes,&unvisitedNodes,& navigatedNodes, &nonHeuristicCostMap, &heuristicCostMap) == true) { 
               ConstructPath(navigatedNodes, endPos, endPath); //Build a path to the current endPos, set as endPath 
               return true;
             } 
-            
-            
         }
-   // }
     
     return false;
 }
@@ -401,53 +393,35 @@ void Map :: PathRooms() {
   int doorCount=0;
   Door* startDoors = initialRoom.getDoors(&doorCount);
 
-  
-  //Path* doorPath = new Path();
- // Position startPos = Position(10,8);
- // Position targetPos = Position(startDoors[0].posX,startDoors[0].posY);
-  
-//  if (AStarSearch(startPos,targetPos,doorPath) == true) {
-//             
-//             for (Position p : (*doorPath) ) {
-//                 if(game_grid[p.y][p.x] == ntl) game_grid[p.y][p.x] = od1;
-//                 //game_grid[p.y][p.x] = od1;
-//             }
-//             
-//             game_grid[startPos.y][startPos.x] = ded;
-//             game_grid[targetPos.y][targetPos.x] = ded;
-//             }
-//             
-//             delete (doorPath);
-
-  
- // while (!AStarSearch()) {
      for (unsigned short int roomNo=0; roomNo<roomCount; roomNo++) {
 
          unsigned short int startX = startDoors[0].posX;
          unsigned short int startY = startDoors[0].posY;
+         unsigned short int targetX = startX;
+         unsigned short int targetY = startY;
+         
          Position startPos = Position(startX,startY);
-
+         Position targetPos = startPos;
          
          int targetDoorCount;
          Door* targetDoors = rooms[roomNo].getDoors(&targetDoorCount);
          
-         for (unsigned short int doorNo=1; doorNo<targetDoorCount; doorNo++) {
-             unsigned short int targetX = targetDoors[doorNo].posX;
-             unsigned short int targetY = targetDoors[doorNo].posY;
+         for (unsigned short int doorNo=0; doorNo<targetDoorCount; doorNo++) {
+             targetX = targetDoors[doorNo].posX;
+             targetY = targetDoors[doorNo].posY;
              
-             Position targetPos = Position(targetX,targetY);
+             targetPos = Position(targetX,targetY);
              
              Path* doorPath = new Path();
              
              if (AStarSearch(startPos,targetPos,doorPath) == true) {
-             
-             for (Position p : (*doorPath) ) {
-                 if(game_grid[p.y][p.x] == ntl) game_grid[p.y][p.x] = cor;
-                 //game_grid[p.y][p.x] = od1;
-             }
-             
-             game_grid[startPos.y][startPos.x] = ded;
-             game_grid[targetPos.y][targetPos.x] = ded;
+                 for (Position p : (*doorPath) ) {
+                     if(game_grid[p.y][p.x] == ntl) game_grid[p.y][p.x] = cor;
+                     //game_grid[p.y][p.x] = od1;
+                 }
+                 
+                 //game_grid[startPos.y][startPos.x] = ded;
+                 //game_grid[targetPos.y][targetPos.x] = ded;
              }
              
              delete (doorPath);
@@ -455,7 +429,6 @@ void Map :: PathRooms() {
          }
                   
      }
-  //}
 
 }
 
