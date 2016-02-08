@@ -9,7 +9,6 @@ void GameEngine :: InitNPCS()
     for(int a = 0; a < MAX_NPCS; a++) 
     { 
       npcs[a] = Goblin(); //Fills the array with the information of the specific class
-      npcs[a].SetPos (3,1); //Sets the position of the templated NPC.
     };
 }
 
@@ -63,6 +62,39 @@ void GameEngine :: spawnPlacePlayer() {
     }
 }
 
+int GameEngine :: MenuScreen() {
+     const int menuSize = 3;
+     const char* text [menuSize] = {"Fog of war","...","..."};   
+    
+    while (true) {
+        switch (MainMenu()) {
+            case 0 :
+                displayUI->ShowNotification("Welcome To ARQ! \n "
+                "You are a humble warrior hoping to earn prestige "
+                "and bring fame and fortune to your family! "
+                "You have set forth into the dungeon in order"
+                " to gather as many riches as possible before "
+                "returning to your loved ones. You are on the"
+                " first level of the dungeon, and should encounter"
+                " little resistance to your pillaging here. "
+                "The deeper you go, the more valuable the prizes that await you, "
+                "but beware what lurks in the deeper levels! Good Luck!");
+                return 0;
+                break;
+                
+            case 1 :
+                switch(displayUI->Menu(&text[0],menuSize)) {
+                    case 0 :
+                        map->ToggleFogOfWar();
+                        
+                        
+                        
+                }
+                break;
+        }
+    }
+}
+
 void GameEngine :: StartGame()
 {
   InitNPCS(); //inititalise all NPCs before doing anything
@@ -76,33 +108,17 @@ void GameEngine :: StartGame()
   displayUI->InitWindows(); 
   displayUI->DecorateWindows(); //Box/label the UI
   
-  switch (MainMenu()) {
-  case 0 :
-     
-      displayUI->ShowNotification("Welcome To ARQ! \n "
-      "You are a humble warrior hoping to earn prestige "
-      "and bring fame and fortune to your family! "
-      "You have set forth into the dungeon in order"
-      " to gather as many riches as possible before "
-      "returning to your loved ones. You are on the"
-      " first level of the dungeon, and should encounter"
-      " little resistance to your pillaging here. "
-      "The deeper you go, the more valuable the prizes that await you, "
-      "but beware what lurks in the deeper levels! Good Luck!");
-      
-      npcs[0].Kill();
-      
-      while (GameLoop()); //Main game loop
-          break;
-      
-  default :
-      break;
-  }
+  if (MenuScreen() == 0) {
   
   
+  npcs[0].Kill();
   
-  //displayUI->DestroyWindows();  
-  endwin ();
+  while (GameLoop()); //Main game loop
+  } 
+      
+      //displayUI->DestroyWindows();  
+      endwin ();
+      return;
 }
 
 
@@ -114,7 +130,7 @@ bool GameEngine :: GameLoop()
   
   player->GetPos(&playerX, &playerY);
   
-  displayUI->DrawMap (map,false,playerX,playerY,3); 
+  displayUI->DrawMap (map,map->GetFogOfWar(),playerX,playerY,3); 
   displayUI->DrawItems (map); 
   displayUI->DrawContainers(map);
   playerUI->DrawNPCS();
@@ -154,7 +170,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 	  //add items to room tiles
 	  if (map->GetTile(x,y) == rom)
 	    {
-	      //for each of the items in the library
+	      //for each of the map->items in the library
 	      for (int  i=0; i<item_size; i++)
 		{
 		  //generate a random chance out of 100 for each item

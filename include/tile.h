@@ -37,8 +37,8 @@ const tile_details tile_library[] =
  {12,      1,              0,              "-",       0,         "Open Steel Door",   2,            /*Hitpoints*/ 200 },
  {13,      0,              1,              "=",       2,         "Closed Steel Door", 2,            /*Hitpoints*/ 200 },
  {14,      0,              1,              "=",       1,         "Locked Steel Door", 2,            /*Hitpoints*/ 200},
- {15,      1,              0,              "@",       1,         "Entrance",          0,            /*Hitpoints*/ 0},
- {16,      1,              0,  	          "@",       2,         "Exit",              0,            /*Hitpoints*/ 0 },
+ {15,      1,              0,              "^",       1,         "Entrance",          0,            /*Hitpoints*/ 0},
+ {16,      1,              0,  	           "^",       2,         "Exit",              0,            /*Hitpoints*/ 0 },
  {17,      0,              0,	           "!",        7,         "Deadly Floor",      0,            /*Hitpoints*/ 0 },
 };
 

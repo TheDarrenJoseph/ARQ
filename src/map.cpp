@@ -148,47 +148,62 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   return true;
 }
 
+
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
 void Map::CreateMap(int roomChance) {
-    int randChance = 0;
-    int roomArea =0;
-    int tryCount=0;
+    int roomArea = 0;
+    int possibleRoomArea = (gridX-2)*(gridY-2); //-2 for external walls
+    int roomQuota = possibleRoomArea/2;
     
-    //Inefficient, try to set all tiles by default
-    while(roomCount<7) {
-       // srand(time(NULL));
+    std::set<Position> possibleRoomPositions;
+
+    for (int x=0; x < gridX-4; x++) {
+        for (int y=0; y < gridY-4; y++) {
+            possibleRoomPositions.insert(Position(x,y));
+            
+        }
+    }
+
+    while(roomArea<roomQuota && !(possibleRoomPositions.empty())) {
+       // std::cout << "Filling map.. "<< roomArea << " of " << roomQuota << "\n";
         
-   // for (int x = 0; x < GRID_X; x++) {
-     //   for (int y = 0; y < GRID_Y; y++) {
-            //game_grid[y][x] = cor; //make every tile a corridor to begin with
+        std::set<Position>::iterator roomPosIterator = possibleRoomPositions.begin();
+        
+        //Pick a random position out of what's available
+        int randPosNo = rand() % possibleRoomPositions.size()-1;
+        for (int i=0; i<randPosNo; i++) {
+            roomPosIterator.operator ++(); //Increment our iterator to pick the right element
+        }
+        Position roomPos = *roomPosIterator;
+        
+        int x = roomPos.x;
+        int y = roomPos.y;
+        int attempts = 0;
             
-        int x = rand() % GRID_X;
-        int y = rand() % GRID_Y;
-            
-            randChance = rand() % 100+1; //rand 1-100
+            //randChance = rand() % 100+1; //rand 1-100
             int size = rand() % 10+3;
+            int xEnd = x+size;
+            int yEnd = y+size;
+            bool roomPlaced = false;
             
-            if (roomCount<MAX_ROOMS && randChance > roomChance ) {
-                if (CreateRoom(x, y, size, NULL)) {
-                    roomArea += size;
+            while(!roomPlaced && attempts<10) {
+                size = rand() % 10+3; //re-roll our size and try again
+                attempts++;
+                roomPlaced = CreateRoom(x,y,size,NULL);
+            }
+            
+            if (roomPlaced) {
+                for (; x < xEnd; x++) {
+                    for (; y < yEnd; y++) {
+                        possibleRoomPositions.erase(Position(x,y));
+                    }
                 }
                 
+                roomArea += size*size;
+            } else {
+                possibleRoomPositions.erase(roomPos);
             }
-              
-        if (tryCount>50) {
-            for (int x=0; x<GRID_X; x++) {
-                for (int y=0; y<GRID_Y; y++) {
-                    game_grid[y][x] = ntl;
-                }
-            }
-            roomCount=0;
-            roomArea=0;
-            tryCount = 0;
-           
-        } else {
-            tryCount++;
-        }
-
+            
     }
 
     PathRooms();
@@ -198,7 +213,12 @@ void Map::CreateMap(int roomChance) {
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
  * 
  */
+//bool Map :: LevelPathValid(Position entryPos, Position exitPos) {
 bool Map :: LevelPathValid() {
+    //Path* path = new Path();
+    
+   // return AStarSearch();
+    
     //Plot a level path? (from the first room to the last, and include an exit?)
     return false;
 }
@@ -207,11 +227,13 @@ void Map :: PaveRoom(Room r) {
     Position startPos = r.GetStartPos();
     Position endPos = r.GetEndPos();
 
+    if(IsInBoundaries(startPos) && IsInBoundaries(endPos)) {
     //Paves the inside of a room    
     for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
         for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
             if (game_grid[y][x] == ntl)  game_grid[y][x] = rom;
         }
+    }
     }
 }
 
@@ -324,9 +346,8 @@ bool Map :: EvaluateNodes(Position currentNode, Position endPos, std::set<Positi
             return false;
         } else { 
         }
-        
-            //Print data about the current node
-            //std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
+        //Print data about the current node
+        //std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
             unvisitedNodes->erase(currentNode);
             visitedNodes->insert(currentNode);    
             
@@ -362,6 +383,7 @@ bool Map :: AStarSearch(Position startPos, Position endPos, Path* endPath) {
             std::map<Position,int> nonHeuristicCostMap;//costs without our heuristic applied (just based on absolute distance) 
             std::map<Position,int> heuristicCostMap; //a map of costs with heuristics applied for estimated total cost to endPos, with infinity default vals
             
+            //Initialise our maps
             for     (unsigned int x=0; x<GRID_X; x++) {
                 for (unsigned int y=0; y<GRID_Y; y++) {
                     heuristicCostMap[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
@@ -372,9 +394,8 @@ bool Map :: AStarSearch(Position startPos, Position endPos, Path* endPath) {
             unvisitedNodes.insert(Position(startPos.x,startPos.y));
             heuristicCostMap[startPos] = ManhattanPathCostEstimate(startPos, endPos); //Manhattan cost the startPos default cost (the distance between the two points absolutely)
             nonHeuristicCostMap[startPos] = 0; //assign the starPos to have a cost of 0
-            
-            Position previousNode = Position(0,0);
 
+            //Start evaluating our nodes
             if (EvaluateNodes(startPos,endPos,&visitedNodes,&unvisitedNodes,& navigatedNodes, &nonHeuristicCostMap, &heuristicCostMap) == true) { 
               ConstructPath(navigatedNodes, endPos, endPath); //Build a path to the current endPos, set as endPath 
               return true;
@@ -417,11 +438,8 @@ void Map :: PathRooms() {
              if (AStarSearch(startPos,targetPos,doorPath) == true) {
                  for (Position p : (*doorPath) ) {
                      if(game_grid[p.y][p.x] == ntl) game_grid[p.y][p.x] = cor;
-                     //game_grid[p.y][p.x] = od1;
+                     //game_grid[p.y][p.x] = cor;
                  }
-                 
-                 //game_grid[startPos.y][startPos.x] = ded;
-                 //game_grid[targetPos.y][targetPos.x] = ded;
              }
              
              delete (doorPath);
@@ -439,13 +457,19 @@ bool Map::IsInBoundaries(int x, int y) {
 
 }
 
+bool Map::IsInBoundaries(Position p) {
+    int x = p.x;
+    int y = p.y;
+    
+    return IsInBoundaries(x,y);
+}
+
 bool Map::IsWall(int x, int y) {
     if (!IsInBoundaries(x,y)) {
         return false;
     }
     
     tile t = game_grid[y][x];
-    
     if (t == wa1 || t == wa2 || t == wa3 || t == win) return true;
     else return false;
 }
@@ -462,7 +486,6 @@ bool Map::IsTraversable(int x, int y) {
 int Map::EnvironmentCheck(int x, int y)
 {
     tile t = GetTile(x, y);
-
     if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2)) {
         return 1; //door processing
     }

@@ -18,11 +18,14 @@
 class Map
 {
     private:
-    tile game_grid[GRID_Y][GRID_X];
+        tile game_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
+    
+    //Settings
+    bool fogOfWar = false;
     
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
@@ -44,10 +47,21 @@ class Map
     Player* player=NULL;
     NPC* npcs     =NULL;
     
+   
     public:
+    void ToggleFogOfWar() {
+        fogOfWar =! fogOfWar;
+    }
+        
+        
     bool IsInBoundaries(int x, int y);
+    bool IsInBoundaries(Position p);
     bool IsWall(int x, int y);
     bool IsTraversable(int x, int y);
+    
+    bool GetFogOfWar() {
+        return fogOfWar;
+    }
     
     /**
      * Tile codes --
@@ -172,8 +186,13 @@ class Map
             gridX = x;
             gridY = y;
         } else {
-          std::cout << "MESSY" << std::endl;
-           Map();
+            Map();
+        }
+        
+        for (int x=0; x < gridX; x++) {
+            for (int y=0; y < gridY; y++) {
+            game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
+            }
         }
         
        

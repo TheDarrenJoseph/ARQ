@@ -22,6 +22,9 @@ class GameEngine
         PlayerUI* playerUI=NULL; 
         std::list<Item*> generatedItems = std::list<Item*>(); //A list of all items generated (memory allocated instead of references)
         
+        //Settings
+        
+        
     public:
         void InitNPCS();
         
@@ -29,6 +32,7 @@ class GameEngine
         
         void spawnPlacePlayer();
 
+        int MenuScreen();
         void StartGame();
         
         bool GameLoop();
