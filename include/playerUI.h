@@ -25,10 +25,10 @@ public:
     int DoorProc (int y, int x, tile doortype);
     void LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname);
     
-    void PlayerMoveTurn (int y, int x);
+    void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);
     bool TextInput();
     void ShowControls();
-    bool Input ();
+    bool Input (bool* levelEnded, bool* newLevel);
     void DrawNPCS();
     void DrawPlayer();
     void AccessPlayerInv();

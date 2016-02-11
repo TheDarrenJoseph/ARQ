@@ -6,8 +6,7 @@
 
 using std::string;
 
-void CursesUI::InitWindows()
-{
+void CursesUI::InitWindows() {
     //newwin(size y, size x, pos y, pos x) 
     int maxX, maxY;
     getmaxyx(stdscr, maxY, maxX);
@@ -26,8 +25,7 @@ void CursesUI::InitWindows()
     std::cout << "Display Initialised\n";
 }
 
-void CursesUI::DestroyWindows()
-{
+void CursesUI::DestroyWindows() {
     werase(titlewin);
 
     werase(mainwin_rear);
@@ -38,8 +36,7 @@ void CursesUI::DestroyWindows()
 
 }
 
-void CursesUI::DecorateWindows()
-{
+void CursesUI::DecorateWindows() {
     wprint_at(titlewin, (const char *) "||ARQ -- ASCII Roguelike Quester||", 0, 3);
 
     //draw borders around the main windows
@@ -52,16 +49,14 @@ void CursesUI::DecorateWindows()
     wrefresh(consolewin_rear);
 }
 
-void CursesUI::ShowInfo()
-{
+void CursesUI::ShowInfo() {
     wprint_at(consolewin_front, (const char *) "Created by Rave Kutsuu", 0, 0); //Please leave this untouched as proof of origin
     wprint_at(consolewin_front, (const char *) "ARQ Learner project/Tech demo", 2, 0);
     wprint_at(consolewin_front, (const char *) "Made using C++ and ncurses", 3, 0);
     wgetch(consolewin_front);
 }
 
-void CursesUI::ShowNotification(const char* text)
-{
+void CursesUI::ShowNotification(const char* text) {
     WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
     WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
 
@@ -71,36 +66,35 @@ void CursesUI::ShowNotification(const char* text)
     wprint_at(nWin, text, 5, 5);
     //wprint_at(nWin, "[Enter]", UI_Y-1, UI_X-12);
 
-
     wrefresh(nWin);
 
     wgetch(nWin);
 }
 
 /** Displays a simple vertical menu of choices and returns the number of the chosen element */
-int CursesUI::Menu(const char** text, int buttons)
-{
+int CursesUI::Menu(std::vector<std::pair<std::string,std::string>> items) {
     WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
     WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
 
     keypad(nWin, TRUE);
     noecho(); //stops input printing on screen
 
-    box(nWinRear, 0, 0);
+    //Border and update the slightly larger rear window
+    box(nWinRear, 0, 0); 
     wrefresh(nWinRear);
 
     werase(nWin);
 
     int scr_x = 12; //ui size/2 - 8 (8 being maximum letters displayed)
-
-    int index = 0;
-
-    for (int i = 0; i < buttons; i++) {
-        wprint_at(nWin,text[i],i,scr_x);
+    int y     = 0;
+    for (std::pair<std::string,std::string> pair : items) {
+        wprint_at(nWin,pair.first.c_str(),y,scr_x);
+        wprint_at(nWin,pair.second.c_str(),y++,scr_x+12);
     }
 
+    int index = 0;
     while (true) {
-        wchgat(nWin, 12, A_NORMAL, 0, NULL);
+        wchgat(nWin, nWin->_maxx, A_NORMAL, 0, NULL);
 
         mvwchgat(nWin, index, scr_x, 12, A_NORMAL, 1, NULL); //add red blink to the current item
         wrefresh(nWin);
@@ -109,7 +103,7 @@ int CursesUI::Menu(const char** text, int buttons)
 
         if ((choice == KEY_UP) && (index > 0)) {
             index--;
-        } else if ((choice == KEY_DOWN) && (index < buttons - 1)) {
+        } else if ((choice == KEY_DOWN) && (index < y-1)) {
             index++;
         } else if (choice == KEY_RIGHT) {
             return index;
@@ -121,8 +115,15 @@ int CursesUI::Menu(const char** text, int buttons)
 
 }
 
-int CursesUI::wprintw_col(WINDOW* winchoice, const char *text, int color_choice) //allows ncurses window and colour selection when outputting characters
-{
+/** Allows ncurses window and colour selection when outputting characters (DOES NOT REFRESH THE WINDOW)
+ * 
+ * @param winchoice the ncurses window to print to
+ * @param text The text to print
+ * @param color_choice the colour to print ()
+ * @return 
+ */
+int CursesUI::wprintw_col(WINDOW* winchoice, const char *text, int color_choice) { 
+
     wattron(winchoice, COLOR_PAIR(color_choice)); //turns on the chosen colour pair
     wprintw(winchoice, text);
     wattroff(winchoice, COLOR_PAIR(color_choice)); //turns off the chosen colour pair

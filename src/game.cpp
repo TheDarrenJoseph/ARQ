@@ -12,14 +12,42 @@ void GameEngine :: InitNPCS()
     };
 }
 
-int GameEngine :: MainMenu() {
+void GameEngine :: SettingsMenu() {
+    //const int menuSize = 3; 
+    //1const char* text [menuSize] 
+     while(true) {
+         
+    std::string fogOfWar = std::string(map->GetFogOfWar() ? "ON" : "OFF");
+    std::vector<std::pair<std::string, std::string>> text = { {"Fog of war",fogOfWar},
+                                           {"Blank",">:D"},
+                                           {"Close Settings",""}
+                                         };   
+   
+    switch(displayUI->Menu(text)) {
+        case 0 :
+            map->ToggleFogOfWar();
+            break;
+            
+        default :
+            return;
+            break;
+        
+    }
+    }
+
+}
+
+int GameEngine :: MainMenu(bool gameRunning) {
+    std::string contextText = std::string(gameRunning ? "Resume" : "Play" );
     
+    std::vector<std::pair<std::string, std::string>> text = { {contextText,"->"},
+                                           {"Settings","->"},
+                                           {"Info","->"},
+                                           {"Quit","->"}
+                                         };   
+
     
-    const int menuSize = 3;
-    const char* text [menuSize] = {"Play! -> ","Settings ->","Info ->"};
-    
-    return displayUI->Menu(&text[0],menuSize);
-    return 0;
+    return displayUI->Menu(text);
 }
 
 /** Sets the entry and exit points for this level, also places the player at the entry position  */
@@ -45,7 +73,7 @@ void GameEngine :: spawnPlacePlayer() {
             }
             
         }
-    
+ 
     }
 
     if( possibleSpawns.size() > 0 ) {
@@ -59,16 +87,16 @@ void GameEngine :: spawnPlacePlayer() {
       }
       
       map->SetTile(chosenExit.x,chosenExit.y,ext);
+      map->SetEntryPositions(chosenEntry,chosenExit);
     }
 }
 
-int GameEngine :: MenuScreen() {
-     const int menuSize = 3;
-     const char* text [menuSize] = {"Fog of war","...","..."};   
-    
+//The main menu screen for game-start
+int GameEngine :: MenuScreen(bool gameRunning) {
     while (true) {
-        switch (MainMenu()) {
+        switch (MainMenu(gameRunning)) {
             case 0 :
+                if(!gameRunning) {
                 displayUI->ShowNotification("Welcome To ARQ! \n "
                 "You are a humble warrior hoping to earn prestige "
                 "and bring fame and fortune to your family! "
@@ -79,18 +107,21 @@ int GameEngine :: MenuScreen() {
                 " little resistance to your pillaging here. "
                 "The deeper you go, the more valuable the prizes that await you, "
                 "but beware what lurks in the deeper levels! Good Luck!");
+                } 
+            
                 return 0;
                 break;
                 
             case 1 :
-                switch(displayUI->Menu(&text[0],menuSize)) {
-                    case 0 :
-                        map->ToggleFogOfWar();
-                        
-                        
-                        
-                }
+                SettingsMenu();
                 break;
+                
+            case 2 :
+                displayUI->ShowNotification("Game made by RaveKutsuu/Darren Joseph using C++ and ncurses as a learner project.");
+                break;
+            
+            case 3 : 
+                return 1; //Anything that isn't 0 quits
         }
     }
 }
@@ -98,9 +129,7 @@ int GameEngine :: MenuScreen() {
 void GameEngine :: StartGame()
 {
   InitNPCS(); //inititalise all NPCs before doing anything
-    
-  map->InitAreas();
-  
+   
   spawnPlacePlayer();
  // GenerateItems(mediumLoot); 
  
@@ -108,12 +137,13 @@ void GameEngine :: StartGame()
   displayUI->InitWindows(); 
   displayUI->DecorateWindows(); //Box/label the UI
   
-  if (MenuScreen() == 0) {
-  
-  
-  npcs[0].Kill();
-  
-  while (GameLoop()); //Main game loop
+  //Start the main menu
+  if (MenuScreen(false) == 0) {
+      npcs[0].Kill();
+      bool levelEnded=false;
+      bool newLevel=true;
+      
+      while (GameLoop(&levelEnded,&newLevel) && !levelEnded); //Main game loop
   } 
       
       //displayUI->DestroyWindows();  
@@ -121,13 +151,11 @@ void GameEngine :: StartGame()
       return;
 }
 
-
-bool GameEngine :: GameLoop()
-{
+bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
   //Draw main elements
   int playerX;
   int playerY;  
-  
+
   player->GetPos(&playerX, &playerY);
   
   displayUI->DrawMap (map,map->GetFogOfWar(),playerX,playerY,3); 
@@ -141,7 +169,76 @@ bool GameEngine :: GameLoop()
   displayUI->UpdateUI(); //refresh all windows
   displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());   
   
-  return playerUI->Input(); //take input from the player
+  //take input from the player
+  if (!(*levelEnded)) {
+      if(!playerUI->Input(levelEnded,downLevel)) {
+          if (!player->IsAlive())  {
+              //deathscreen 
+          } 
+          
+          if (MenuScreen(true) == 1) return false; 
+      } 
+  } 
+  
+  if (*levelEnded) {
+      Position newPosition = map->GetEntryPosition(); //Set to entrance by default
+      
+      if ((*downLevel)) {
+          if(levels.empty()) {
+              levels.push_front(map);
+              currentLevel = levels.begin();
+          }
+          
+          //Make a new level (levelIndex starts from 0)
+          if ((levelIndex == levels.size()-1)) {
+              displayUI->ClearConsole();
+              displayUI->ConsolePrint("Generating a new level..",0,0);
+              
+              //Re-run map init to place player and exit (spawnPlacePlayer and extras?)
+              map = new Map(50,15,MAX_NPCS,&npcs[0],player); //Rebuild the map
+              levels.push_back(map);
+              
+              displayUI->ConsolePrintWithWait("DONE [Enter]",0,12);
+
+              delete(playerUI);
+              playerUI = new PlayerUI(MAX_NPCS,displayUI,map,player,&npcs[0]);
+              //InitNPCS(); 
+              spawnPlacePlayer();
+          }
+          
+          displayUI->ShowNotification("You go down a level!");
+          currentLevel++; //Go down a level
+          levelIndex++;
+         
+          newPosition = (*currentLevel)->GetEntryPosition();
+      } else if (!(*downLevel)) { //UP -- Otherwise check if we've gone back a level
+          
+          displayUI->ShowNotification("You go up a level!");
+
+          if (levels.size()>0 && levelIndex>0) {
+              // std::cout<<"Going up a level..\n";
+              currentLevel--;//Go up a level
+              levelIndex--;
+              
+              newPosition = (*currentLevel)->GetExitPosition();
+          } else {
+              displayUI->ShowNotification("You escaped to the surface!");
+              return false; //Left the dungeon, woo!   
+          }
+      } 
+      
+      map = *currentLevel;
+      
+      delete(playerUI);
+      playerUI = new PlayerUI(MAX_NPCS,displayUI,map,player,&npcs[0]);
+      player->SetPos(newPosition.x,newPosition.y);
+      
+      *levelEnded=false;
+      //  *downLevel=false;
+      GameLoop(levelEnded,downLevel);
+  }
+  
+  return true;
 }
 
  Player* GameEngine :: GetPlayer()

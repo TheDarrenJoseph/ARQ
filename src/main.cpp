@@ -43,8 +43,6 @@ int main()
 
     Player* thisPlayer = new Warrior();
     
-    thisPlayer->SetPos (1,1);
-    
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
     Container* c = new Container(98,"Bag","X",2,2,0,true); //inventory testing
     thisPlayer->AddToInventory(c);
@@ -55,11 +53,13 @@ int main()
     Item* i = new Item(98,"Swoop","X",2,2,0,true); //inventory testing
     thisPlayer->AddToInventory(i);
     
-    Map thisMap =  Map(50,15,MAX_NPCS,&npcs[0],thisPlayer);
-    CursesUI thisUI = CursesUI();
-    PlayerUI playerUI = PlayerUI(MAX_NPCS,&thisUI,&thisMap,thisPlayer,&npcs[0]);
     
-    GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, &thisMap, &thisUI, &playerUI);
+    //Map and playerUI are new initialised as the GameEngine will delete all of these when done (these pointers get modified for new maps)
+    Map* thisMap = new Map(50,15,MAX_NPCS,&npcs[0],thisPlayer);
+    CursesUI thisUI = CursesUI();
+    PlayerUI* playerUI = new PlayerUI(MAX_NPCS,&thisUI,thisMap,thisPlayer,&npcs[0]);
+    
+    GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, thisMap, &thisUI, playerUI);
     
     thisGame.StartGame();
     

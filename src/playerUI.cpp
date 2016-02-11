@@ -119,14 +119,12 @@ void PlayerUI::Battle(int npc_id)
 
 }
 
-void PlayerUI::AccessPlayerInv()
-{
+void PlayerUI::AccessPlayerInv() {
     AccessContainer(player->GetInventory(),true);
     mainUI->UpdateUI();
 }
 
-void PlayerUI::DrawPlayerEquipment()
-{
+void PlayerUI::DrawPlayerEquipment() {
 //    weapon* weps = player->GetWeps();
 //
 //    for (int x = 0; x < INV_SIZE - 1; x++) {
@@ -137,8 +135,7 @@ void PlayerUI::DrawPlayerEquipment()
 //    mainUI->DrawPlayerEquipmentSlot(INV_SIZE, player->GetOutfit().name);
 }
 
-int PlayerUI::BattleTurn(int npc_id)
-{
+int PlayerUI::BattleTurn(int npc_id) {
     mainUI->ClearConsole();
 
     for (int i = 0; i < 3; i++) {
@@ -178,28 +175,29 @@ int PlayerUI::BattleTurn(int npc_id)
     return 0;
 }
 
-int PlayerUI::DoorProc(int y, int x, tile doortype)
-{
+int PlayerUI::DoorProc(int y, int x, tile doortype) {
     int map_tile = map->GetTile(x, y);
 
     std::string door_name = tile_library[map_tile].name;
 
     if ((doortype == od0) || (doortype == od1) || (doortype == od2)) {
         std::string output = "You enter the doorway of the" + door_name; //Building our message
-
         mainUI->ConsolePrintWithWait(output, 0, 0);
-
         player->SetPos(x, y);
 
-        return (0);
-    } else if ((doortype == cd0) || (doortype == cd1) || (doortype == cd2)) {
+    } else {
         std::string answer;
 
-        std::string output = "Would you like to open the " + door_name + "?";
+        std::string output = "Would you like to open the " + door_name + "? ";
         mainUI->ConsolePrint(output, 0, 0);
         answer = mainUI->ConsoleGetString();
 
         if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
+            if ((doortype == ld1) || (doortype == ld2)) {
+                LockProc(y, x, doortype, map_tile, door_name);
+                return (0);
+            }
+            
             std::string output = "You open the " + door_name + " and step into the doorway";
             mainUI->ConsolePrint(output, 0, 0);
 
@@ -208,28 +206,17 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
             if (door == (cd0) || door == cd1 || door == cd2) //Checking main tile
             {
                 map->SetTile(x, y, od0);
-
-                if (map->GetTile(x, y + 1) == (door)) //Checking for surrounding door tiles
-                {
-                    map->SetTile(x, y + 1, od0);
-                } else if (map->GetTile(x, y - 1) == (door)) {
-                    map->SetTile(x, y - 1, od0);
-                } else if (map->GetTile(x + 1, y) == (door)) {
-                    map->SetTile(x + 1, y, od0);
-                } else if (map->GetTile(x - 1, y) == (door)) {
-                    map->SetTile(x - 1, y, od0);
-                };
+                for (Position neighbor : map->GetNeighbors(x,y)) {
+                     if (map->GetTile(neighbor) == door) map->SetTile(x,y,od0);
+                }
+               
             };
-
-
-            return (0);
         } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
-            std::string output = "You leave the " + door_name + " untouched";
+            std::string output = "You leave the " + door_name + " untouched.";
 
             mainUI->ClearConsole();
             mainUI->ConsolePrintWithWait(output, 0, 0);
-
-            return (0);
+            return 0;
         } else {
             mainUI->ClearConsole();
             mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
@@ -237,38 +224,13 @@ int PlayerUI::DoorProc(int y, int x, tile doortype)
             DoorProc(y, x, map->GetTile(x, y));
         };
 
-        return (0);
-    } else if ((doortype == ld1) || (doortype == ld2)) {
-        std::string answer;
-
-        mainUI->ClearConsole();
-        mainUI->ConsolePrint("Would you like to open the door? ", 0, 0);
-        answer = mainUI->ConsoleGetString();
-
-        if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
-            LockProc(y, x, doortype, map_tile, door_name);
-            return (0);
-        } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
-            std::string output = "You leave the " + door_name + " untouched";
-            
-            mainUI->ClearConsole();
-            mainUI->ConsolePrintWithWait(output, 0, 0);
-
-            return (0);
-        } else {
-            mainUI->ClearConsole();
-            mainUI->ConsolePrintWithWait("Not a yes or no answer, try again..", 0, 0);
-
-            DoorProc(y, x, map->GetTile(x, y));
-        };
-        return (0);
-    };
+        
+    }
 
     return (0);
 }
 
-void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname)
-{
+void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname) {
     std::string answer;
     const Item* inv_tile;
     int keyCount = player->GetKeyCount();
@@ -428,8 +390,12 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
     return;
 }
 
-/*Wrapper for the Player Move() method, making use of return values for UI context*/
-void PlayerUI::PlayerMoveTurn(int x, int y)
+/** Wrapper for the Player Move() method, making use of return values for UI context
+ * 
+ * @param x 
+ * @param y
+ */
+void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
 {
     std::string output;
     int eid;
@@ -494,7 +460,24 @@ void PlayerUI::PlayerMoveTurn(int x, int y)
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
         break;
+        
+        case 5: //Entrance
+         mainUI->ClearConsole();
+         mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);
+         *levelEnded = true;
+         *downLevel = false; //False takes us up to a previous level
+         break;
+        
+        case 6: //Exit
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait("You have reached the exit!", 0, 0);
+            *levelEnded = true;
+            *downLevel = true;
+            return;
+            break;
     }
+
+    return;
 }
 
 /** A function to handle command input from the player.
@@ -542,7 +525,11 @@ void PlayerUI::ShowControls()
     mainUI->ConsolePrint("Arrow Keys to move.. ", 0, 1);
 }
 
-bool PlayerUI::Input()
+/**
+ * 
+ * @return false to exit or change level, true otherwise.
+ */
+bool PlayerUI::Input(bool* levelEnded, bool* downLevel)
 {
     int x;
     int y;
@@ -558,15 +545,17 @@ bool PlayerUI::Input()
     else if (choice == KEY_RIGHT || choice == 'd') thisX++;
     else if (choice == KEY_DOWN || choice == 's') thisY++;
     else if (choice == KEY_LEFT || choice == 'a') thisX--;
-    else if (choice == 'q') return false;
+    else if (choice == 'q' || choice == KEY_EXIT ) return false;
     else if (choice == 'c') return TextInput();
     else if (choice == 'i') AccessPlayerInv();
 
-    //handle any movement input
+        //handle any movement input
     if ((x != thisX) || (y != thisY)) {
-        PlayerMoveTurn(thisX, thisY);
+        PlayerMoveTurn(thisX, thisY,levelEnded,downLevel);
+        
+        if (*levelEnded) return false;
     }
-
+    
     return true;
 }
 
@@ -708,13 +697,15 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
 void PlayerUI::TileProc(int y, int x, tile t)
 {
 
-    if (t == od0 || (t == od1) || (t == od2)) {
-        DoorProc(y, x, t);
-        return;
-    } else if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2)) {
-        DoorProc(y, x, t);
-        return;
-    } else if (t == ent) {
+//    if (t == od0 || (t == od1) || (t == od2)) {
+//        DoorProc(y, x, t);
+//        return;
+//    } else if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2)) {
+//        DoorProc(y, x, t);
+//        return;
+//    } else 
+        
+    if (t == ent) {
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);
         return;

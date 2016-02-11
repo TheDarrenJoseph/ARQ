@@ -1,6 +1,19 @@
 #include "map.h"
 #include "room.h"
 
+void Map :: SetEntryPositions(Position entry, Position exit) {
+    entryPosition = entry;
+    exitPosition = exit;
+}
+
+Position Map :: GetEntryPosition() {
+    return entryPosition;
+}
+
+Position Map :: GetExitPosition() {
+    return exitPosition;
+}
+
 std::list<Position> Map:: GetNeighbors(int x, int y) {
     std::list<Position> possibleNeighbors;
     std::list<Position> neighbors = *new std::list<Position>();    
@@ -485,15 +498,16 @@ bool Map::IsTraversable(int x, int y) {
 
 int Map::EnvironmentCheck(int x, int y)
 {
+    
     tile t = GetTile(x, y);
-    if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2)) {
+    if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2) || (t == od0) || (t == od1) || (t == od2)) {
         return 1; //door processing
     }
     else if (t == ded) {
         return 2; //danger sign
     }
+    
     else return 0;
-
 }
 
 bool Map::CanPlaceItems(int x, int y)
@@ -560,7 +574,6 @@ int Map::MoveCharacter(Character* c, int x, int y)
     case 2:
         //trap!!
         return 2;
-
     }
 
     return 99;
@@ -576,12 +589,14 @@ int Map::MoveCharacter(Character* c, int x, int y)
  * 3 - Enemy found
  * 4 - Dead body found
  * 
+ * 5 - entrance
+ * 6 - exit
+ * 
  * 99 - Cannot move
  * Other - determined by EncounterCheck()'s return value
  */
 int Map::MovePlayer(int x, int y, int* npcID)
 {
-   
     if ((x > 0) || (y > 0) || (x < GRID_X) || (y < GRID_Y)) {
         switch (EncounterCheck(x, y, npcID)) {
         case 1:
@@ -593,6 +608,15 @@ int Map::MovePlayer(int x, int y, int* npcID)
             break;
         }
     }
+    
+    tile t = GetTile(x, y);
+    if (t == ent) {
+        return 5;
+    } else if (t == ext) {
+        return 6;
+    } else if (t == ded) {
+       
+    };
 
     return MoveCharacter(player, x, y);
 }
@@ -657,6 +681,12 @@ tile Map::GetTile(int x, int y)
     return game_grid[y][x];
 }
 
+tile Map::GetTile(Position p)
+{
+    return game_grid[p.y][p.x];
+}
+
+
 void Map::SetTile(int x, int y, tile t)
 {
     game_grid[y][x] = t;
@@ -705,10 +735,6 @@ int Map::GetGridY()
     return gridY;
 }
 
-void Map::InitAreas()
-{
-
-}
 
 /*
 void DrawInv(area* a)
@@ -734,7 +760,7 @@ void DrawInv(area* a)
           wrefresh(thisWindow);
         }; 
     };  
-  return;
+  return;DoorProc
 }
  */
 

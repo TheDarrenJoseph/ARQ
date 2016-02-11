@@ -27,7 +27,7 @@ public:
 
     virtual void ShowInfo() = 0;
     virtual void ShowNotification(const char* text) = 0;
-    virtual int Menu(const char** text, int buttons) = 0;
+    virtual int Menu(std::vector<std::pair<std::string,std::string>>) = 0;
 
     virtual void UpdateUI() = 0;
     

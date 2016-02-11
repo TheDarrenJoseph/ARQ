@@ -73,7 +73,7 @@ public:
 
     virtual void ShowInfo();
     virtual void ShowNotification(const char* text);
-    virtual int Menu(const char** text, int buttons);
+    virtual int Menu(std::vector<std::pair<std::string,std::string>> items);
 
     virtual void UpdateUI();
 

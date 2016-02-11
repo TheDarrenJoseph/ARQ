@@ -15,12 +15,19 @@ class GameEngine
 {  
     private:
         int MAX_NPCS=0;
+
         Map* map=NULL;
+        std::list<Map*> levels; //A list of all of the addresses for our maps
+        
+        long unsigned int levelIndex=0;
+        std::list<Map*>::iterator currentLevel = levels.begin();
+        
         Player* player=NULL;
         NPC* npcs=NULL;
         UI* displayUI=NULL;
         PlayerUI* playerUI=NULL; 
         std::list<Item*> generatedItems = std::list<Item*>(); //A list of all items generated (memory allocated instead of references)
+        
         
         //Settings
         
@@ -28,14 +35,16 @@ class GameEngine
     public:
         void InitNPCS();
         
-        int MainMenu();
+        void SettingsMenu();
+        int MenuScreen(bool gameRunning);
+        int MainMenu(bool gameRunning);
         
         void spawnPlacePlayer();
 
-        int MenuScreen();
+        
         void StartGame();
         
-        bool GameLoop();
+        bool GameLoop(bool* levelEnded, bool* newLevel);
         
         Player* GetPlayer();
         NPC* GetNPCS(int* size);
@@ -45,6 +54,8 @@ class GameEngine
         int EncounterCheck(int x, int y, int* npcID);
         
         void GenerateItems(lootChance thisChance);
+        
+       
         
         /** Shallow-copies from another game-engine to preserve external data control
          * 
@@ -90,6 +101,14 @@ class GameEngine
         }
         
         ~GameEngine() {
+            delete(playerUI);
+            
+           if(levels.size()==0) delete(map); //Current map, not in level list.
+            
+            for(Map* m : levels) {
+                delete(m);
+            }
+            
             
         }
      

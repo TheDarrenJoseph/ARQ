@@ -17,8 +17,8 @@
 
 class Map
 {
-    private:
-        tile game_grid[GRID_Y][GRID_X];
+private:
+    tile game_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
@@ -31,11 +31,6 @@ class Map
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
         return (lval.second < rval.second); //compares the int costs of the two PositionCosts, allowing sorting of positions by their movement cost
     }
-
-    
-    //Room list
-    //Sort rooms by co-ordinates?
-    //When creating a room, you can check against co-ordinates and size
     
     int gridX=0;
     int gridY=0;
@@ -47,13 +42,21 @@ class Map
     Player* player=NULL;
     NPC* npcs     =NULL;
     
+    Position entryPosition = Position(0,0);
+    Position exitPosition = Position(0,0);
+    
    
     public:
     void ToggleFogOfWar() {
         fogOfWar =! fogOfWar;
     }
         
-        
+    void SetEntryPositions(Position entry, Position exit);
+    
+    Position GetEntryPosition();
+    Position GetExitPosition();    
+    
+    
     bool IsInBoundaries(int x, int y);
     bool IsInBoundaries(Position p);
     bool IsWall(int x, int y);
@@ -68,6 +71,8 @@ class Map
      * 0 - fine
      * 1 - Door encountered
      * 2 - trap encountered
+     * 3 - entrance
+     * 4 - exit
      * 
      * @return returns an integer code for if an environment object is encounterred
      */
@@ -139,6 +144,8 @@ class Map
     
         
     tile GetTile(int x, int y);
+    tile GetTile(Position p);
+    
     void SetTile(int x, int y,tile t);
 
     const Item* GetItem(int x, int y);
