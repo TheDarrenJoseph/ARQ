@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "map.h"
 #include "room.h"
 
@@ -185,7 +187,7 @@ void Map::CreateMap(int roomChance) {
         //Pick a random position out of what's available
         int randPosNo = rand() % possibleRoomPositions.size()-1;
         for (int i=0; i<randPosNo; i++) {
-            roomPosIterator.operator ++(); //Increment our iterator to pick the right element
+            roomPosIterator++; //Increment our iterator to pick the right element
         }
         Position roomPos = *roomPosIterator;
         
@@ -219,7 +221,17 @@ void Map::CreateMap(int roomChance) {
             
     }
 
-    PathRooms();
+    PaveRooms();
+    AddEntryPoints();
+    
+    //If pathing/making a path to the exit fails, rebuild the map
+    if (!PathRooms()) {
+        std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
+       // Map* thisMap = this;
+        Map(); 
+        
+//        delete(thisMap);
+    }
 
 }
 
@@ -228,26 +240,48 @@ void Map::CreateMap(int roomChance) {
  */
 //bool Map :: LevelPathValid(Position entryPos, Position exitPos) {
 bool Map :: LevelPathValid() {
-    //Path* path = new Path();
-    
-   // return AStarSearch();
-    
-    //Plot a level path? (from the first room to the last, and include an exit?)
-    return false;
+    Path* levelPath = new Path();
+    return AStarSearch(this->GetEntryPosition(),this->GetExitPosition(),levelPath);
+    delete levelPath;
+}
+
+std::vector<Position> Map :: GetPossibleSpawns() {
+    return possibleSpawns;
+}
+
+void Map :: AddEntryPoints() {
+
+    if( possibleSpawns.size() > 0 ) {
+      Position chosenEntry = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
+      
+      SetTile(chosenEntry.x,chosenEntry.y,ent);
+      
+      Position chosenExit = chosenEntry;
+      while (chosenExit == chosenEntry) {
+          chosenExit = possibleSpawns[rand()%possibleSpawns.size()]; //pick another for our exit
+      }
+      
+      SetTile(chosenExit.x,chosenExit.y,ext);
+      SetEntryPositions(chosenEntry,chosenExit);
+    }
 }
 
 void Map :: PaveRoom(Room r) {
     Position startPos = r.GetStartPos();
     Position endPos = r.GetEndPos();
+    
+    
 
     if(IsInBoundaries(startPos) && IsInBoundaries(endPos)) {
     //Paves the inside of a room    
     for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
         for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
             if (game_grid[y][x] == ntl)  game_grid[y][x] = rom;
+            possibleSpawns.push_back(Position(x,y));
         }
     }
     }
+   
 }
 
 int Map :: ManhattanPathCostEstimate(Position startPos, Position endPos) {
@@ -354,27 +388,28 @@ bool Map :: EvaluateNodes(Position currentNode, Position endPos, std::set<Positi
         
         //Check that we've looped once (by the pos now being valid), if so make sure we haven't repeated the node search
         if (IsInBoundaries(previousNode.x,previousNode.y)) {
-        if (currentNode == previousNode) {
-            std::cout << "Node repeated! Aborting pathing here..";
-            return false;
-        } else { 
-        }
+            if (currentNode == previousNode) {
+                std::cout << "Node repeated! Aborting pathing here..\n";
+                return false;
+            } 
+        } 
+        
         //Print data about the current node
         //std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
-            unvisitedNodes->erase(currentNode);
-            visitedNodes->insert(currentNode);    
-            
-            //Check for reaching our goal
-            if (currentNode == endPos) { 
-                return true;
-            } else { //Evaluate all neighbors of the current node
-                for (Position p : GetNeighbors(currentNode.x,currentNode.y)) {
-                    EvaluatePathNeighborNode(p,endPos,currentNode, visitedNodes, unvisitedNodes, navigatedNodes, nonHeuristicCostMap, heuristicCostMap );
-                }
+        unvisitedNodes->erase(currentNode);
+        visitedNodes->insert(currentNode);    
+        
+        //Check for reaching our goal
+        if (currentNode == endPos) { 
+            return true;
+        } else { //Evaluate all neighbors of the current node
+            for (Position p : GetNeighbors(currentNode.x,currentNode.y)) {
+                EvaluatePathNeighborNode(p,endPos,currentNode, visitedNodes, unvisitedNodes, navigatedNodes, nonHeuristicCostMap, heuristicCostMap );
             }
-            
-            previousNode = currentNode;
         }
+        
+        previousNode = currentNode;
+       
         
     }
     
@@ -418,11 +453,17 @@ bool Map :: AStarSearch(Position startPos, Position endPos, Path* endPath) {
     return false;
 }
 
-void Map :: PathRooms() { 
-  for (unsigned short int i=0; i<roomCount; i++) {
+void Map :: PaveRooms() {
+      for (unsigned short int i=0; i<roomCount; i++) {
         PaveRoom(rooms[i]);
-  }
+      }
+    
+//    for (Room r : rooms) {
+//         PaveRoom(r);
+//    }
+}
 
+bool Map :: PathRooms() { 
   Room initialRoom = rooms[0];
   int doorCount=0;
   Door* startDoors = initialRoom.getDoors(&doorCount);
@@ -460,14 +501,18 @@ void Map :: PathRooms() {
          }
                   
      }
-
+  
+  //Return based on whether or not you can reach the exit
+  return LevelPathValid();
+  //return true;
 }
 
 bool Map::IsInBoundaries(int x, int y) {
     if ((x < 0) || (x > GRID_X) || (y < 0) || (y > GRID_Y)) {
         return false;
-    } else return true;
-
+    } 
+    
+    return true;
 }
 
 bool Map::IsInBoundaries(Position p) {

@@ -42,6 +42,8 @@ private:
     Player* player=NULL;
     NPC* npcs     =NULL;
     
+    std::vector<Position> possibleSpawns;
+    
     Position entryPosition = Position(0,0);
     Position exitPosition = Position(0,0);
     
@@ -50,9 +52,13 @@ private:
     void ToggleFogOfWar() {
         fogOfWar =! fogOfWar;
     }
+    
+    void PaveRooms();
         
     void SetEntryPositions(Position entry, Position exit);
+    void AddEntryPoints();
     
+    std::vector<Position> GetPossibleSpawns();
     Position GetEntryPosition();
     Position GetExitPosition();    
     
@@ -140,7 +146,7 @@ private:
     bool EvaluateNodes(Position currentNode, Position endPos ,std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes,std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap, std::map<Position,int>* heuristicCostMap );
     void EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode, std::set<Position>* visitedNodes, std::set<Position>* unvisitedNodes, std::map<Position,Position>* navigatedNodes, std::map<Position,int>* nonHeuristicCostMap,std::map<Position,int>* heuristicCostMap );
     bool AStarSearch(Position startPos, Position endPos, Path* endPath);
-    void PathRooms();
+    bool PathRooms();
     
         
     tile GetTile(int x, int y);
@@ -198,7 +204,7 @@ private:
         
         for (int x=0; x < gridX; x++) {
             for (int y=0; y < gridY; y++) {
-            game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
+                game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
             }
         }
         
@@ -243,10 +249,10 @@ private:
         return *this;
     }
     
-  //Copy constructor  
-  Map(const Map& m) {  
-      copyMap(m);
-  }
+    //Copy constructor  
+    Map(const Map& m) {  
+        copyMap(m);
+    }
     
     ~Map()
     {

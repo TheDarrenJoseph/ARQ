@@ -17,7 +17,7 @@ class GameEngine
         int MAX_NPCS=0;
 
         Map* map=NULL;
-        std::list<Map*> levels; //A list of all of the addresses for our maps
+        std::list<Map*> levels;
         
         long unsigned int levelIndex=0;
         std::list<Map*>::iterator currentLevel = levels.begin();
@@ -28,10 +28,6 @@ class GameEngine
         PlayerUI* playerUI=NULL; 
         std::list<Item*> generatedItems = std::list<Item*>(); //A list of all items generated (memory allocated instead of references)
         
-        
-        //Settings
-        
-        
     public:
         void InitNPCS();
         
@@ -40,12 +36,13 @@ class GameEngine
         int MainMenu(bool gameRunning);
         
         void spawnPlacePlayer();
-
+        
         
         void StartGame();
         
         bool GameLoop(bool* levelEnded, bool* newLevel);
-        
+        void ChangeLevel(bool* levelEnded, bool* downLevel);
+                
         Player* GetPlayer();
         NPC* GetNPCS(int* size);
         
@@ -71,6 +68,24 @@ class GameEngine
             this->npcs = engine.npcs;
             this->player = engine.player;
             this->playerUI = engine.playerUI;
+            
+            std::list<Map*> oldLevels = engine.levels;
+            
+            //Assign a begin an end iterator for our copy
+            std::list<Map*>::iterator oldLevelsIt = oldLevels.begin();
+            const std::list<Map*>::iterator toCopyEnd = oldLevels.end(); //One past the end 
+            
+             std::list<Map*>::iterator newLevelsIt = levels.begin();
+
+           // std::list<Map*>::iterator copiedLevels = levels.begin()
+            //Assign the currentLevel pointer, which we shall use to advance through all of the toCopy 
+            //(++currentLevel for efficiency)
+            //!= (since our loop stops when it reaches the end+1 then, and thus we don't miss the last item)
+            for (; oldLevelsIt != toCopyEnd; ++oldLevelsIt) {
+                *newLevelsIt =*oldLevelsIt; //Initiate Map copy constructor
+                
+                ++newLevelsIt;
+            }
         }
     
     //Overriding assignment operator
@@ -108,8 +123,7 @@ class GameEngine
             for(Map* m : levels) {
                 delete(m);
             }
-            
-            
+
         }
      
   

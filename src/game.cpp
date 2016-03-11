@@ -56,39 +56,9 @@ void GameEngine :: spawnPlacePlayer() {
     Room* rooms = map->GetRooms();
     int roomCount = map->GetRoomCount();
     
-    std::vector<Position> possibleSpawns;
-    
-    //int randomRoom = rooms[rand()%roomCount];
-    
-    //Save the co-ordinates of every room's tiles
-    for (int roomNo=0; roomNo<roomCount; roomNo++) {
-        Room room = rooms[roomNo];
-        Position roomPos = room.GetStartPos();
-        
-        for (unsigned int x=roomPos.x; x<(room.GetEndPos().x); x++) {
-            for (unsigned int y=roomPos.y; y<(room.GetEndPos().y); y++) {
-                if (map->GetTile(x,y) == rom) {
-                    possibleSpawns.push_back(Position(x,y));
-                } 
-            }
-            
-        }
- 
-    }
-
-    if( possibleSpawns.size() > 0 ) {
-      Position chosenEntry = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
-      player->SetPos(chosenEntry.x, chosenEntry.y); //place the player there
-      map->SetTile(chosenEntry.x,chosenEntry.y,ent);
-      
-      Position chosenExit = chosenEntry;
-      while (chosenExit == chosenEntry) {
-          chosenExit = possibleSpawns[rand()%possibleSpawns.size()]; //pick another for our exit
-      }
-      
-      map->SetTile(chosenExit.x,chosenExit.y,ext);
-      map->SetEntryPositions(chosenEntry,chosenExit);
-    }
+    //std::vector<Position> possibleSpawns = map->GetPossibleSpawns();
+    Position chosenEntry = map->GetEntryPosition();
+    player->SetPos(chosenEntry.x, chosenEntry.y); //place the player there
 }
 
 //The main menu screen for game-start
@@ -151,37 +121,13 @@ void GameEngine :: StartGame()
       return;
 }
 
-bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
-  //Draw main elements
-  int playerX;
-  int playerY;  
-
-  player->GetPos(&playerX, &playerY);
-  
-  displayUI->DrawMap (map,map->GetFogOfWar(),playerX,playerY,3); 
-  displayUI->DrawItems (map); 
-  displayUI->DrawContainers(map);
-  playerUI->DrawNPCS();
-  
-  //Draw player UI elements
-   playerUI->DrawPlayer(); //Draw the player
-   
-  displayUI->UpdateUI(); //refresh all windows
-  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());   
-  
-  //take input from the player
-  if (!(*levelEnded)) {
-      if(!playerUI->Input(levelEnded,downLevel)) {
-          if (!player->IsAlive())  {
-              //deathscreen 
-          } 
-          
-          if (MenuScreen(true) == 1) return false; 
-      } 
-  } 
-  
-  if (*levelEnded) {
-      Position newPosition = map->GetEntryPosition(); //Set to entrance by default
+/** Loads a new level, either creating a new Map, or loading a pre-existing one.
+ * 
+ * @param levelEnded whether or not an exit has been reached
+ * @param downLevel whether or not to go down a level
+ */
+void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
+    Position newPosition = map->GetEntryPosition(); //Set to entrance by default
       
       if ((*downLevel)) {
           if(levels.empty()) {
@@ -193,7 +139,7 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
           if ((levelIndex == levels.size()-1)) {
               displayUI->ClearConsole();
               displayUI->ConsolePrint("Generating a new level..",0,0);
-              
+              displayUI->UpdateUI();
               //Re-run map init to place player and exit (spawnPlacePlayer and extras?)
               map = new Map(50,15,MAX_NPCS,&npcs[0],player); //Rebuild the map
               levels.push_back(map);
@@ -223,7 +169,7 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
               newPosition = (*currentLevel)->GetExitPosition();
           } else {
               displayUI->ShowNotification("You escaped to the surface!");
-              return false; //Left the dungeon, woo!   
+              return; //Return without changing level or resetting the levelEnded flag, ends the main loop
           }
       } 
       
@@ -234,8 +180,46 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
       player->SetPos(newPosition.x,newPosition.y);
       
       *levelEnded=false;
-      //  *downLevel=false;
-      GameLoop(levelEnded,downLevel);
+}
+
+/**
+ * 
+ * @param levelEnded whether or not the current level has ended, the game ends if this is true when this function returns
+ * @param downLevel
+ * @return 
+ */
+bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
+  int playerX;
+  int playerY;  
+
+  player->GetPos(&playerX, &playerY);
+  
+  displayUI->DrawMap (map,map->GetFogOfWar(),playerX,playerY,3); 
+  displayUI->DrawItems (map); 
+  displayUI->DrawContainers(map);
+  playerUI->DrawNPCS();
+  
+  //Draw player UI elements
+   playerUI->DrawPlayer(); //Draw the player
+   
+  displayUI->UpdateUI(); //refresh all windows
+  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());   
+  
+  //take input from the player
+  if (!(*levelEnded)) {
+      if(!playerUI->Input(levelEnded,downLevel)) {
+          if (!player->IsAlive())  {
+              //deathscreen 
+              displayUI->ShowNotification("You died!");
+              MenuScreen(false);
+          } 
+          
+          if (MenuScreen(true) == 1) return false; 
+      } 
+  } 
+  
+  if (*levelEnded) {
+      ChangeLevel(levelEnded,downLevel);
   }
   
   return true;
