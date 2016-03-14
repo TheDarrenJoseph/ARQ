@@ -276,7 +276,7 @@ void CursesUI::DrawCharacter(int x, int y, int colour, char symbol)
     return;
 }
 
-void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
+void CursesUI::DrawPlayerStats(std::string name, int health, long unsigned int loot, long unsigned int currentLevel)
 {
     WINDOW* winchoice = mainwin_rear;
 
@@ -292,6 +292,10 @@ void CursesUI::DrawPlayerStats(std::string name, int health, int loot)
     wmove(winchoice, 0, 28);
     wprintw_col(winchoice, "Loot: ", 4);
     wprintw(winchoice, "%06d", loot);
+    
+    wmove(winchoice, 0, 42);
+    wprintw_col(winchoice, "Level: ", 4);
+    wprintw(winchoice, "%06d", currentLevel);
     
     wrefresh(winchoice);
     

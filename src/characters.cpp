@@ -188,13 +188,13 @@ Container* Player :: GetInventory()
 }  
 
 
-void Player :: SetLoot(int i)
+void Player :: SetLoot(unsigned long int i)
 {
   this->loot = i;
   return;
 }
 
-int Player :: GetLootScore ()
+unsigned long int Player :: GetLootScore ()
 {
   return this->loot;
 }

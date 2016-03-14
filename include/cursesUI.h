@@ -59,7 +59,7 @@ public:
     virtual void DrawItems(Map* m);
     virtual void DrawContainers(Map* m);
 
-    virtual void DrawPlayerStats(std::string name, int health, int loot);
+    virtual void DrawPlayerStats(std::string name, int health, unsigned long int loot, unsigned long int levelIndex);
 
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
     virtual void HighlightInvLine(int index);

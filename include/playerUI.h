@@ -27,6 +27,7 @@ public:
     
     void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);
     bool TextInput();
+    bool InventoryInput(int choice, int index,  Container* c, bool playerInv);
     void ShowControls();
     bool Input (bool* levelEnded, bool* newLevel);
     void DrawNPCS();
@@ -35,7 +36,7 @@ public:
     void DrawPlayerEquipment();
 
 //    int AccessArea (Inventory* a);
-    void accessListCommand(Container* c,int index);
+    void AccessListCommand(Container* c,int index, bool playerInv);
     void AccessContainer (Container* c,bool playerInv);
 
     

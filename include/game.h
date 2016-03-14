@@ -19,7 +19,7 @@ class GameEngine
         Map* map=NULL;
         std::list<Map*> levels;
         
-        long unsigned int levelIndex=0;
+        unsigned long int levelIndex=0;
         std::list<Map*>::iterator currentLevel = levels.begin();
         
         Player* player=NULL;
@@ -37,7 +37,6 @@ class GameEngine
         
         void spawnPlacePlayer();
         
-        
         void StartGame();
         
         bool GameLoop(bool* levelEnded, bool* newLevel);
@@ -47,6 +46,7 @@ class GameEngine
         NPC* GetNPCS(int* size);
         
         Map* GetMap();
+        unsigned long int GetLevelIndex(); //Get the current level number
         
         int EncounterCheck(int x, int y, int* npcID);
         

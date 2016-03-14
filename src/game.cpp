@@ -1,6 +1,7 @@
 #include "position.h"
 #include "game.h"
 #include <vector>
+#include <limits> //numeric limits for safety
 
 
 void GameEngine :: InitNPCS()
@@ -127,6 +128,11 @@ void GameEngine :: StartGame()
  * @param downLevel whether or not to go down a level
  */
 void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
+    if (levelIndex == (std::numeric_limits<unsigned long int>::max()) ) {
+        displayUI->ShowNotification("The door is useless! (You have gone too deep!)");
+        return; //Return without changing level or resetting the levelEnded flag, ends the main loop
+    }
+    
     Position newPosition = map->GetEntryPosition(); //Set to entrance by default
       
       if ((*downLevel)) {
@@ -203,7 +209,7 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
    playerUI->DrawPlayer(); //Draw the player
    
   displayUI->UpdateUI(); //refresh all windows
-  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore());   
+  displayUI->DrawPlayerStats (player->GetName(),player->GetHealth(),player->GetLootScore(),GetLevelIndex());   
   
   //take input from the player
   if (!(*levelEnded)) {
@@ -240,6 +246,10 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
  Map* GameEngine :: GetMap()
  {
      return map;
+ }
+ 
+ long unsigned int GameEngine :: GetLevelIndex() {
+     return levelIndex;
  }
  
 void GameEngine :: GenerateItems(lootChance thisChance)

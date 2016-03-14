@@ -136,7 +136,7 @@ class Player : public Character
   Container* inventory = NULL;
  // NPC* npcs;
   
-  int loot=0;
+  unsigned long int loot=0;
   
   
   public :
@@ -148,8 +148,8 @@ class Player : public Character
   Container* GetInventory();
   const Item* GetFromInventory(int index);
   
-  void SetLoot(int x);
-  int GetLootScore();
+  void SetLoot(unsigned long int x);
+  unsigned long int GetLootScore();
 
   int GetLootCount ();
   int GetKeyCount();

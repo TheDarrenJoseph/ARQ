@@ -604,9 +604,10 @@ void PlayerUI::DrawPlayer()
  *  This allows dropping/moving items, etc
  * @param index The currently selected item index
  * @param mainUI The UI to call to
+ * @param playerInv whether or not this is the player's inventory (to disable "take", etc)
  * @return 
  */
-void PlayerUI :: accessListCommand(Container* c, int index) {
+void PlayerUI :: AccessListCommand(Container* c, int index, bool playerInv) {
     echo();
 
     mainUI->ConsolePrintWithWait(PROMPT_TEXT, 0, 0);
@@ -639,13 +640,39 @@ void PlayerUI :: accessListCommand(Container* c, int index) {
 
 /**
  * 
+ * @param choice int code for the player input
+ * @param index The current selected item index in this list
+ * @param c A pointer to this container
+ * @param playerInv Whether or not this is the player's inventory or another container
+ * @return 
+ */
+bool PlayerUI::InventoryInput(int choice, int index, Container* c, bool playerInv) {
+     switch(choice) {
+            case ('q') : {
+                return false;
+                break;
+            }
+            case ('c') : {
+                AccessListCommand(c, index, playerInv);
+                break;
+            }
+           case ('i') : { //Item info
+                break;
+            }
+        }
+     return true;
+}
+
+
+/**
+ * 
  * @param c         
  * @param playerInv whether or not we are current looking at the player's inventory, disables 'take'
  * @return 
  */
 void PlayerUI::AccessContainer(Container * c, bool playerInv)
 {
-        bool selection = true;
+    bool selection = true;
     long unsigned int index = 0;
     long unsigned int invIndex = 0; //The index of the topmost item on the screen, alows scrolling
     
@@ -657,38 +684,26 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
            
         int choice =mainUI->ConsoleGetInput();
         long unsigned int invSize = c->GetSize()-1; 
-        // index++;
-        switch(choice) {
-            case (KEY_UP) : {
-                if (index>0) {
-                    index--; 
-                } else if (index==0 && invIndex>0) {
-                    invIndex--;
-                }
-                break;
-            }
-            case (KEY_DOWN) : { 
-                long unsigned int invWindowLimit = INVWIN_FRONT_Y-2;
-                //Checking against the window boundary. invSize-1 allows
-                if (index<invWindowLimit && index<invSize) {
-                    if (index==invWindowLimit-1 && invIndex<invSize) {
-                        invIndex++;
-                    } else {
-                        index++; 
-                    }
-                } 
-                break;
-            }
-            case ('q') : {
-                selection = false;
-                break;
-            }
-            case ('c') : {
-                accessListCommand(c, index);
-            }
-        }
-
         
+        if (choice == KEY_UP) {
+            if (index>0) {
+                index--; 
+            } else if (index==0 && invIndex>0) {
+                invIndex--;
+            }
+        } else if(choice == KEY_DOWN) { 
+            unsigned long int invWindowLimit = INVWIN_FRONT_Y-2;
+            //Checking against the window boundary. invSize-1 allows
+            if (index<invWindowLimit && index<invSize) {
+                if (index==invWindowLimit-1 && invIndex<invSize) {
+                    invIndex++;
+                } else {
+                    index++; 
+                }
+            } 
+        } else {
+            selection = InventoryInput(choice, index, c, playerInv);
+        }
     }
     
 }

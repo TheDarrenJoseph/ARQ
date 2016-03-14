@@ -13,7 +13,7 @@ public:
     virtual void DrawItems(Map* m) = 0; //Draw an assortment of items that will only ever have items (e.g inside of a chest)
     virtual void DrawContainers(Map* m) = 0; //Draw an assortment of items that may contain containers (e.g a room)
 
-    virtual void DrawPlayerStats (std::string name, int health, int loot) = 0;
+    virtual void DrawPlayerStats (std::string name, int health, unsigned long int loot, unsigned long int levelIndex) = 0;
 
     virtual void HighlightInv(int xChars, int xIndex, int yIndex)=0;
     virtual void HighlightInvLine(int index)=0;
