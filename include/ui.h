@@ -3,6 +3,7 @@
 
 #include <curses.h>  
 #include "map.h"
+#include <vector>
 
 class UI {
 public:
