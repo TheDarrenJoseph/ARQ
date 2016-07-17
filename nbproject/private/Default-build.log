@@ -1,6 +1,0 @@
-cd src;g++ -c -Wall -I../include -std=gnu++11 -lncurses main.cpp characters.cpp grid.cpp ui.cpp items.cpp containers.cpp
-cd src;g++ -o "arq" -Wall -I../include -std=gnu++11 -lncurses main.o characters.o grid.o ui.o items.o containers.o
-rm \*.o
-rm: cannot remove ‘*.o’: No such file or directory
-arq.make:19: recipe for target 'clean' failed
-make: *** [clean] Error 1
