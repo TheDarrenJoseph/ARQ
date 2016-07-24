@@ -39,8 +39,7 @@ class Character
   int Flee();
   
   void Draw();
-  int Flee();
- 
+
   void SetCharacter(char char_choice, int colour_choice, std::string name_choice, int health_choice);
 
   void GetPos (int *x, int *y);
