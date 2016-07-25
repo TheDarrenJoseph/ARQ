@@ -1,4 +1,4 @@
-ASCII Rougelike Quester -- Experimental project [C++, Ncurses]
+ASCII Roguelike Quester -- Experimental project [C++, Ncurses]
 =============================================================
 A small learner project/tech demo using C++ and Ncurses. ARQ is 
 essentially a very basic rougelike being used to understand and learn
