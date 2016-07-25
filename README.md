@@ -9,7 +9,7 @@ LINUX BUILD
 Author: Rave Kutsuu   
 Version : ~1.0 transition                             
 Created: Dec 16, 2012
-Last Modified: Dec 01, 2015
+Last Modified: Dec 01, 
 
 CREDITS
 =======
@@ -19,18 +19,18 @@ http://www.kathekonta.com/rlguide/index.html
 2. NCURSES Programming HOWTO --  
 http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/                      
 
-TODO
+TODO (Not in any specific order)
 ----
 1. UI Redesign 
 2. Procedural levels (Room and corridor generation in progress! :D)
 3. Health System (Player Death menu)
->>>>>>> Major refactoring/Improvements, jumped to 0.90.0
 4. NPCs (improved spawning, AI, bosses)
 5. Items (potions, scrolls, etc)
 6. Level Progression [Repeating step 1 with extras] 
 7. Full ending (Dungeon escape?)
 8. Menu
 9. Load game/item maps from files
+10. Mild redesign/re-implementing the battle system
 
 Notes-- 
 Armour system -- Armour modifier == (DAM(Weapon)-(DAM(Wep)/100*AP) rounded) .. Armour reduces incoming damage by that percentage
@@ -44,6 +44,23 @@ Changelist (~1.0) ongoing (see below for updates until >1.0)
 I've decided to do a large amount of refactoring and cleanup. Currently branched everything to 'ARQ2' because there have been so many changes that needed an obviously different name. Things such as improved UI/Curses access implementation, procedural generation, 
 pathfinding, and general gameplay improvements are underway. Therefore this whole project is rather messy, but once I've made sufficient changes I'll be merging everything and hopefully reaching 1.0 (or some relatively playable state)! 
 
+25/07/16
+--------
+It's been 7 months! I've overhauled and changed a lot in my spare time, the item system still needs to be finished (w/ loot scattering and such), and the map levels also need some work to 
+allow larger/fixed size maps that pan on smaller screens/windows.
+
+* Major changes were made on branch 'arq2' which has been rebased onto 'master', so everything should look nice on Github now!
+* I'm NOT removing TODOs 1,2,6, or 8 yet, as they all have a bit more to do.
+* I've added TODO 10 as a reminder to fix/improve/re-implement the battle system (As this will likely remain until items 3,4, and 5 are done)
+
+Changelist(0.90)
+-----------------
+1. Lots of fixes and refactoring
+2. Added a "pause" menu and start menu w/ fog of war setting
+3. Inventory now works in a list format! (The entire item system still needs some work)
+4. Maps are now prodecurally generated using A* to path between them! (Needs expansion w/ view panning)
+5. There are now multiple levels thanks to procedural generation! Previous levels are stored too.
+
 01/12/15  
 --------
 1. After major refactoring of the UI, I'm redesigning the overall UI layout to be more futureproof. A few points worth noting are
@@ -52,13 +69,13 @@ pathfinding, and general gameplay improvements are underway. Therefore this whol
      * The player can store as many items as they want up to this limit in weight
 
 
-Changelist (0.89.2)
+Changelist (0.89a)
 -------------------
 
 **GAMEPLAY**
 1. You can now swap items between containers
 2. Added the ability to store multiple items in one area
-3. Added a new Goblin subtype
+3. Added a placeholder for a new Goblin subtype (The Beserker, I'll add his AI later.)
 
 **CODE**
 1. Finished container implementation
