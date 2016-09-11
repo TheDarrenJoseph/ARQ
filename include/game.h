@@ -28,6 +28,8 @@ class GameEngine
         PlayerUI* playerUI=NULL; 
         std::list<Item*> generatedItems = std::list<Item*>(); //A list of all items generated (memory allocated instead of references)
         
+        bool fogOfWar = false;
+        
     public:
         void InitNPCS();
         

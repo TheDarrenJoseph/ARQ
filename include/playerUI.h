@@ -16,7 +16,7 @@ public:
     
     NPC* npcs = NULL;
     Player* player = NULL;
-    
+
     int MAX_NPCS=0;
     
     void Battle (int npc_id);

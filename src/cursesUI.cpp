@@ -214,47 +214,66 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewD
     int startY = 0;
     int endX = GRID_X;
     int endY = GRID_Y;
+    
+    int viewStartX = 0;
+    int viewStartY = 0;
+    int viewEndX = GRID_X;
+    int viewEndY = GRID_Y;
+    
+    int maptile;
+    int maptile_colour;
+    bool maptile_found;
+    const char *maptile_char;
+    tile_details tileDetails;
 
     //If fogOfWar is enabled, modify draw distances to fit
     if (fogOfWar) {
+        viewStartX = playerX;
+        viewStartY = playerY;
 
-        startX = playerX;
-        startY = playerY;
-
-        if (startX < GRID_X - viewDistance && startY < GRID_Y - viewDistance) {
-            endX = startX + viewDistance;
-            endY = startY + viewDistance;
+        if (viewStartX < GRID_X - viewDistance && viewStartY < GRID_Y - viewDistance) {
+            viewEndX = viewStartX + viewDistance;
+            viewEndY = viewStartY + viewDistance;
         }
 
-        if (startX > viewDistance && startY > viewDistance) {
-            startX -= viewDistance;
-            startY -= viewDistance;
+        if (viewStartX > viewDistance && viewStartY > viewDistance) {
+            viewStartX -= viewDistance;
+            viewStartY -= viewDistance;
         } else {
-            startX = 0;
-            startY = 0;
+            viewStartX = 0;
+            viewStartY = 0;
 
         }
     }
 
+	//Setting visible area
+    for (int y = viewStartY; y < viewEndY; y++) {
+        for (int x = viewStartX; x < viewEndX; x++) {
+			maptile = m->GetTile(x, y);
+            if (!maptile_found) m->SetTileVisible(x,y,true);
+        }
+
+    }
+    
+    //Drawing everything visible
     for (int y = startY; y < endY; y++) {
-        wmove(mainwin_front, y, 0);
+        //wmove(mainwin_front, y, 0);
 
         for (int x = startX; x < endX; x++) {
-            int maptile;
-            int maptile_colour;
-            const char *maptile_char;
-
-            maptile = m->GetTile(x, y);
-
-            maptile_colour = tile_library[maptile].color;
-            maptile_char = tile_library[maptile].symbol;
-
-            wmove(mainwin_front, y, x);
-            wprintw_col(mainwin_front, maptile_char, maptile_colour);
-        };
-
-    };
-
+			maptile = m->GetTile(x, y);
+			tileDetails = tile_library[maptile];
+			maptile_found = m->TileIsVisible(x,y);
+			
+			maptile_colour = tileDetails.color;
+			maptile_char = tileDetails.symbol;
+            
+            if (maptile_found) {
+				wmove(mainwin_front, y, x);
+				wprintw_col(mainwin_front, maptile_char, maptile_colour);
+			}
+		}
+	
+	}
 
     return (0);
 }

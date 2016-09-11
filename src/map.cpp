@@ -16,15 +16,17 @@ Position Map :: GetExitPosition() {
     return exitPosition;
 }
 
-std::list<Position> Map:: GetNeighbors(int x, int y) {
+std::list<Position> Map :: GetNeighbors(int x, int y) {
     std::list<Position> possibleNeighbors;
     std::list<Position> neighbors = *new std::list<Position>();    
-
+		
+	   //Adding the main 4 cardinal directions as neighbors
        possibleNeighbors.push_back(Position(x+1, y));
        possibleNeighbors.push_back(Position(x-1, y));
        possibleNeighbors.push_back(Position(x, y+1));
        possibleNeighbors.push_back(Position(x, y-1));
-
+		
+	   //Only add those neighbors within the map bounds to the neighbors list
        for (Position p : possibleNeighbors) {
            if (IsInBoundaries(p.x,p.y)) neighbors.push_back(p);
        }
@@ -166,16 +168,18 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
 void Map::CreateMap(int roomChance) {
+	const int MAX_ROOM_SIZE = 10;
     int roomArea = 0;
     int possibleRoomArea = (gridX-2)*(gridY-2); //-2 for external walls
     int roomQuota = possibleRoomArea/2;
-    
-    std::set<Position> possibleRoomPositions;
 
-    for (int x=0; x < gridX-4; x++) {
-        for (int y=0; y < gridY-4; y++) {
+    std::set<Position> possibleRoomPositions;
+	
+	//Adding every position on the map to our set of possible positions
+	//Leaving a 1 tile gap out of our room positions to allow for corridors
+    for (int x=1; x < gridX-MAX_ROOM_SIZE-1; x++) {
+        for (int y=1; y < gridY-MAX_ROOM_SIZE-1; y++) {
             possibleRoomPositions.insert(Position(x,y));
-            
         }
     }
 
@@ -183,31 +187,29 @@ void Map::CreateMap(int roomChance) {
        // std::cout << "Filling map.. "<< roomArea << " of " << roomQuota << "\n";
         
         std::set<Position>::iterator roomPosIterator = possibleRoomPositions.begin();
-        
+		Position roomPos = *roomPosIterator;
+
         //Pick a random position out of what's available
         int randPosNo = rand() % possibleRoomPositions.size()-1;
-        for (int i=0; i<randPosNo; i++) {
-            roomPosIterator++; //Increment our iterator to pick the right element
-        }
-        Position roomPos = *roomPosIterator;
-        
+        for (int i=0; i<randPosNo; i++) roomPosIterator++; //Increment to that Position in our set.
+     
         int x = roomPos.x;
         int y = roomPos.y;
         int attempts = 0;
-            
-            //randChance = rand() % 100+1; //rand 1-100
-            int size = rand() % 10+3;
-            int xEnd = x+size;
-            int yEnd = y+size;
+
+            int size = rand() % MAX_ROOM_SIZE+3; //Size 3-Max size allowed            
             bool roomPlaced = false;
             
-            while(!roomPlaced && attempts<10) {
-                size = rand() % 10+3; //re-roll our size and try again
+            while(!roomPlaced && attempts<3 && size >3) {
+                size = size-1; //Try a smaller room
                 attempts++;
                 roomPlaced = CreateRoom(x,y,size,NULL);
             }
             
             if (roomPlaced) {
+				int xEnd = x+size+1; //+1 to leave a gap
+				int yEnd = y+size+1;
+	
                 for (; x < xEnd; x++) {
                     for (; y < yEnd; y++) {
                         possibleRoomPositions.erase(Position(x,y));
@@ -218,21 +220,10 @@ void Map::CreateMap(int roomChance) {
             } else {
                 possibleRoomPositions.erase(roomPos);
             }
-            
     }
 
     PaveRooms();
     AddEntryPoints();
-    
-    //If pathing/making a path to the exit fails, rebuild the map
-    if (!PathRooms()) {
-        std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
-       // Map* thisMap = this;
-        Map(); 
-        
-//        delete(thisMap);
-    }
-
 }
 
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
@@ -270,16 +261,14 @@ void Map :: PaveRoom(Room r) {
     Position startPos = r.GetStartPos();
     Position endPos = r.GetEndPos();
     
-    
-
     if(IsInBoundaries(startPos) && IsInBoundaries(endPos)) {
     //Paves the inside of a room    
     for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
         for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
-            if (game_grid[y][x] == ntl)  game_grid[y][x] = rom;
-            possibleSpawns.push_back(Position(x,y));
-        }
-    }
+				if (game_grid[y][x] == ntl)  game_grid[y][x] = rom;
+				possibleSpawns.push_back(Position(x,y));
+			}
+		}
     }
    
 }
@@ -371,11 +360,12 @@ bool Map :: EvaluateNodes(Position currentNode, Position endPos, std::set<Positi
         bool foundNewNode = false;
         
         while (!foundNewNode) {
+			//Check for the lowest node using our CompareMapLessThanCost comparison function
             std::pair<Position, int> lowestCostNode = *std::min_element(possibleNewNodes.begin(), possibleNewNodes.end(), &Map::CompareMapLessThanCost);
             currentNode = lowestCostNode.first; 
             
-            //Only care if this node is unvisited, not worrying about the visited flag here
-            if (unvisitedNodes->count(currentNode)==1) {
+            //Only care if this node is unvisited
+            if (unvisitedNodes->count(currentNode) == 1) {
                 foundNewNode = true;
             } else if (possibleNewNodes.empty()){
                 std::cout << "Ran out of new nodes.. \n";
@@ -567,7 +557,7 @@ bool Map::CanPlaceItems(int x, int y)
  * @param x
  * @param y
  * @param npcID
- * @return 
+ * @return 3 for alive enemy, 4 for dead body (to conform to MovePlayer)
  */
 int Map::EncounterCheck(int x, int y, int* npcID) {
 
@@ -581,8 +571,8 @@ int Map::EncounterCheck(int x, int y, int* npcID) {
             //encounter 
             if (((x == enemy_x and y == enemy_y) || (x == enemy_x and y == enemy_y))) {
                 if (npcs[e_id].IsAlive()) {
-                    return 1;
-                } else return 2; //dead body 
+                    return 4;
+                } else return 4; //dead body 
 
             }
 
@@ -608,32 +598,22 @@ int Map::MoveCharacter(Character* c, int x, int y)
     if (IsTraversable(x, y)) {
         c->SetPos(x, y);
         return 0;
-    }
-
-    switch (EnvironmentCheck(x, y)) {
-    case 1:
-        //door!
-        return 1;
-
-
-    case 2:
-        //trap!!
-        return 2;
-    }
-
-    return 99;
+    } else return (EnvironmentCheck(x, y)); 
 }
 
 /**
  * @param npcID - an ID pointer for incase an NPC is encountered
  * @return code guide --
+ * Movement
  * 0 - moved successfully
  * 1 - door found
  * 2 - trap found
  * 
+ * Encounters
  * 3 - Enemy found
  * 4 - Dead body found
  * 
+ * Entryways
  * 5 - entrance
  * 6 - exit
  * 
@@ -643,25 +623,15 @@ int Map::MoveCharacter(Character* c, int x, int y)
 int Map::MovePlayer(int x, int y, int* npcID)
 {
     if ((x > 0) || (y > 0) || (x < GRID_X) || (y < GRID_Y)) {
-        switch (EncounterCheck(x, y, npcID)) {
-        case 1:
-            return 3;
-            break;
-
-        case 2:
-            return 4;
-            break;
-        }
+		//Run an encounter check and convert it's return values if needed
+        int encounterCode = EncounterCheck(x, y, npcID); 
+		if (encounterCode) return encounterCode; //Retun any non-zero value 
     }
     
     tile t = GetTile(x, y);
-    if (t == ent) {
-        return 5;
-    } else if (t == ext) {
-        return 6;
-    } else if (t == ded) {
-       
-    };
+    if (t == ent) return 5;
+    else if (t == ext) return 6;
+    else if (t == ded) return 2;
 
     return MoveCharacter(player, x, y);
 }
@@ -731,11 +701,21 @@ tile Map::GetTile(Position p)
     return game_grid[p.y][p.x];
 }
 
+bool Map::TileIsVisible(int x, int y) 
+{
+	return visible_grid[y][x];
+}
+
+void Map::SetTileVisible(int x, int y, bool b) 
+{
+	visible_grid[y][x] = b;
+}
 
 void Map::SetTile(int x, int y, tile t)
 {
     game_grid[y][x] = t;
 }
+
 
 const Item* Map::GetItem(int x, int y)
 {

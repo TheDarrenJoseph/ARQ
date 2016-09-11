@@ -1,8 +1,8 @@
 #ifndef GRID_H
 #define GRID_H
 
-#define GRID_X 50 //Fallback/default size values
-#define GRID_Y 15
+#define GRID_X 100 //Fallback/default size values
+#define GRID_Y 30
 
 #include "position.h"
 #include "tile.h"
@@ -20,13 +20,42 @@ class Map
 {
 private:
     tile game_grid[GRID_Y][GRID_X];
+    bool visible_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
     
-    //Settings
-    bool fogOfWar = false;
+    void initMap(int sizeX,int sizeY, int maxNPCS, NPC* npcs, Player* p) {
+		if (sizeX<=GRID_X && sizeY<=GRID_Y) {
+            gridX = sizeX;
+            gridY = sizeY;
+        } else  Map();
+        
+        for (int x=0; x < gridX; x++) {
+            for (int y=0; y < gridY; y++) {
+                game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
+                visible_grid[y][x] = false;
+            }
+        }
+        
+        MAX_NPCS = maxNPCS;
+        this->npcs = npcs;
+        
+        player = p;
+        
+        roomCount = 0;
+        
+        int roomChance = rand()%100-50; //Between 0-49% chance of rooms
+        CreateMap(roomChance);
+        
+//        //Initialise container spaces
+//        for (int x = 0; x < GRID_X; x++) {
+//            for (int y = 0; y < GRID_Y; y++) {
+//                container_grid[y][x] =Container();
+//            }
+//         }
+	}
     
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
@@ -50,10 +79,6 @@ private:
     
    
     public:
-    void ToggleFogOfWar() {
-        fogOfWar =! fogOfWar;
-    }
-    
     void PaveRooms();
         
     void SetEntryPositions(Position entry, Position exit);
@@ -68,10 +93,6 @@ private:
     bool IsInBoundaries(Position p);
     bool IsWall(int x, int y);
     bool IsTraversable(int x, int y);
-    
-    bool GetFogOfWar() {
-        return fogOfWar;
-    }
     
     /**
      * Tile codes --
@@ -153,6 +174,9 @@ private:
     tile GetTile(int x, int y);
     tile GetTile(Position p);
     
+    bool TileIsVisible(int x, int y);
+    void SetTileVisible(int x, int y, bool b);
+    
     void SetTile(int x, int y,tile t);
 
     const Item* GetItem(int x, int y);
@@ -186,53 +210,29 @@ private:
     void CreateMap(int seed);
     
     void InitAreas();
-    
+
     //Attempts at default initialisation, !FIX NULL USAGE HERE, OR make it safe!
-    Map() : Map(GRID_X,GRID_Y,4,NULL,NULL) {
-        gridX=GRID_X;
-        gridY=GRID_Y;  
+    Map() : Map(4,NULL,NULL) {
+        
     }
     
+	//Default map size constructor
+    Map (int maxNPCS, NPC* npcs, Player* p) {
+		gridX=GRID_X;
+        gridY=GRID_Y;  
+        
+		initMap(gridX,gridY,maxNPCS,npcs,p);  	
+	}
     
+    //Custom map size constructor
     Map(int x,int y, int maxNPCS, NPC* npcs, Player* p) {
-       
-        if (x<=GRID_X && y<=GRID_Y) {
-            gridX = x;
-            gridY = y;
-        } else {
-            Map();
-        }
-        
-        for (int x=0; x < gridX; x++) {
-            for (int y=0; y < gridY; y++) {
-                game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
-            }
-        }
-        
-       
-        MAX_NPCS = maxNPCS;
-        this->npcs = npcs;
-        
-        player = p;
-        
-        roomCount = 0;
-        
-        int roomChance = rand()%100-50; //Between 0-49% chance of rooms
-        CreateMap(roomChance);
-        
-//        //Initialise container spaces
-//        for (int x = 0; x < GRID_X; x++) {
-//            for (int y = 0; y < GRID_Y; y++) {
-//                container_grid[y][x] =Container();
-//            }
-//         }
-        
+		initMap(x,y,maxNPCS,npcs,p);    
     }
     
     void copyMap(const Map& m) {
-         this->MAX_NPCS = m.MAX_NPCS;
+        this->MAX_NPCS = m.MAX_NPCS;
 
-        //container grid
+        //Copying containers and tiles from the address given,
         for (int x=0; x<GRID_X; x++) {
             for(int y=0; y<GRID_Y; y++) {
                 this->container_grid[y][x] = m.container_grid[y][x];

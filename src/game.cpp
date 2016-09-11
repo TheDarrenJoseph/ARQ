@@ -18,22 +18,23 @@ void GameEngine :: SettingsMenu() {
     //1const char* text [menuSize] 
      while(true) {
          
-    std::string fogOfWar = std::string(map->GetFogOfWar() ? "ON" : "OFF");
-    std::vector<std::pair<std::string, std::string>> text = { {"Fog of war",fogOfWar},
-                                           {"Blank",">:D"},
-                                           {"Close Settings",""}
-                                         };   
-   
-    switch(displayUI->Menu(text)) {
-        case 0 :
-            map->ToggleFogOfWar();
-            break;
-            
-        default :
-            return;
-            break;
-        
-    }
+		std::string fogStatus = std::string(fogOfWar? "ON" : "OFF");
+		std::vector<std::pair<std::string, std::string>> text = { 	
+																	{"Fog of war",fogStatus},
+																	{"Close Settings",""}
+																};   
+	   
+		switch(displayUI->Menu(text)) {
+			case 0 :
+				fogOfWar = !fogOfWar;
+				break;
+				
+			default :
+				return;
+				break;
+			
+		}
+		
     }
 
 }
@@ -147,8 +148,19 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               displayUI->ConsolePrint("Generating a new level..",0,0);
               displayUI->UpdateUI();
               //Re-run map init to place player and exit (spawnPlacePlayer and extras?)
-              map = new Map(50,15,MAX_NPCS,&npcs[0],player); //Rebuild the map
+              map = new Map(MAX_NPCS,&npcs[0],player); //Rebuild the map
               levels.push_back(map);
+              
+              displayUI->ClearConsole();
+              displayUI->ConsolePrint("Pathing rooms..",1,1);
+              displayUI->UpdateUI();
+              
+              //If pathing/making a path to the exit fails, rebuild the map
+				if (!map->PathRooms() ) {
+					std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
+					Map* thisMap = new Map(); 
+					//delete(thisMap);
+				}
               
               displayUI->ConsolePrintWithWait("DONE [Enter]",0,12);
 
@@ -200,7 +212,7 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
 
   player->GetPos(&playerX, &playerY);
   
-  displayUI->DrawMap (map,map->GetFogOfWar(),playerX,playerY,3); 
+  displayUI->DrawMap (map,fogOfWar,playerX,playerY,3); 
   displayUI->DrawItems (map); 
   displayUI->DrawContainers(map);
   playerUI->DrawNPCS();

@@ -38,7 +38,6 @@ private:
     
     
     
-    
 public:
     
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
