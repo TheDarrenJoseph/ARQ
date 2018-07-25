@@ -17,6 +17,8 @@ http://www.kathekonta.com/rlguide/index.html
 2. NCURSES Programming HOWTO --  
 http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/                      
 
+![Main Example Screenshot](resources/arq.png)
+
 TODO (Not in any specific order)
 ----
 1. UI Redesign 
@@ -39,8 +41,6 @@ EXTRAS
 
 Changelist (~1.0) ongoing (see below for updates until >1.0)
 ----------------
-I've decided to do a large amount of refactoring and cleanup. Currently branched everything to 'ARQ2' because there have been so many changes that needed an obviously different name. Things such as improved UI/Curses access implementation, procedural generation, 
-pathfinding, and general gameplay improvements are underway. Therefore this whole project is rather messy, but once I've made sufficient changes I'll be merging everything and hopefully reaching 1.0 (or some relatively playable state)! 
 
 25/07/16
 --------
