@@ -84,17 +84,17 @@ Changelist (0.89)
 -----------------
 
 **GAMEPLAY**
-1.Added lootable containers/dead bodies
-2.Added the ability to put player inv items into containers
-3.Characters drop their equipment on death
+1. Added lootable containers/dead bodies
+2. Added the ability to put player inv items into containers
+3. Characters drop their equipment on death
 
 **CODE**
-1.Added containers
-2.Reworked inventory system to work using containers
-3.Added a secondary AcessInv function specifically for the player's inv
-4.Further improvements to player movement
-5.Changed indent style to GNU standard.
-6.Cleaned up UI code/fixed refresh issues
+1. Added containers
+2. Reworked inventory system to work using containers
+3. Added a secondary AcessInv function specifically for the player's inv
+4. Further improvements to player movement
+5. Changed indent style to GNU standard.
+6. Cleaned up UI code/fixed refresh issues
 
 Changelist (0.88)
 -----------------
@@ -112,31 +112,31 @@ Changelist (0.87)
 -----------------
 
 **GAMEPLAY**
-1.Fixed bug with NPCs not dying
-2.Added corpses/modified NPC symbol
-3.Small improvements to movement feedback
-4.Reworked inventory layout to fix item name bug
-5.Fixed an item pickup bug caused by 0.85-2
-6.Added equipment window
-7.Added outfits/armour
+1. Fixed bug with NPCs not dying
+2. Added corpses/modified NPC symbol
+3. Small improvements to movement feedback
+4. Reworked inventory layout to fix item name bug
+5. Fixed an item pickup bug caused by 0.85-2
+6. Added equipment window
+7. Added outfits/armour
 
 **CODE**
-1.Updated item system enums and listings 
-2.Fixed bad naming conventions
-3.Cleaned up main() and added init functions
-4.Gave WINDOW*'s global scope
+1. Updated item system enums and listings 
+2. Fixed bad naming conventions
+3. Cleaned up main() and added init functions
+4. Gave WINDOW*'s global scope
 
 Changelist (0.86)
 -----------------
-1.Fixed item pickup bug
+1. Fixed item pickup bug
 
 Changelist (0.85)
 -----------------
 
-1.Improved documentation
-2.Ablity to walk over items
-3.Fixed inventory to work with the new item system
-4.Added the ability to fight/kill NPCs
-5.Fixed death
+1. Improved documentation
+2. Ablity to walk over items
+3. Fixed inventory to work with the new item system
+4. Added the ability to fight/kill NPCs
+5. Fixed death
 
 
