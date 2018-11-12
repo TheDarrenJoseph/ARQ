@@ -367,8 +367,8 @@ void CursesUI :: HighlightInv(int xChars, int xIndex, int yIndex) {
     wrefresh(invwin_front);
 }
 
-void CursesUI :: HighlightInvLine(int index) {
-    mvwchgat(invwin_front, index, 0,INVWIN_FRONT_X, A_BLINK, 1, NULL); //add red blink to the current line
+void CursesUI :: HighlightInvLine(int yIndex) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X -1 , A_BLINK, 1, NULL); //add red blink to the current line
     wrefresh(invwin_front);
  }
 

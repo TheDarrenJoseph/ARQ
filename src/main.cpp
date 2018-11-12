@@ -1,18 +1,7 @@
-//The ASCII Roguelike Quester -- Experimental project
-//LINUX BUILD
-//                                                                    
-// Author: Rave Kutsuu             
-// Version : 0.89                   
+// ---- The ASCII Roguelike Quester -- Experimental project
+// Author: Darren Joseph             
 // Created: Dec 16, 2012           
-// Last Modified: 20 July, 2014     
 // LICENSE -- See the "LICENSE" file (in root directory of ARQ) for details
-
-//CREDITS --                                                             
-// 1. The Beginner's Guide to Roguelike Development in C/C++ -- http://www.kathekonta.com/rlguide/index.html (11/12/2015)        
-// 2. NCURSES Programming HOWTO -- http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/ (11/12/2015))
-                                                       
-//BULD COMMANDS --
-//Linux G++ -- "g++ -Wall -I../include -o "%e" "%f" -lncurses -std=gnu++11 characters.cpp ui.cpp grid.cpp items.cpp"
 
 #include <cstdlib>
 #include <time.h>
@@ -44,14 +33,13 @@ int main()
     Player* thisPlayer = new Warrior();
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container* c = new Container(98,"Bag","X",2,2,0,true); //inventory testing
-    thisPlayer->AddToInventory(c);
-    
-    Container* ct = new Container(98,"Box","X",2,2,0,true); //inventory testing
-    thisPlayer->AddToInventory(ct);
+    Container* bag = new Container(98,"Bag","X",2,2,0,true); //inventory testing
+    Container* box = new Container(98,"Box","X",2,2,0,true); //inventory testing
+    thisPlayer->AddToInventory(bag);
+    thisPlayer->AddToInventory(box);
             
-    Item* i = new Item(98,"Swoop","X",2,2,0,true); //inventory testing
-    thisPlayer->AddToInventory(i);
+    Item* testItem = new Item(98,"Test Item","X",2,2,0,true); //inventory testing
+    thisPlayer->AddToInventory(testItem);
     
     
     //Map and playerUI are new initialised as the GameEngine will delete all of these when done (these pointers get modified for new maps)
@@ -66,9 +54,9 @@ int main()
     delete(thisPlayer);
     
     //Clean up our container mess
-    delete(c);
-    delete(ct);
-    delete(i);
+    delete(bag);
+    delete(box);
+    delete(testItem);
     
     //Free each npc?
     //for (int npcNo=0; npcNo<MAX_NPCS; npcNo++) {
