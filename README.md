@@ -27,7 +27,8 @@ INSPIRATION
 - Dwarf Fortress
 
 ![Main Example Screenshot](resources/arq.png)
-![Example Screenshot 2 -- Redesigned UI ala Nethack] (resources/arq-2.png)
+
+![Example Screenshot 2 -- Redesigned UI ala Nethack](resources/arq-2.png)
 
 TODO (Not in any specific order)
 ----
