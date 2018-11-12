@@ -20,7 +20,14 @@ http://www.kathekonta.com/rlguide/index.html
 2. NCURSES Programming HOWTO --  
 http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/                      
 
+
+INSPIRATION
+=======
+- Nethack
+- Dwarf Fortress
+
 ![Main Example Screenshot](resources/arq.png)
+![Example Screenshot 2 -- Redesigned UI ala Nethack] (resources/arq-2.png)
 
 TODO (Not in any specific order)
 ----
