@@ -6,7 +6,7 @@ OBJECTS=main.o game.o characters.o map.o cursesUI.o playerUI.o items.o container
 all : arq clean
 
 arq : objects
-	cd src;g++ -o "../arq" $(CFLAGS) $(INCLUDES) $(OBJECTS) $(LIBS);
+	cd src;g++ -o "arq" $(CFLAGS) $(INCLUDES) $(OBJECTS) $(LIBS);
 
 objects : 
 	cd src;g++ -c $(CFLAGS) $(INCLUDES) $(SOURCES);
