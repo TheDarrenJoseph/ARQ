@@ -13,25 +13,12 @@ bool Room :: intersects(Room r) {
     
     int newRoomEndX = r.GetEndPos().x;
     int newRoomEndY = r.GetEndPos().y;
-    
-    //Room starts after this one
-    if(newRoomStartX>endX && newRoomStartY>endY && newRoomEndX>endX && newRoomEndY>endY) {  
-        return false;
-    }
-    
-    //Room comes before this one
-    if (newRoomStartX<startX && newRoomStartY<startX && newRoomEndX<startX && newRoomEndY<startX) {
-        return false;
-    }
-    
-    //Same x
-    if( (newRoomStartX<endX && newRoomStartX>startY) && (newRoomStartY>endY || newRoomEndY<startY) ) {
-        return false;
-    }
-    
-    //Same y 
-    if( (newRoomStartY<endY && newRoomStartY>startY) && (newRoomStartX>endX || newRoomEndX<startX) ) {
-        return false;
+  
+    if( newRoomStartX > endX 
+        || newRoomStartY > endY
+        || (newRoomStartX < endX && (newRoomStartY > endY || newRoomEndY < startY)) 
+        || (newRoomStartY < endY && (newRoomStartX > endX || newRoomEndX < startX)) ) {
+	  return false;
     }
     
     // Must collide...

@@ -44,6 +44,7 @@ int main()
     
     //Map and playerUI are new initialised as the GameEngine will delete all of these when done (these pointers get modified for new maps)
     Map* thisMap = new Map(50,15,MAX_NPCS,&npcs[0],thisPlayer);
+    
     CursesUI thisUI = CursesUI();
     PlayerUI* playerUI = new PlayerUI(MAX_NPCS,&thisUI,thisMap,thisPlayer,&npcs[0]);
     

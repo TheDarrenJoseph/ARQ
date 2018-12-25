@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 
 #include "map.h"
 #include "room.h"
@@ -19,17 +20,17 @@ Position Map :: GetExitPosition() {
 std::list<Position> Map :: GetNeighbors(int x, int y) {
     std::list<Position> possibleNeighbors;
     std::list<Position> neighbors = *new std::list<Position>();    
+
+    //Adding the main 4 cardinal directions as neighbors
+    possibleNeighbors.push_back(Position(x+1, y));
+    possibleNeighbors.push_back(Position(x-1, y));
+    possibleNeighbors.push_back(Position(x, y+1));
+    possibleNeighbors.push_back(Position(x, y-1));
 		
-	   //Adding the main 4 cardinal directions as neighbors
-       possibleNeighbors.push_back(Position(x+1, y));
-       possibleNeighbors.push_back(Position(x-1, y));
-       possibleNeighbors.push_back(Position(x, y+1));
-       possibleNeighbors.push_back(Position(x, y-1));
-		
-	   //Only add those neighbors within the map bounds to the neighbors list
-       for (Position p : possibleNeighbors) {
-           if (IsInBoundaries(p.x,p.y)) neighbors.push_back(p);
-       }
+    //Only add those neighbors within the map bounds to the neighbors list
+    for (Position p : possibleNeighbors) {
+        if (IsInBoundaries(p.x,p.y)) neighbors.push_back(p);
+    }
     
     return neighbors;
 }
@@ -168,58 +169,64 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
 void Map::CreateMap(int roomChance) {
-	const int MAX_ROOM_SIZE = 10;
+    const int MAX_ROOM_SIZE = 10;
+    const int MIN_ROOM_SIZE = 3;
+
     int roomArea = 0;
     int possibleRoomArea = (gridX-2)*(gridY-2); //-2 for external walls
     int roomQuota = possibleRoomArea/2;
 
     std::set<Position> possibleRoomPositions;
 	
-	//Adding every position on the map to our set of possible positions
-	//Leaving a 1 tile gap out of our room positions to allow for corridors
-    for (int x=1; x < gridX-MAX_ROOM_SIZE-1; x++) {
-        for (int y=1; y < gridY-MAX_ROOM_SIZE-1; y++) {
+    //Adding every position on the map to our set of possible positions
+    //Leaving a 1 tile gap out of our room positions to allow for corridors
+    //Min room size allows for smaller rooms to generate near map edges
+    //Greatly increases map space utilisation
+    for (int x=1; x < gridX-MIN_ROOM_SIZE-1; x++) {
+        for (int y=1; y < gridY-MIN_ROOM_SIZE-1; y++) {
             possibleRoomPositions.insert(Position(x,y));
         }
     }
 
-    while(roomArea<roomQuota && !(possibleRoomPositions.empty())) {
-       // std::cout << "Filling map.. "<< roomArea << " of " << roomQuota << "\n";
+    while(roomArea < (roomQuota - MIN_ROOM_SIZE) 
+	    && !(possibleRoomPositions.empty())) {
+        // std::cout << "Filling map.. "<< roomArea << " of " << roomQuota << "\n";
         
-        std::set<Position>::iterator roomPosIterator = possibleRoomPositions.begin();
-		Position roomPos = *roomPosIterator;
-
         //Pick a random position out of what's available
-        int randPosNo = rand() % possibleRoomPositions.size()-1;
-        for (int i=0; i<randPosNo; i++) roomPosIterator++; //Increment to that Position in our set.
-     
+        int randPosNo = rand() % possibleRoomPositions.size();
+
+        Position roomPos = *std::next(possibleRoomPositions.begin(), randPosNo);
+
         int x = roomPos.x;
         int y = roomPos.y;
-        int attempts = 0;
+        int attempts = 1;
+        
+	int targetMaxSize = std::min(MAX_ROOM_SIZE, roomQuota - roomArea); // Prevent exceeding quota
+        int size = (rand() % (targetMaxSize - MIN_ROOM_SIZE + 1)) + MIN_ROOM_SIZE; // Random size in range [MIN_ROOM_SIZE, targetMaxSize] (Inclusive)
+        bool roomPlaced = false;
+        
+	roomPlaced = CreateRoom(x, y, size, NULL);
 
-            int size = rand() % MAX_ROOM_SIZE+3; //Size 3-Max size allowed            
-            bool roomPlaced = false;
+        while(!roomPlaced && attempts < 3 && size > MIN_ROOM_SIZE) {
+            size--; //Try a smaller room
+            attempts++;
+            roomPlaced = CreateRoom(x,y,size,NULL);
+        }
             
-            while(!roomPlaced && attempts<3 && size >3) {
-                size = size-1; //Try a smaller room
-                attempts++;
-                roomPlaced = CreateRoom(x,y,size,NULL);
-            }
-            
-            if (roomPlaced) {
-				int xEnd = x+size+1; //+1 to leave a gap
-				int yEnd = y+size+1;
-	
-                for (; x < xEnd; x++) {
-                    for (; y < yEnd; y++) {
-                        possibleRoomPositions.erase(Position(x,y));
-                    }
+        if (roomPlaced) {
+	    int xEnd = x+size+1; //+1 to leave a gap
+	    int yEnd = y+size+1;
+
+            for (; x < xEnd; x++) {
+                for (; y < yEnd; y++) {
+                    possibleRoomPositions.erase(Position(x,y));
                 }
-                
-                roomArea += size*size;
-            } else {
-                possibleRoomPositions.erase(roomPos);
             }
+                
+            roomArea += size*size;
+        } else {
+            possibleRoomPositions.erase(roomPos);
+        }
     }
 
     PaveRooms();
@@ -241,7 +248,6 @@ std::vector<Position> Map :: GetPossibleSpawns() {
 }
 
 void Map :: AddEntryPoints() {
-
     if( possibleSpawns.size() > 0 ) {
       Position chosenEntry = possibleSpawns[rand()%possibleSpawns.size()]; //Pick a random position
       
@@ -262,15 +268,15 @@ void Map :: PaveRoom(Room r) {
     Position endPos = r.GetEndPos();
     
     if(IsInBoundaries(startPos) && IsInBoundaries(endPos)) {
-    //Paves the inside of a room    
-    for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
-        for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
-				if (game_grid[y][x] == ntl)  game_grid[y][x] = rom;
-				possibleSpawns.push_back(Position(x,y));
-			}
-		}
+        //Paves the inside of a room    
+        for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
+            for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
+                if (game_grid[y][x] == ntl) 
+                    game_grid[y][x] = rom;
+		possibleSpawns.push_back(Position(x,y));
+            }
+        }
     }
-   
 }
 
 int Map :: ManhattanPathCostEstimate(Position startPos, Position endPos) {
@@ -788,7 +794,6 @@ void DrawInv(area* a)
   return;DoorProc
 }
  */
-
 
 int Map::ContainerProc(int x, int y)
 {
