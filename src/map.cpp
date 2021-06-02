@@ -236,11 +236,11 @@ void Map::CreateMap(int roomChance) {
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
  * 
  */
-//bool Map :: LevelPathValid(Position entryPos, Position exitPos) {
 bool Map :: LevelPathValid() {
     Path* levelPath = new Path();
-    return AStarSearch(this->GetEntryPosition(),this->GetExitPosition(),levelPath);
+    bool isValid = AStarSearch(this->GetEntryPosition(),this->GetExitPosition(),levelPath);
     delete levelPath;
+    return isValid;
 }
 
 std::vector<Position> Map :: GetPossibleSpawns() {

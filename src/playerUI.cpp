@@ -1,4 +1,5 @@
 #include "playerUI.h"
+#include "stringUtils.h"
 
 void PlayerUI::Battle(int npc_id)
 {
@@ -175,6 +176,29 @@ int PlayerUI::BattleTurn(int npc_id) {
     return 0;
 }
 
+int PlayerUI::processYesOrNoChoice(std::string choice) {
+    std::string lowerCased = StringUtils::toLowerCase(choice);
+    if ((lowerCased == "yes") || (lowerCased == "y")) {
+      return 0;
+    } else if ((lowerCased == "no") || (lowerCased == "n")) {
+      return 1;
+    } else {
+      return -1;
+    }
+}
+
+void PlayerUI::openDoorTile(int x, int y) {
+  int map_tile = map->GetTile(x, y);
+  if (map_tile == cd0 || map_tile == cd1 || map_tile == cd2) //Checking main tile
+  {
+      map->SetTile(x, y, od0);
+      // Check to see if the door spans multiple tiles and open those too 
+      for (Position neighbor : map->GetNeighbors(x,y)) {
+           if (map->GetTile(neighbor) == map_tile) map->SetTile(x,y,od0);
+      }
+  };
+}
+
 int PlayerUI::DoorProc(int y, int x, tile doortype) {
     int map_tile = map->GetTile(x, y);
 
@@ -192,7 +216,8 @@ int PlayerUI::DoorProc(int y, int x, tile doortype) {
         mainUI->ConsolePrint(output, 0, 0);
         answer = mainUI->ConsoleGetString();
 
-        if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
+        int answerChoice = processYesOrNoChoice(answer);
+        if (answerChoice == 0) {
             if ((doortype == ld1) || (doortype == ld2)) {
                 LockProc(y, x, doortype, map_tile, door_name);
                 return (0);
@@ -200,18 +225,8 @@ int PlayerUI::DoorProc(int y, int x, tile doortype) {
             
             std::string output = "You open the " + door_name + " and step into the doorway";
             mainUI->ConsolePrint(output, 0, 0);
-
-
-            tile door = map->GetTile(x, y);
-            if (door == (cd0) || door == cd1 || door == cd2) //Checking main tile
-            {
-                map->SetTile(x, y, od0);
-                for (Position neighbor : map->GetNeighbors(x,y)) {
-                     if (map->GetTile(neighbor) == door) map->SetTile(x,y,od0);
-                }
-               
-            };
-        } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
+            PlayerUI::openDoorTile(x, y);
+        } else if (answerChoice == 1) {
             std::string output = "You leave the " + door_name + " untouched.";
 
             mainUI->ClearConsole();

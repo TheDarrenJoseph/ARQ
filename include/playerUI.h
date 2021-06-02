@@ -1,9 +1,12 @@
 #ifndef PLAYERUI_H
 #define	PLAYERUI_H
 
-#include "cursesUI.h"
 #include <string>
 #include <sstream>
+
+#include "cursesUI.h"
+#include "map.h"
+
 
 #define PROMPT_TEXT "ARQ: "
 
@@ -22,6 +25,8 @@ public:
     void Battle (int npc_id);
     int BattleTurn (int npc_id);
     
+    void openDoorTile(int x, int y);
+    int processYesOrNoChoice(std::string choice);
     int DoorProc (int y, int x, tile doortype);
     void LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname);
     

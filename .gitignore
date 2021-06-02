@@ -1,5 +1,5 @@
 #Ignore build objects
+*.out
 *.o
 #Ignore emacs backups
 *\~
-src/arq
