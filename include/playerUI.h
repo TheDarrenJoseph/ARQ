@@ -6,7 +6,7 @@
 
 #include "cursesUI.h"
 #include "map.h"
-
+#include "characters.h"
 
 #define PROMPT_TEXT "ARQ: "
 
@@ -30,6 +30,7 @@ public:
     int DoorProc (int y, int x, tile doortype);
     void LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname);
     
+    int PlayerItemProc(Player* p, Item* itm, int x, int y);
     void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);
     bool TextInput();
     bool InventoryInput(int choice, int index,  Container* c, bool playerInv);

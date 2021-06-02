@@ -177,6 +177,7 @@ int PlayerUI::BattleTurn(int npc_id) {
 }
 
 int PlayerUI::processYesOrNoChoice(std::string choice) {
+    if(choice.length() == 0 || choice.length() > 3) return -1;
     std::string lowerCased = StringUtils::toLowerCase(choice);
     if ((lowerCased == "yes") || (lowerCased == "y")) {
       return 0;
@@ -226,6 +227,7 @@ int PlayerUI::DoorProc(int y, int x, tile doortype) {
             std::string output = "You open the " + door_name + " and step into the doorway";
             mainUI->ConsolePrint(output, 0, 0);
             PlayerUI::openDoorTile(x, y);
+            player->SetPos(x, y);
         } else if (answerChoice == 1) {
             std::string output = "You leave the " + door_name + " untouched.";
 
@@ -403,6 +405,48 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
     };
 
     return;
+}
+
+int PlayerUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
+{
+    std::string answer;
+    std::string itm_name = itm->name.c_str();
+
+    char promptbuffer[30];
+    sprintf(&promptbuffer[0], "There's a %s on the floor..", itm_name);
+    std::string prompt = promptbuffer;
+    mainUI->ConsolePrintWithWait(prompt, 0, 0);
+
+
+    sprintf(&promptbuffer[0], "Would you like to pick up the %s?", itm_name);
+    prompt = promptbuffer;
+    mainUI->ConsolePrintWithWait(prompt, 0, 0);
+    answer = mainUI->ConsoleGetString();
+    int answerChoice = processYesOrNoChoice(answer);
+
+    if (answerChoice == 0) {
+        p->AddToInventory(itm);
+
+        std::string prompt;
+        sprintf(&promptbuffer[0], "You pick up the %s..", itm_name);
+        prompt = promptbuffer;
+        mainUI->ConsolePrintWithWait(prompt, 0, 0);
+       // p->SetInventoryTile(x, y, new Item(item_library[no_item]));
+        p->SetPos(x, y);
+        return (0);
+ 
+    } else if (answerChoice == 1) {
+        sprintf(&promptbuffer[0], "You leave the %s untouched..", itm_name);
+        prompt = promptbuffer;
+        mainUI->ConsolePrintWithWait(prompt, 0, 0);
+        p->SetPos(x, y);
+        return (0);
+    } else {
+        mainUI->ConsolePrintWithWait("Incorrect choice, please answer yes or no.. ", 0, 0);
+        PlayerItemProc(p, itm, x, y);
+    }
+
+    return (0);
 }
 
 /** Wrapper for the Player Move() method, making use of return values for UI context

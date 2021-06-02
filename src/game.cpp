@@ -103,7 +103,7 @@ void GameEngine :: StartGame()
   InitNPCS(); //inititalise all NPCs before doing anything
    
   spawnPlacePlayer();
- // GenerateItems(mediumLoot); 
+  //GenerateItems(mediumLoot); 
  
   displayUI->InitScreen (); //prep display
   displayUI->InitWindows(); 
@@ -275,43 +275,20 @@ void GameEngine :: GenerateItems(lootChance thisChance)
 	    {
 	      //for each of the map->items in the library
 	      for (int  i=0; i<item_size; i++)
-		{
-		  //generate a random chance out of 100 for each item
-		  int chance = rand() %100+1;
-	      
-		  Item thisItem = item_library[i];
-	      
-		  //if the random chance < the number of items (e.g 10, 10%)
-		  if (chance<=thisChance)  
-		    {
-		      //then add it to the item grid
-		     // map.AddToContainer(x,y,new Item(thisItem));
-                      map->AddToContainer(x,y,&item_library[i]);
-                   
-		      //break the for loop
-		      break; 
-		    }
-		}
-	    
-	      /*
-	      //spawn each weapon based on a chance out of 100
-	      for (int  i=0; i<weapon_size; i++)
-	      {
-	      weapon thisWeapon = weapon_library[i];
-	      
-	      int chance = rand() %100+1;
-	      
-	      //use the number of weapons as the chance of appearing
-	      
-	      if (chance<=weapon_size && IsLootable(thisWeapon)) 
-	      {
-	      item_grid[y][x] = new weapon(thisWeapon);
-	      cout << thisWeapon.name;
-	      break;
-	      };
-	      }
-	      */
-	  
+          {
+            //generate a random chance out of 100 for each item
+            int chance = rand() %100+1;
+              
+            Item thisItem = item_library[i];
+              
+            //if the random chance < the number of items (e.g 10, 10%)
+            if (chance<=thisChance)  
+              {
+                map -> AddToContainer(x,y,new Item(thisItem));
+                //map->AddToContainer(x,y,&item_library[i]);
+                break; 
+              }
+          }
 	    }
 																	
 	  else

@@ -88,7 +88,7 @@ bool IsLootable(const Item* i);
 
 bool CanDropItem(const Item* thisItem);
 
-const Item item_library[item_size] =
+const Item item_library[] =
   { 
     // {id}{Name(12 cha)}{Symbol}{Col}{Weighy}{Val}{Lootable}
     {0,  "None"      , " ",      0,   0,       0,   false},

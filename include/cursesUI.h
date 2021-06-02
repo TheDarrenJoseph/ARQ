@@ -45,10 +45,8 @@ public:
     int wprintNoRefresh(WINDOW* win, std::string text);
 
     Item* AccessPlayerInventory(Player* p);
-    int PlayerItemProc(Player* p, Item* itm, int x, int y);
 
     void TileProc(int y, int x, tile t);
-
 
     virtual int InitScreen();
     virtual void InitWindows();

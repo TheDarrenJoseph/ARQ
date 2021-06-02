@@ -473,57 +473,6 @@ void CursesUI::UpdateUI()
     wrefresh(consolewin_front);
 }
 
-int CursesUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
-{
-   std::string answer;
-    char answerchar[20];
-   std::string itm_name = itm->name;
-
-    werase(consolewin_front);
-    wmove(consolewin_front, 0, 0);
-    wprintw(consolewin_front, "There's a %s on the floor..", itm_name.c_str());
-    wrefresh(consolewin_front);
-
-    wgetch(consolewin_front);
-
-    wmove(consolewin_front, 0, 0);
-    wprintw(consolewin_front, "Would you like to pick the %s? ", itm_name.c_str());
-    wgetstr(consolewin_front, answerchar);
-
-    answer = (answerchar);
-
-    if ((answer == "Yes") || (answer == "YES") || (answer == "yes") || (answer == "y") || (answer == "Y")) {
-        p->AddToInventory(itm);
-
-            wmove(consolewin_front, 0, 0);
-            werase(consolewin_front);
-            wprintw(consolewin_front, "You pick up the %s..", itm_name.c_str());
-            wgetch(consolewin_front);
-
-           // p->SetInventoryTile(x, y, new Item(item_library[no_item]));
-
-            p->SetPos(x, y);
-
-            return (0);
- 
-    } else if ((answer == "No") || (answer == "NO") || (answer == "no") || (answer == "n") || (answer == "N")) {
-        wmove(consolewin_front, 0, 0);
-        werase(consolewin_front);
-        wprintw(consolewin_front, "You leave the %s untouched..", itm_name.c_str());
-        wgetch(consolewin_front);
-
-        p->SetPos(x, y);
-        return (0);
-    } else {
-        wprint_at(consolewin_front, "Incorrect choice, please answer yes or no.. ", 0, 0);
-        wgetch(consolewin_front);
-
-        PlayerItemProc(p, itm, x, y);
-    }
-
-    return (0);
-}
-
 void CursesUI::ConsolePrint(std::string text, int posX, int posY)
 {
     wmove(consolewin_front, posY, posX);
