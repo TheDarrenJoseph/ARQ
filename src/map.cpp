@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include "map.h"
 #include "room.h"
