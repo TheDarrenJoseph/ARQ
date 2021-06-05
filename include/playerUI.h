@@ -25,10 +25,9 @@ public:
     void Battle (int npc_id);
     int BattleTurn (int npc_id);
     
-    void openDoorTile(int x, int y);
     int processYesOrNoChoice(std::string choice);
-    int DoorProc (int y, int x, tile doortype);
-    void LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname);
+    int DoorProc (int y, int x);
+    void LockProc(int door_y, int door_x);
     
     int PlayerItemProc(Player* p, Item* itm, int x, int y);
     void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);

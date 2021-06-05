@@ -46,9 +46,14 @@ struct Container : public Item
       
     };
   
-  Container(int i, std::string n, const char* s, int col, int weight, int val,bool lootable) : Item(i,n,s,col, weight, val,lootable)
+  Container(int id, std::string name, const char* symbol, int colour, int weight, int value, bool lootable) : Item(id, name, symbol, colour, weight, value, lootable)
     {
      
+    };
+
+  Container(const Container* toCopy)  : Item (toCopy)
+    {
+      
     };
     
   virtual ~Container() {

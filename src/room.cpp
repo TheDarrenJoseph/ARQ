@@ -35,32 +35,35 @@ Door* Room :: getDoors(int* size) {
     return &doors[0];
 }
 
-bool Room :: AddDoor(tile doorType, side s, int* x, int* y) {
+Door Room :: AddDoor(Door door, side s) {
     
+    int x,y = 0;
     switch(s) {
     case (TOP) : 
-        (*x) = startPos.x+size/2; 
-        (*y) = startPos.y; 
+        x = startPos.x+size/2; 
+        y = startPos.y; 
         break;
         
     case (LEFT) :
-        (*x) = startPos.x;
-        (*y) = startPos.y+size/2;
+        x = startPos.x;
+        y = startPos.y+size/2;
         break;
         
     case (BOTTOM) :
-        (*x) = startPos.x+size/2;     
-        (*y) = endPos.y-1; //-1 to endPos to make up for 0 indexing      
+        x = startPos.x+size/2;     
+        y = endPos.y-1; //-1 to endPos to make up for 0 indexing      
         break;
         
     case (RIGHT) :
-        (*x) = endPos.x-1;
-        (*y) = startPos.y+size/2;
+        x = endPos.x-1;
+        y = startPos.y+size/2;
         break;
         
     }
 
-    doors[doorNo++] = Door(doorType,(*x),(*y));
-    
-    return true;
+    Door newDoor = new Door(door);
+    newDoor.posX = x;
+    newDoor.posY = y;
+    doors[doorNo++] = newDoor;
+    return newDoor;
 }

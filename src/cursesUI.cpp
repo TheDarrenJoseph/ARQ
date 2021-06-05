@@ -49,13 +49,6 @@ void CursesUI::DecorateWindows() {
     wrefresh(consolewin_rear);
 }
 
-void CursesUI::ShowInfo() {
-    wprint_at(consolewin_front, (const char *) "Created by Rave Kutsuu", 0, 0); //Please leave this untouched as proof of origin
-    wprint_at(consolewin_front, (const char *) "ARQ Learner project/Tech demo", 2, 0);
-    wprint_at(consolewin_front, (const char *) "Made using C++ and ncurses", 3, 0);
-    wgetch(consolewin_front);
-}
-
 void CursesUI::ShowNotification(const char* text) {
     WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
     WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);

@@ -4,6 +4,7 @@
 
 #include "map.h"
 #include "room.h"
+#include "doors.h"
 
 void Map :: SetEntryPositions(Position entry, Position exit) {
     entryPosition = entry;
@@ -75,12 +76,17 @@ side OppositeSide(side s) {
     return TOP;
 }
 
-void Map :: AddOppositeDoors(Room* room, tile doorTile, side one, side two) {
-    int doorX, doorY;
-    room->AddDoor(doorTile,OppositeSide(one),&doorX,&doorY);
-    game_grid[doorY][doorX] = doorTile;
-    room->AddDoor(doorTile,OppositeSide(two),&doorX,&doorY);
-    game_grid[doorY][doorX] = doorTile;
+void Map :: AddOppositeDoors(Room* room, Door door, side one, side two) {
+    Door sideOneDoor = room->AddDoor(door,OppositeSide(one));
+    game_grid[sideOneDoor.posY][sideOneDoor.posX] = sideOneDoor.doorTile;
+
+    Door sideTwoDoor = room->AddDoor(door,OppositeSide(two));
+    game_grid[sideTwoDoor.posY][sideTwoDoor.posX] = sideTwoDoor.doorTile;
+}
+
+void Map :: AddDoor(Room* room, Door door, side doorSide) {
+    Door newDoor = room->AddDoor(door, doorSide);
+    game_grid[newDoor.posY][newDoor.posX] = newDoor.doorTile;
 }
 
 
@@ -103,7 +109,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   room = &rooms[roomCount++];
   
   //Door addition algorithm
-  tile doorTile = cd1;
+  Door door = new Door(WOODEN_DOOR);
   int doorX, doorY;
   
   //enum side={TOP,BOTTOM,LEFT,RIGHT}
@@ -112,58 +118,54 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   
   //TOP RIGHT
   if (x == GRID_X-size && y == 0) {
-      AddOppositeDoors(room, doorTile, TOP, RIGHT);
+      AddOppositeDoors(room, door, TOP, RIGHT);
       return true;
   }
   //BOTTOM LEFT
   if (x == 0 && y == GRID_Y-size) {
-      AddOppositeDoors(room, doorTile, BOTTOM, LEFT);
+      AddOppositeDoors(room, door, BOTTOM, LEFT);
       return true;
   }
   //TOP LEFT
   if (x == 0 && y == 0) {
-      AddOppositeDoors(room, doorTile, TOP, LEFT);
+      AddOppositeDoors(room, door, TOP, LEFT);
       return true;
   }
   //BOTTOM RIGHT
   if (x == GRID_X-size && y == GRID_Y-size) {
-      AddOppositeDoors(room, doorTile, BOTTOM, RIGHT);
+      AddOppositeDoors(room, door, BOTTOM, RIGHT);
       return true;
   }
       
   //TOP
   if (y == 0) {
-      room->AddDoor(doorTile,BOTTOM,&doorX,&doorY);
-      game_grid[doorY][doorX] = doorTile;
+      AddDoor(room, door,BOTTOM);
       return true;
   }
   //LEFT
   if (x == 0) {
-      room->AddDoor(doorTile,RIGHT,&doorX,&doorY);
-      game_grid[doorY][doorX] = doorTile;
+      AddDoor(room, door,RIGHT);
       return true;
   }
   
   //Right
   if (x == GRID_X-size) {
-      room->AddDoor(doorTile,LEFT,&doorX,&doorY);
-      game_grid[doorY][doorX] = doorTile;
+      AddDoor(room, door,LEFT);
       return true;
   }
   
   //Bottom
   if (y == GRID_Y-size) {
-      room->AddDoor(doorTile,TOP,&doorX,&doorY);
-      game_grid[doorY][doorX] = doorTile;
+      AddDoor(room, door,TOP);
       return true;
   }
   
-  for (int doorNo = (rand() % 4 + 1); doorNo > 0; doorNo--) {
-    if (room->AddDoor(doorTile, static_cast<side>(rand()%4), &doorX, &doorY)) {
-        game_grid[doorY][doorX] = doorTile;
-    }
+  // Otherwise pick a random door count of max sides
+  int doorCount = (rand() % 4 + 1);
+  for (int doorNo = doorCount; doorNo > 0; doorNo--) {
+    side randomDoorSide = static_cast<side>(rand()%4);
+    AddDoor(room, door, randomDoorSide);
   }
-  
   return true;
 }
 
@@ -542,7 +544,7 @@ int Map::EnvironmentCheck(int x, int y)
 {
     
     tile t = GetTile(x, y);
-    if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2) || (t == od0) || (t == od1) || (t == od2)) {
+    if (t == dor) {
         return 1; //door processing
     }
     else if (t == ded) {
@@ -757,6 +759,16 @@ void Map::SetContainer(int x, int y, Container c)
     container_grid[y][x] = c;
 }
 
+Door Map::GetDoor(int x, int y)
+{
+    return door_grid[y][x];
+}
+
+void Map::SetDoor(int x, int y, Door door)
+{
+    door_grid[y][x] = door;
+}
+
 int Map::GetGridX()
 {
     return gridX;
@@ -799,4 +811,33 @@ void DrawInv(area* a)
 int Map::ContainerProc(int x, int y)
 {
     return GetContainer(x, y).HasItems();
+}
+
+void Map::UnlockDoorTile(int x, int y) {
+  int map_tile = GetTile(x, y);
+  if (map_tile == dor)
+  {
+      GetDoor(x, y).Unlock();
+      // Check to see if the door spans multiple tiles and open those too 
+      for (Position neighbor : GetNeighbors(x,y)) {
+        if (GetTile(neighbor) == dor) {
+            GetDoor(neighbor.x, neighbor.y).Unlock();
+        }
+      }
+  };
+}
+
+void Map::OpenDoorTile(int x, int y) {
+  int map_tile = GetTile(x, y);
+  // Check for door tile
+  if (map_tile == dor)
+  {
+      GetDoor(x, y).Open();
+      // Check to see if the door spans multiple tiles and open those too 
+      for (Position neighbor : GetNeighbors(x,y)) {
+        if (GetTile(neighbor) == dor) {
+            GetDoor(neighbor.x, neighbor.y).Open();
+        }
+      }
+  };
 }

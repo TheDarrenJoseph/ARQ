@@ -34,16 +34,28 @@ struct Item
     value = 0;
     lootable = false;
   }
-   
-  Item(int i, std::string n, const char* s, int col, int weight, int val, bool lootable)
+
+  Item(const Item* toCopy)
   {
-    id = i;
-    name = n;
-    symbol = (*s);
-    colour = col;
-    this->weight = weight;
-    value = val;
-    this->lootable = lootable;
+    this -> id = toCopy -> id;
+    this -> name = toCopy -> name;
+    this -> symbol = toCopy -> symbol;
+    this -> colour = toCopy ->  colour;
+    this -> weight = toCopy -> weight;
+    this -> value = toCopy -> value;
+    this -> lootable = toCopy -> lootable;
+  }
+
+   
+  Item(int id, std::string name, const char* symbol, int colour, int weight, int value, bool lootable)
+  {
+    this -> id = id;
+    this -> name = name;
+    this -> symbol = (*symbol);
+    this -> colour = colour;
+    this -> weight = weight;
+    this -> value = value;
+    this -> lootable = lootable;
   }
   
   virtual ~Item() {

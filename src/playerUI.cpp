@@ -1,6 +1,13 @@
 #include "playerUI.h"
 #include "stringUtils.h"
 
+void CursesUI::ShowInfo() {
+    wprint_at(consolewin_front, (const char *) "Created by Darren Joseph", 0, 0);
+    wprint_at(consolewin_front, (const char *) "ARQ Learner project/Tech demo", 2, 0);
+    wprint_at(consolewin_front, (const char *) "Made using C++ and ncurses", 3, 0);
+    wgetch(consolewin_front);
+}
+
 void PlayerUI::Battle(int npc_id)
 {
     std::string p_name = player->GetName();
@@ -188,118 +195,99 @@ int PlayerUI::processYesOrNoChoice(std::string choice) {
     }
 }
 
-void PlayerUI::openDoorTile(int x, int y) {
-  int map_tile = map->GetTile(x, y);
-  if (map_tile == cd0 || map_tile == cd1 || map_tile == cd2) //Checking main tile
-  {
-      map->SetTile(x, y, od0);
-      // Check to see if the door spans multiple tiles and open those too 
-      for (Position neighbor : map->GetNeighbors(x,y)) {
-           if (map->GetTile(neighbor) == map_tile) map->SetTile(x,y,od0);
-      }
-  };
-}
 
-int PlayerUI::DoorProc(int y, int x, tile doortype) {
-    int map_tile = map->GetTile(x, y);
+
+int PlayerUI::DoorProc(int y, int x) {
+    int map_tile = map -> GetTile(x, y);
+    Door door = map -> GetDoor(x, y);
 
     std::string door_name = tile_library[map_tile].name;
 
-    if ((doortype == od0) || (doortype == od1) || (doortype == od2)) {
+    if (door.isLocked) {
+        mainUI->ConsolePrintWithWait("The door here is locked..", 0, 0);
+        int unlockChoice = -1;
+        while (unlockChoice < 0) {
+          std::string answer;
+          std::string output = "Would you like unlock the " + door_name + "? ";
+          mainUI->ConsolePrint(output, 0, 0);
+          answer = mainUI->ConsoleGetString();
+          int answerChoice = processYesOrNoChoice(answer);
+          if (answerChoice == 0) {
+            LockProc(y, x);
+            unlockChoice = answerChoice;
+          } else if (answerChoice == 1) {
+            std::string output = "You leave the " + door_name + " untouched.";
+            mainUI->ClearConsole();
+            mainUI->ConsolePrintWithWait(output, 0, 0);
+            unlockChoice = answerChoice;
+          } else {
+            mainUI->ClearConsole();
+            mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
+            DoorProc(y, x);
+          };
+        } 
+    } if (door.isOpen) {
         std::string output = "You enter the doorway of the" + door_name; //Building our message
         mainUI->ConsolePrintWithWait(output, 0, 0);
         player->SetPos(x, y);
 
     } else {
-        std::string answer;
+        mainUI->ConsolePrintWithWait("The door here is closed..", 0, 0);
 
-        std::string output = "Would you like to open the " + door_name + "? ";
-        mainUI->ConsolePrint(output, 0, 0);
-        answer = mainUI->ConsoleGetString();
+        int openChoice = -1;
+        while (openChoice < 0) {
+          std::string answer;
+          std::string output = "Would you like to open the " + door_name + "? ";
+          mainUI->ConsolePrint(output, 0, 0);
+          answer = mainUI->ConsoleGetString();
 
-        int answerChoice = processYesOrNoChoice(answer);
-        if (answerChoice == 0) {
-            if ((doortype == ld1) || (doortype == ld2)) {
-                LockProc(y, x, doortype, map_tile, door_name);
-                return (0);
-            }
-            
-            std::string output = "You open the " + door_name + " and step into the doorway";
-            mainUI->ConsolePrint(output, 0, 0);
-            PlayerUI::openDoorTile(x, y);
-            player->SetPos(x, y);
-        } else if (answerChoice == 1) {
-            std::string output = "You leave the " + door_name + " untouched.";
+          int answerChoice = processYesOrNoChoice(answer);
+          if (answerChoice == 0) {
+              std::string output = "You open the " + door_name + " and step into the doorway";
+              mainUI -> ConsolePrint(output, 0, 0);
+              map -> OpenDoorTile(x, y);
+              player -> SetPos(x, y);
+              openChoice = answerChoice;
+          } else if (answerChoice == 1) {
+              std::string output = "You leave the " + door_name + " untouched.";
+              mainUI->ClearConsole();
+              mainUI->ConsolePrintWithWait(output, 0, 0);
+              openChoice = answerChoice;
+          } else {
+              mainUI->ClearConsole();
+              mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
+          };
+        }
 
-            mainUI->ClearConsole();
-            mainUI->ConsolePrintWithWait(output, 0, 0);
-            return 0;
-        } else {
-            mainUI->ClearConsole();
-            mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
-
-            DoorProc(y, x, map->GetTile(x, y));
-        };
-
-        
     }
 
     return (0);
 }
 
-void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std::string doorname) {
-    std::string answer;
+void PlayerUI::LockProc(int y, int x) {
+    int map_tile = map -> GetTile(x, y);
+    Door door = map -> GetDoor(x, y);
+
     const Item* inv_tile;
     int keyCount = player->GetKeyCount();
-    int requiredCount = tile_library[doortile].locks;
+    int requiredCount = door.lockCount;
 
     mainUI->ClearConsole();
     mainUI->ConsolePrint("How would you like to unlock the door? ", 0, 0);
     mainUI->ConsolePrint("1. Using Door Keys, 2. Using Lockpicks ", 1, 0);
     mainUI->ConsolePrint("Enter a choice to continue, or 'exit' to cancel ", 2, 0);
     mainUI->ConsolePrint("lock_proc:~$  ", 3, 0);
-
-    answer = mainUI->ConsoleGetString();
-
-    if ((answer == "1") || (answer == "Key") || (answer == "Keys") || (answer == "key") || (answer == "keys") || (answer == "Door Key") || (answer == "Door Keys") || (answer == "door key") || (answer == "door keys")) {
+    std::string answer = StringUtils::toLowerCase(mainUI->ConsoleGetString());
+    if ((answer == "1") || (answer == "key") || (answer == "keys") || (answer == "door key") || (answer == "door keys")) {
         std::ostringstream lockContextStream;
         mainUI->ClearConsole(); //Clear ready for response
 
         //Check we have enough keys for the number of locks on this door
         if (keyCount >= requiredCount) {
             player->RemoveKeyCount(requiredCount); //Use up/delete these keys
-            
             lockContextStream << "You insert " << requiredCount << " keys into the door and open it .. ";
             mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
-            
-            if (doortype == ld1) {
-                
-                if (map->GetTile(door_x, door_y + 1) == (ld1)) //Checking for surrounding door tiles
-                {
-                    map->SetTile(door_x, door_y + 1, od0);
-                } else if (map->GetTile(door_x, door_y - 1) == (ld1)) {
-                    map->SetTile(door_x, door_y - 1, od0);
-                } else if (map->GetTile(door_x + 1, door_y) == (ld1)) {
-                    map->SetTile(door_x + 1, door_y, od0);
-                } else if (map->GetTile(door_x - 1, door_y) == (ld1)) {
-                    map->SetTile(door_x - 1, door_y, od0);
-                };
-            } else if (doortype == ld2) {
-                map->SetTile(door_x, door_y, od2);
-
-                if (map->GetTile(door_x, door_y + 1) == (ld2)) //Checking for surrounding door tiles
-                {
-                    map->SetTile(door_x, door_y + 1, od0);
-                } else if (map->GetTile(door_x, door_y - 1) == (ld2)) {
-                    map->SetTile(door_x, door_y - 1, od0);
-                } else if (map->GetTile(door_x + 1, door_y) == (ld2)) {
-                    map->SetTile(door_x + 1, door_y, od0);
-                } else if (map->GetTile(door_x - 1, door_y) == (ld2)) {
-                    map->SetTile(door_x - 1, door_y, od0);
-                };
-            };
-
-            player->SetPos(door_x, door_y);
+            map -> UnlockDoorTile(x, y);
             return;
         } else {
             lockContextStream << "You need " << requiredCount << " keys to open this door.. ";
@@ -322,13 +310,12 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
             }
        
 
-        if (lockpick_count >= (tile_library[doortile].locks)) {
+        if (lockpick_count >= door.lockCount) {
 
                 for (int i = 0; i < INV_SIZE; i++) {
                     inv_tile = player->GetFromInventory(i);
 
                     if (inv_tile->name == item_library[lockpick].name) {
-                        int chance = rand() % 100 + 1;
                         int lockno = 1;
                         std::ostringstream lockContextStream;
                         mainUI->ClearConsole();
@@ -341,6 +328,7 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
                         lockContextStream << "You attempt to pick lock " << lockno;
                         mainUI->ConsolePrintWithWait(lockContextStream.str(),1,0);
 
+                        int chance = rand() % 100 + 1;
                         if (chance > 50) {
                             mainUI->ConsolePrintWithWait("You manage to open the lock with the lockpick.. ", 0, 0);
                             count++;
@@ -354,25 +342,18 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
                         chance = rand() % 100 + 1;
                     }
 
-                    if (count == (tile_library[doortile].locks)) {
+                    if (count == door.lockCount) {
                         mainUI->ClearConsole();
                         mainUI->ConsolePrintWithWait("You manage to unlock the door.. ", 0, 0);
-                        
-                        //Setting the correct open door
-                        if (doortype == ld1) {
-                            map->SetTile(door_x, door_y, od1);
-                        } else if (doortype == ld2) {
-                            map->SetTile(door_x, door_y, od2);
-                        };
-
-                        player->SetPos(door_x, door_y);
+                        map -> UnlockDoorTile(x, y);
+                        player->SetPos(x, y);
                         return;
                     }
 
                 }
            
 
-        } else if (lockpick_count != (tile_library[doortile].locks)) {
+        } else if (lockpick_count != door.lockCount) {
             std::ostringstream lockContextStream;
             mainUI->ClearConsole(); //Clear ready for response
             
@@ -382,7 +363,7 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
             return;
         };
 
-        if (count != (tile_library[doortile].locks)) {
+        if (count != door.lockCount) {
             std::ostringstream lockContextStream;
             mainUI->ClearConsole(); //Clear ready for response
             mainUI->ConsolePrintWithWait("You have run out of lockpicks..", 0, 0);
@@ -391,17 +372,17 @@ void PlayerUI::LockProc(int door_y, int door_x, tile doortype, int doortile, std
         };
 
         return;
-    } else if ((answer == "Exit") || (answer == "EXIT") || (answer == "exit")) {
+    } else if ((answer == "exit")) {
         std::ostringstream lockContextStream;
         mainUI->ClearConsole(); //Clear ready for response
         
-        lockContextStream << "You leave the " << doorname.c_str() << " untouched.";
+        lockContextStream << "You leave the " << door.name.c_str() << " untouched.";
         
         mainUI->ConsolePrintWithWait(lockContextStream.str(),0,0);
         return;
     } else {
         mainUI->ConsolePrintWithWait("Not a correct choice, try again.. ", 0, 0);
-        LockProc(door_y, door_x, doortype, doortile, doorname);
+        LockProc(y, x);
     };
 
     return;
@@ -489,7 +470,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
     switch (map->MovePlayer(x, y, &eid)) {
         //Door    
     case 1:
-        DoorProc(y, x, map->GetTile(x, y));
+        DoorProc(y, x);
         break;
 
         //Trap    
@@ -545,31 +526,25 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
  */
 bool PlayerUI::TextInput()
 {
-    echo();
-
-    std::string answer;
-
+    echo(); // enable echoing of text inputs on the UI
     mainUI->ClearConsole();
     mainUI->ConsolePrint(PROMPT_TEXT, 0, 0);
-    answer = mainUI->ConsoleGetString();
-
-    if (answer == "help") {
+    std::string lowerCasedAnswer = StringUtils::toLowerCase(mainUI->ConsoleGetString());
+    if (lowerCasedAnswer == "help") {
         mainUI->ConsolePrint("ihelp - interactions", 1, 0);
         mainUI->ConsolePrintWithWait("info - game info", 2, 0); //getch on last line 
 
-    } else if (answer == "ihelp") {
+    } else if (lowerCasedAnswer == "ihelp") {
         mainUI->ConsolePrintWithWait("drop - drop item (selection)", 0, 0);
-
-    } else if (answer == "info") {
+    } else if (lowerCasedAnswer == "info") {
         mainUI->ShowInfo();
-    } else if ((answer == "exit") || (answer == "Exit") || (answer == "EXIT") || (answer == "quit") || (answer == "Quit") || (answer == "QUIT")) {
+    } else if ((lowerCasedAnswer == "exit") || (lowerCasedAnswer == "quit")) {
         mainUI->ConsolePrintWithWait("Quitting.. ", 0, 0);
         return false;
-    } else if (answer == "inventory") AccessPlayerInv();
-
-    else {
+    } else if (lowerCasedAnswer == "inventory") {
+      AccessPlayerInv();
+    } else {
         mainUI->ConsolePrintWithWait("unrecognised input, use 'help' for a examples. ", 0, 0);
-        //TextInput();
     }
 
     return true;
@@ -767,24 +742,13 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
     
 }
 
-
-void PlayerUI::TileProc(int y, int x, tile t)
-{
-
-//    if (t == od0 || (t == od1) || (t == od2)) {
-//        DoorProc(y, x, t);
-//        return;
-//    } else if (t == cd0 || (t == cd1) || (t == cd2) || (t == ld1) || (t == ld2)) {
-//        DoorProc(y, x, t);
-//        return;
-//    } else 
-        
+void PlayerUI::TileProc(int y, int x, tile t) {
     if (t == ent) {
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);
         return;
     } else if (t == ext) {
-         mainUI->ClearConsole();
+        mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("You have reached the exit!", 0, 0);
         return;
     } else if (t == ded) {

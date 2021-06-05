@@ -6,6 +6,7 @@
 
 #include "position.h"
 #include "tile.h"
+#include "doors.h"
 #include "containers.h"
 #include "characters.h"
 #include "room.h"
@@ -15,12 +16,14 @@
 #include <map>
 #include <algorithm> 
 #include <vector>
+#include <stdbool.h>
 
 class Map
 {
 private:
     tile game_grid[GRID_Y][GRID_X];
     bool visible_grid[GRID_Y][GRID_X];
+    Door door_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
     static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
@@ -48,13 +51,6 @@ private:
         
         int roomChance = rand()%100-50; //Between 0-49% chance of rooms
         CreateMap(roomChance);
-        
-//        //Initialise container spaces
-//        for (int x = 0; x < GRID_X; x++) {
-//            for (int y = 0; y < GRID_Y; y++) {
-//                container_grid[y][x] =Container();
-//            }
-//         }
 	}
     
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
@@ -69,10 +65,10 @@ private:
   
     int roomCount=0;
     
-    Player* player=NULL;
-    NPC* npcs     =NULL;
+    Player* player = NULL;
+    NPC* npcs      = NULL;
     
-    std::vector<Position> possibleSpawns;
+    std::vector<Position> possibleSpawns = {};
     
     Position entryPosition = Position(0,0);
     Position exitPosition = Position(0,0);
@@ -189,6 +185,9 @@ private:
 
     Container GetContainer(int x, int y);
     void SetContainer(int x, int y, Container a);
+
+    Door GetDoor(int x, int y);
+    void SetDoor(int x, int y, Door door);
     
     int GetGridX();
     int GetGridY();
@@ -196,8 +195,9 @@ private:
     bool CanPlaceRoom(Room* room);
     void CreateWalls(Room* room);
     
-    void AddOppositeDoors(Room* room, tile doorTile, side one, side two);
-    
+    void AddOppositeDoors(Room* room, Door door, side one, side two);
+    void AddDoor(Room* room, Door door, side doorSide);
+
     /**
      *  x - the x of the top-left of the room
      *  y - the y pos of the top-left of the room
@@ -211,6 +211,9 @@ private:
     
     void InitAreas();
 
+    void UnlockDoorTile(int x, int y);
+    void OpenDoorTile(int x, int y);
+
     //Attempts at default initialisation, !FIX NULL USAGE HERE, OR make it safe!
     Map() : Map(4,NULL,NULL) {
         
@@ -222,7 +225,7 @@ private:
         gridY=GRID_Y;  
         
 		initMap(gridX,gridY,maxNPCS,npcs,p);  	
-	}
+	  }
     
     //Custom map size constructor
     Map(int x,int y, int maxNPCS, NPC* npcs, Player* p) {
@@ -235,7 +238,8 @@ private:
         //Copying containers and tiles from the address given,
         for (int x=0; x<GRID_X; x++) {
             for(int y=0; y<GRID_Y; y++) {
-                this->container_grid[y][x] = m.container_grid[y][x];
+                this->door_grid[y][x] = new Door(m.door_grid[y][x]);
+                this->container_grid[y][x] = new Container(m.container_grid[y][x]);
                 this->game_grid[y][x] = m.game_grid[y][x];
             }
         }

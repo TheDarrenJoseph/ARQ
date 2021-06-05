@@ -17,7 +17,7 @@ class GameEngine
         int MAX_NPCS=0;
 
         Map* map=NULL;
-        std::list<Map*> levels;
+        std::list<Map*> levels = {};
         
         unsigned long int levelIndex=0;
         std::list<Map*>::iterator currentLevel = levels.begin();
