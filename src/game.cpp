@@ -18,23 +18,28 @@ void GameEngine :: SettingsMenu() {
     //1const char* text [menuSize] 
      while(true) {
          
-		std::string fogStatus = std::string(fogOfWar? "ON" : "OFF");
-		std::vector<std::pair<std::string, std::string>> text = { 	
-																	{"Fog of war",fogStatus},
-																	{"Close Settings",""}
-																};   
-	   
-		switch(displayUI->Menu(text)) {
-			case 0 :
-				fogOfWar = !fogOfWar;
-				break;
-				
-			default :
-				return;
-				break;
-			
-		}
-		
+      std::string fogStatus = std::string(fogOfWar? "ON" : "OFF");
+      std::vector<std::pair<std::string, std::string>> text = { 	
+                                    {"Fog of war",fogStatus},
+                                    {"Close Settings",""}
+                                  };   
+       
+      switch(displayUI->Menu(text)) {
+        case 0 :
+          if (fogOfWar) {
+            displayUI -> DisableFogOfWar(map);
+          } else {
+            displayUI -> EnableFogOfWar(map, player -> GetPosition());
+          } 
+          fogOfWar = !fogOfWar;
+          break;
+          
+        default :
+          return;
+          break;
+        
+      }
+      
     }
 
 }
@@ -54,10 +59,6 @@ int GameEngine :: MainMenu(bool gameRunning) {
 
 /** Sets the entry and exit points for this level, also places the player at the entry position  */
 void GameEngine :: spawnPlacePlayer() {
-    //int roomCount = map.GetRoomCount();
-    Room* rooms = map->GetRooms();
-    int roomCount = map->GetRoomCount();
-    
     //std::vector<Position> possibleSpawns = map->GetPossibleSpawns();
     Position chosenEntry = map->GetEntryPosition();
     player->SetPos(chosenEntry.x, chosenEntry.y); //place the player there
@@ -148,7 +149,7 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               displayUI->ConsolePrint("Generating a new level..",0,0);
               displayUI->UpdateUI();
               //Re-run map init to place player and exit (spawnPlacePlayer and extras?)
-              map = new Map(MAX_NPCS,&npcs[0],player); //Rebuild the map
+              map = new Map(MAX_NPCS, &npcs[0], player); //Rebuild the map
               levels.push_back(map);
               
               displayUI->ClearConsole();
@@ -158,7 +159,7 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               //If pathing/making a path to the exit fails, rebuild the map
 				if (!map->PathRooms() ) {
 					std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
-					Map* thisMap = new Map(); 
+					//Map* thisMap = new Map(); 
 					//delete(thisMap);
 				}
               
@@ -207,12 +208,9 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
  * @return 
  */
 bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
-  int playerX;
-  int playerY;  
-
-  player->GetPos(&playerX, &playerY);
+  Position playerPos = player -> GetPosition();
   
-  displayUI->DrawMap (map,fogOfWar,playerX,playerY,3); 
+  displayUI->DrawMap (map, fogOfWar, playerPos); 
   displayUI->DrawItems (map); 
   displayUI->DrawContainers(map);
   playerUI->DrawNPCS();
@@ -302,4 +300,4 @@ void GameEngine :: GenerateItems(lootChance thisChance)
   return;
 }
  
-
+    

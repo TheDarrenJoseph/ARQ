@@ -110,7 +110,6 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   
   //Door addition algorithm
   Door door = new Door(WOODEN_DOOR);
-  int doorX, doorY;
   
   //enum side={TOP,BOTTOM,LEFT,RIGHT}
   //Don't add doors to any side touching the edge of the map!!
@@ -204,11 +203,11 @@ void Map::CreateMap(int roomChance) {
         int y = roomPos.y;
         int attempts = 1;
         
-	int targetMaxSize = std::min(MAX_ROOM_SIZE, roomQuota - roomArea); // Prevent exceeding quota
+	      int targetMaxSize = std::min(MAX_ROOM_SIZE, roomQuota - roomArea); // Prevent exceeding quota
         int size = (rand() % (targetMaxSize - MIN_ROOM_SIZE + 1)) + MIN_ROOM_SIZE; // Random size in range [MIN_ROOM_SIZE, targetMaxSize] (Inclusive)
         bool roomPlaced = false;
         
-	roomPlaced = CreateRoom(x, y, size, NULL);
+        roomPlaced = CreateRoom(x, y, size, NULL);
 
         while(!roomPlaced && attempts < 3 && size > MIN_ROOM_SIZE) {
             size--; //Try a smaller room
@@ -217,8 +216,8 @@ void Map::CreateMap(int roomChance) {
         }
             
         if (roomPlaced) {
-	    int xEnd = x+size+1; //+1 to leave a gap
-	    int yEnd = y+size+1;
+            int xEnd = x+size+1; //+1 to leave a gap
+            int yEnd = y+size+1;
 
             for (; x < xEnd; x++) {
                 for (; y < yEnd; y++) {
@@ -722,7 +721,7 @@ void Map::SetTileVisible(int x, int y, bool b)
 
 void Map::SetTile(int x, int y, tile t)
 {
-    game_grid[y][x] = t;
+  game_grid[y][x] = t;
 }
 
 

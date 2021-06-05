@@ -1,13 +1,6 @@
 #include "playerUI.h"
 #include "stringUtils.h"
 
-void CursesUI::ShowInfo() {
-    wprint_at(consolewin_front, (const char *) "Created by Darren Joseph", 0, 0);
-    wprint_at(consolewin_front, (const char *) "ARQ Learner project/Tech demo", 2, 0);
-    wprint_at(consolewin_front, (const char *) "Made using C++ and ncurses", 3, 0);
-    wgetch(consolewin_front);
-}
-
 void PlayerUI::Battle(int npc_id)
 {
     std::string p_name = player->GetName();
@@ -198,7 +191,6 @@ int PlayerUI::processYesOrNoChoice(std::string choice) {
 
 
 int PlayerUI::DoorProc(int y, int x) {
-    int map_tile = map -> GetTile(x, y);
     Door door = (*map -> GetDoor(x, y));
     std::string door_name = door.name;
 
@@ -262,7 +254,6 @@ int PlayerUI::DoorProc(int y, int x) {
 }
 
 void PlayerUI::LockProc(int y, int x) {
-    int map_tile = map -> GetTile(x, y);
     Door door = map -> GetDoor(x, y);
 
     const Item* inv_tile;

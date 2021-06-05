@@ -3,8 +3,14 @@
 
 #include "cursesUI.h"
 
-
 using std::string;
+
+void CursesUI::ShowInfo() {
+    wprint_at(consolewin_front, (const char *) "Created by Darren Joseph", 0, 0);
+    wprint_at(consolewin_front, (const char *) "ARQ Learner project/Tech demo", 2, 0);
+    wprint_at(consolewin_front, (const char *) "Made using C++ and ncurses", 3, 0);
+    wgetch(consolewin_front);
+}
 
 void CursesUI::InitWindows() {
     //newwin(size y, size x, pos y, pos x) 
@@ -143,136 +149,84 @@ int CursesUI::wprintNoRefresh(WINDOW* win, std::string text)
 
 void CursesUI::DrawItems(Map* m)
 {
-    //iterate through the rows of the grid/map
     for (int y = 0; y < GRID_Y; y++) {
         for (int x = 0; x < GRID_X; x++) {
-            //create variables to hold item info
-            int colour;
-            char symbol;
-
-            //grab the info for each item from the library
-            const Item* i = m->GetItem(x, y);
-
-            if ((i != NULL) && (IsLootable(i))) //Check for an item type, && it not being an empty item 
-            {
-                colour = i->colour;
-                symbol = i->symbol;
-
-                //draw the tile to the screen
+            const Item* item = m->GetItem(x, y);
+            if ((item != NULL) && (item -> IsLootable())) {
+                int colour = item -> colour;
+                char symbol = item -> symbol;
                 wmove(mainwin_front, y, x);
-
                 wprintw_col(mainwin_front, &symbol, colour);
-                //	      wrefresh(mainwin_front);
             }
         }
     }
-
-    return;
 }
 
 void CursesUI::DrawContainers(Map* m)
 {
-     //create variables to hold item info
-     int colour;
-     char symbol;
-     Container c;
-     
-    //iterate through the rows of the grid/map
-    for (int y = 0; y < GRID_Y; y++) {
-        for (int x = 0; x < GRID_X; x++) {
-           
-            //grab the info for each item from the library
-            c = m->GetContainer(x, y);
-
-            if (c.id == 98) //Check for an item type, && it not being an empty item 
-            {
-                colour = c.colour;
-                symbol = c.symbol;
-
-                //draw the tile to the screen
-                wmove(mainwin_front, y, x);
-                wprintw_col(mainwin_front, &symbol, colour);
-            }
-        }
+  for (int y = 0; y < GRID_Y; y++) {
+    for (int x = 0; x < GRID_X; x++) {
+      Container container = m -> GetContainer(x, y);
+      if (container.id == 98) //Check for an item type, && it not being an empty item 
+      {
+        int colour = container.colour;
+        char symbol = container.symbol;
+        wmove(mainwin_front, y, x);
+        wprintw_col(mainwin_front, &symbol, colour);
+      }
     }
-
-    return;
+  }
 }
 
-int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance)
+void CursesUI::CalculateViewBoundaries(Position playerPos, int viewDistance, Position* viewStart, Position* viewEnd) {
+  viewStart -> x = (playerPos.x - viewDistance);
+  viewStart -> y = (playerPos.y - viewDistance);
+  viewEnd -> x   = (playerPos.x + viewDistance);
+  viewEnd -> y   = (playerPos.y + viewDistance);
+
+  if (playerPos.x < viewDistance) viewStart -> x = viewDistance - playerPos.x;
+  if (playerPos.y < viewDistance) viewStart -> y = viewDistance - playerPos.y;
+  if (playerPos.x > (GRID_X - viewDistance)) viewEnd -> x = GRID_X - playerPos.x;
+  if (playerPos.y > (GRID_Y - viewDistance)) viewEnd -> x = GRID_Y - playerPos.y;
+}
+
+int CursesUI::DrawMap(Map* m, bool fogOfWar, Position playerPos)
 {
     wmove(mainwin_front, 0, 0);
-
-    int startX = 0;
-    int startY = 0;
-    int endX = GRID_X;
-    int endY = GRID_Y;
     
-    int viewStartX = 0;
-    int viewStartY = 0;
-    int viewEndX = GRID_X;
-    int viewEndY = GRID_Y;
+    Position mapViewStart = Position(0, 0);
+    Position mapViewEnd = Position(GRID_X, GRID_Y);
     
     tile maptile;
     int maptile_colour;
-    bool maptile_found;
     const char *maptile_char;
-    tile_details tileDetails;
+    const tile_details* tileDetails;
 
-    //If fogOfWar is enabled, modify draw distances to fit
+    // Set any tiles in range to visible
     if (fogOfWar) {
-        viewStartX = playerX;
-        viewStartY = playerY;
+      UpdateVisibleTiles(m, playerPos);
+    } 
 
-        if (viewStartX < GRID_X - viewDistance && viewStartY < GRID_Y - viewDistance) {
-            viewEndX = viewStartX + viewDistance;
-            viewEndY = viewStartY + viewDistance;
-        }
-
-        if (viewStartX > viewDistance && viewStartY > viewDistance) {
-            viewStartX -= viewDistance;
-            viewStartY -= viewDistance;
-        } else {
-            viewStartX = 0;
-            viewStartY = 0;
-
-        }
-    }
-
-	 //Setting visible area
-    for (int y = viewStartY; y < viewEndY; y++) {
-        for (int x = viewStartX; x < viewEndX; x++) {
-			maptile = m->GetTile(x, y);
-            if (!maptile_found) m->SetTileVisible(x,y,true);
-        }
-
-    }
-    
     //Drawing everything visible
-    for (int y = startY; y < endY; y++) {
-        //wmove(mainwin_front, y, 0);
+    for (unsigned int y = mapViewStart.y; y < mapViewEnd.y; y++) {
+      for (unsigned int x = mapViewStart.x; x < mapViewEnd.x; x++) {
+        if (!fogOfWar || m -> TileIsVisible(x,y)) {
+          maptile = m->GetTile(x, y);
+          tileDetails = &tile_library[maptile];        
+          maptile_colour = tileDetails -> color;
 
-        for (int x = startX; x < endX; x++) {
-			maptile = m->GetTile(x, y);
-			tileDetails = tile_library[maptile];
-			maptile_found = m->TileIsVisible(x,y);
-			
-			maptile_colour = tileDetails.color;
-
-      if (maptile == dor) {
-        Door* door = m -> GetDoor(x,y);
-        const char* open_door_symbol = "-";
-        maptile_char = door -> isOpen ? open_door_symbol : tileDetails.symbol;
-      } else {
-        maptile_char = tileDetails.symbol;
+          if (maptile == dor) {
+            Door* door = m -> GetDoor(x,y);
+            const char* open_door_symbol = "-";
+            maptile_char = door -> isOpen ? open_door_symbol : tileDetails -> symbol;
+          } else {
+            maptile_char = tileDetails -> symbol;
+          }
+                
+            wmove(mainwin_front, y, x);
+            wprintw_col(mainwin_front, maptile_char, maptile_colour);
+        }
       }
-            
-      if (maptile_found) {
-				wmove(mainwin_front, y, x);
-				wprintw_col(mainwin_front, maptile_char, maptile_colour);
-			}
-		}
-	
 	}
 
     return (0);
@@ -516,6 +470,53 @@ std::string CursesUI::ConsoleGetString()
 }
 
 
+void CursesUI::UpdateVisibleTiles(Map* map, Position playerPos) {
+  Position viewStart = Position(0, 0);
+  Position viewEnd = Position(GRID_X, GRID_Y);
+
+  Position localViewStart = Position(0, 0);
+  Position localViewEnd = Position(GRID_X, GRID_Y);
+  CalculateViewBoundaries(playerPos, 6, &localViewStart, &localViewEnd);
+
+  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
+    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+      if ( y >= localViewStart.y && y <= localViewEnd.y && x >= localViewStart.x && x <= localViewEnd.x) {
+        map -> SetTileVisible(x,y, true);
+      }
+    }
+  }
+}
+
+void CursesUI::EnableFogOfWar(Map* map, Position playerPos) {
+  Position viewStart = Position(0, 0);
+  Position viewEnd = Position(GRID_X, GRID_Y);
+
+  Position localViewStart = Position(0, 0);
+  Position localViewEnd = Position(GRID_X, GRID_Y);
+  CalculateViewBoundaries(playerPos, 6, &localViewStart, &localViewEnd);
+
+  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
+    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+      if ( y >= localViewStart.y && y <= localViewEnd.y && x >= localViewStart.x && x <= localViewEnd.x) {
+        map -> SetTileVisible(x,y, true);
+      } else {
+        map -> SetTileVisible(x,y, false);
+      }
+    }
+  }
+
+}
+
+void CursesUI::DisableFogOfWar(Map* map) {
+  Position viewStart = Position(0, 0);
+  Position viewEnd = Position(GRID_X, GRID_Y);
+
+  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
+    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+      map -> SetTileVisible(x,y, true);
+    }
+  }
+}
 
 
 

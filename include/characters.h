@@ -8,8 +8,7 @@
 #include "tile.h"
 #include "items.h"
 #include "containers.h"
-
-
+#include "position.h"
 
 class Character
 {
@@ -43,7 +42,9 @@ class Character
   void SetCharacter(char char_choice, int colour_choice, std::string name_choice, int health_choice);
 
   void GetPos (int *x, int *y);
-  
+  void SetPos(int x, int y);
+  Position GetPosition();
+
   int GetColour();
   char GetSymbol();
 
@@ -57,7 +58,6 @@ class Character
   void SetOutfit(outfit o);
   outfit GetOutfit();
   
-  void SetPos(int x, int y);
   void SetHealth(int);
 
   Container DropItems(); //Drops the players inv on death as a dead body

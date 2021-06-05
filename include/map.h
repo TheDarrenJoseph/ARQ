@@ -4,12 +4,6 @@
 #define GRID_X 100 //Fallback/default size values
 #define GRID_Y 30
 
-#include "position.h"
-#include "tile.h"
-#include "doors.h"
-#include "containers.h"
-#include "characters.h"
-#include "room.h"
 #include <cstdlib>
 #include <iostream>
 #include <set>
@@ -17,6 +11,12 @@
 #include <algorithm> 
 #include <vector>
 #include <stdbool.h>
+
+#include "tile.h"
+#include "doors.h"
+#include "containers.h"
+#include "characters.h"
+#include "room.h"
 
 class Map
 {
@@ -30,15 +30,16 @@ private:
     Room rooms[MAX_ROOMS];
     
     void initMap(int sizeX,int sizeY, int maxNPCS, NPC* npcs, Player* p) {
-		if (sizeX<=GRID_X && sizeY<=GRID_Y) {
+        if (sizeX<=GRID_X && sizeY<=GRID_Y) {
             gridX = sizeX;
             gridY = sizeY;
         } else  Map();
         
+
         for (int x=0; x < gridX; x++) {
             for (int y=0; y < gridY; y++) {
                 game_grid[y][x] = ntl; //set all tiles to no tile by default to avoid segfaults
-                visible_grid[y][x] = false;
+                visible_grid[y][x] = true;
             }
         }
         
@@ -51,7 +52,7 @@ private:
         
         int roomChance = rand()%100-50; //Between 0-49% chance of rooms
         CreateMap(roomChance);
-	}
+    }
     
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
@@ -219,17 +220,14 @@ private:
         
     }
     
-	//Default map size constructor
+	  //Default map size constructor
     Map (int maxNPCS, NPC* npcs, Player* p) {
-		gridX=GRID_X;
-        gridY=GRID_Y;  
-        
-		initMap(gridX,gridY,maxNPCS,npcs,p);  	
+      initMap(GRID_X,GRID_Y,maxNPCS,npcs,p);  	
 	  }
     
     //Custom map size constructor
     Map(int x,int y, int maxNPCS, NPC* npcs, Player* p) {
-		initMap(x,y,maxNPCS,npcs,p);    
+      initMap(x,y,maxNPCS,npcs,p);    
     }
     
     void copyMap(const Map& m) {

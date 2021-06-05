@@ -1,5 +1,6 @@
 #ifndef POSITION_H
 #define	POSITION_H
+
 #include <list>
 
 struct Position {
@@ -14,7 +15,7 @@ public:
         y=0;
     }
     
-     Position(int x,int y) {
+    Position(int x,int y) {
          if (x>0 && y>0) {  
              this->x = x;
              this->y = y;
@@ -57,5 +58,5 @@ public:
 
 typedef std::list<Position> Path;
 
-#endif	/* POSITION_H */
+#endif
 

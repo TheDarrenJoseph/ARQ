@@ -24,6 +24,10 @@ struct Item
   
   virtual itemType getType() const { return ITEM; } 
 
+  bool IsLootable() const {
+    return this -> lootable;
+  }
+
   Item()
   {
     id = 0;
@@ -93,12 +97,6 @@ struct outfit : public Item
       armourPoints = AP;
     }
 };
-
-
-
-bool IsLootable(const Item* i);
-
-bool CanDropItem(const Item* thisItem);
 
 const Item item_library[] =
   { 

@@ -3,6 +3,8 @@
 
 #include <string>
 #include "ui.h"
+#include "tile.h"
+#include "position.h"
  
 #define MAINWIN_REAR_X     getmaxx(stdscr)-2
 #define MAINWIN_REAR_Y     getmaxy(stdscr)-1
@@ -35,9 +37,7 @@ private:
 
     WINDOW* invwin_front=NULL;
     WINDOW* invwin_rear=NULL;
-    
-    
-    
+        
 public:
     
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
@@ -65,7 +65,8 @@ public:
 //    virtual void ListInv(Inventory* a);
     virtual void ClearInvHighlighting();
    
-    virtual int DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance);
+    virtual void CalculateViewBoundaries(Position playPos, int viewDistance, Position* viewStart, Position* viewEnd);
+    virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos);
     virtual void DrawCharacter(int x, int y, int colour, char symbol);
 
     virtual void ShowInfo();
@@ -82,7 +83,10 @@ public:
     
     virtual void ClearConsoleHighlighting();
     virtual void HighlightConsole(int scr_x, int scr_y);
-    
+    virtual void UpdateVisibleTiles(Map* map, Position playerPos);
+    virtual void EnableFogOfWar(Map* map, Position playerPosition);
+    virtual void DisableFogOfWar(Map* map);
+
     void copyUI(const CursesUI& ui) {
         this->consolewin_front = ui.consolewin_front;
         this->consolewin_rear = ui.consolewin_rear;

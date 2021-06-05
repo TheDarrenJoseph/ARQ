@@ -2,8 +2,9 @@
 #define	UI_H
 
 #include <curses.h>  
-#include "map.h"
 #include <vector>
+#include "position.h"
+#include "map.h"
 
 class UI {
 public:
@@ -22,9 +23,8 @@ public:
     //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;
     
-    virtual int DrawMap (Map* m, bool fogOfWar, int playerX, int playerY, int viewDistance) = 0;
+    virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos)=0;
     virtual void DrawCharacter (int x, int y, int colour, char symbol) = 0;
-
 
     virtual void ShowInfo() = 0;
     virtual void ShowNotification(const char* text) = 0;
@@ -41,6 +41,10 @@ public:
     virtual void HighlightConsole(int scr_x, int scr_y) = 0;
         
     virtual int InitScreen () = 0;
+
+    virtual void UpdateVisibleTiles(Map* map, Position playerPos)=0;
+    virtual void EnableFogOfWar(Map* map, Position playerPosition) = 0;
+    virtual void DisableFogOfWar(Map* map) = 0;
 
     virtual ~UI() {}
 };

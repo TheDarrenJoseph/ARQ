@@ -93,6 +93,12 @@ void Character :: GetPos (int* x, int* y)
   (*y = this->posY);
 }
 
+Position Character :: GetPosition()
+{
+  return Position(this->posX, this->posY);
+}
+
+
 int Character :: GetHealth ()
 {
   return this->health;

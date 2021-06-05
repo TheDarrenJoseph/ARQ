@@ -54,8 +54,6 @@ class GameEngine
         
         void GenerateItems(lootChance thisChance);
         
-       
-        
         /** Shallow-copies from another game-engine to preserve external data control
          * 
          * 
