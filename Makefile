@@ -1,8 +1,8 @@
 CFLAGS=-Wall -Wextra -Weffc++ -pedantic
 LIBS=-l curses
 INCLUDES=-I ../include -std=gnu++11
-SOURCES=main.cpp game.cpp characters.cpp map.cpp items.cpp containers.cpp doors.cpp room.cpp stringUtils.cpp cursesUI.cpp playerUI.cpp 
-OBJECTS=main.o game.o characters.o map.o items.o containers.o doors.o room.o stringUtils.o cursesUI.o playerUI.o 
+SOURCES=main.cpp game.cpp characters.cpp map.cpp items.cpp containers.cpp doors.cpp room.cpp stringUtils.cpp pathfinding.cpp cursesUI.cpp playerUI.cpp 
+OBJECTS=main.o game.o characters.o map.o items.o containers.o doors.o room.o stringUtils.o pathfinding.o cursesUI.o playerUI.o 
 
 all : clean arq
 

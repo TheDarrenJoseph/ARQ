@@ -7,6 +7,9 @@
 #include "characters.h"
 #include "playerUI.h"
 #include "ui.h"
+#include "position.h"
+#include "map.h"
+#include "pathfinding.h"
 
 void SetRunning(bool state);
 std::string GetVersion();

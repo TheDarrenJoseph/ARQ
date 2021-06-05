@@ -26,7 +26,7 @@ private:
     Door door_grid[GRID_Y][GRID_X];
     Container container_grid[GRID_Y][GRID_X];
     
-    static const int MAX_ROOMS= ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
+    static const int MAX_ROOMS = ((GRID_X*GRID_Y)/9); //assuming a room should at minimum use 9 tiles of space, divide the total map size by this
     Room rooms[MAX_ROOMS];
     
     void initMap(int sizeX,int sizeY, int maxNPCS, NPC* npcs, Player* p) {
@@ -53,11 +53,7 @@ private:
         int roomChance = rand()%100-50; //Between 0-49% chance of rooms
         CreateMap(roomChance);
     }
-    
-    //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
-    static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
-        return (lval.second < rval.second); //compares the int costs of the two PositionCosts, allowing sorting of positions by their movement cost
-    }
+
     
     int gridX=0;
     int gridY=0;

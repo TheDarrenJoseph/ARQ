@@ -1,4 +1,3 @@
-#include "position.h"
 #include "game.h"
 #include <vector>
 #include <limits> //numeric limits for safety
@@ -156,12 +155,13 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               displayUI->ConsolePrint("Pathing rooms..",1,1);
               displayUI->UpdateUI();
               
+              Pathfinding* pathfinding = new Pathfinding(map);
               //If pathing/making a path to the exit fails, rebuild the map
-				if (!map->PathRooms() ) {
-					std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
-					//Map* thisMap = new Map(); 
-					//delete(thisMap);
-				}
+              if (!pathfinding -> PathRooms() ) {
+                std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
+                //Map* thisMap = new Map(); 
+                //delete(thisMap);
+              }
               
               displayUI->ConsolePrintWithWait("DONE [Enter]",0,12);
 
