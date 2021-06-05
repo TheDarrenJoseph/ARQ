@@ -186,7 +186,7 @@ private:
     Container GetContainer(int x, int y);
     void SetContainer(int x, int y, Container a);
 
-    Door GetDoor(int x, int y);
+    Door* GetDoor(int x, int y);
     void SetDoor(int x, int y, Door door);
     
     int GetGridX();

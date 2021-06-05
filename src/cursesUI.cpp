@@ -213,7 +213,7 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewD
     int viewEndX = GRID_X;
     int viewEndY = GRID_Y;
     
-    int maptile;
+    tile maptile;
     int maptile_colour;
     bool maptile_found;
     const char *maptile_char;
@@ -239,7 +239,7 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewD
         }
     }
 
-	//Setting visible area
+	 //Setting visible area
     for (int y = viewStartY; y < viewEndY; y++) {
         for (int x = viewStartX; x < viewEndX; x++) {
 			maptile = m->GetTile(x, y);
@@ -258,9 +258,16 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, int playerX, int playerY, int viewD
 			maptile_found = m->TileIsVisible(x,y);
 			
 			maptile_colour = tileDetails.color;
-			maptile_char = tileDetails.symbol;
+
+      if (maptile == dor) {
+        Door* door = m -> GetDoor(x,y);
+        const char* open_door_symbol = "-";
+        maptile_char = door -> isOpen ? open_door_symbol : tileDetails.symbol;
+      } else {
+        maptile_char = tileDetails.symbol;
+      }
             
-            if (maptile_found) {
+      if (maptile_found) {
 				wmove(mainwin_front, y, x);
 				wprintw_col(mainwin_front, maptile_char, maptile_colour);
 			}

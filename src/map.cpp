@@ -759,9 +759,9 @@ void Map::SetContainer(int x, int y, Container c)
     container_grid[y][x] = c;
 }
 
-Door Map::GetDoor(int x, int y)
+Door* Map::GetDoor(int x, int y)
 {
-    return door_grid[y][x];
+    return &door_grid[y][x];
 }
 
 void Map::SetDoor(int x, int y, Door door)
@@ -817,11 +817,11 @@ void Map::UnlockDoorTile(int x, int y) {
   int map_tile = GetTile(x, y);
   if (map_tile == dor)
   {
-      GetDoor(x, y).Unlock();
+      GetDoor(x, y) -> Unlock();
       // Check to see if the door spans multiple tiles and open those too 
       for (Position neighbor : GetNeighbors(x,y)) {
         if (GetTile(neighbor) == dor) {
-            GetDoor(neighbor.x, neighbor.y).Unlock();
+            GetDoor(neighbor.x, neighbor.y) -> Unlock();
         }
       }
   };
@@ -832,11 +832,11 @@ void Map::OpenDoorTile(int x, int y) {
   // Check for door tile
   if (map_tile == dor)
   {
-      GetDoor(x, y).Open();
+      GetDoor(x, y) -> Open();
       // Check to see if the door spans multiple tiles and open those too 
       for (Position neighbor : GetNeighbors(x,y)) {
         if (GetTile(neighbor) == dor) {
-            GetDoor(neighbor.x, neighbor.y).Open();
+            GetDoor(neighbor.x, neighbor.y) -> Open();
         }
       }
   };

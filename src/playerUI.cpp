@@ -199,35 +199,34 @@ int PlayerUI::processYesOrNoChoice(std::string choice) {
 
 int PlayerUI::DoorProc(int y, int x) {
     int map_tile = map -> GetTile(x, y);
-    Door door = map -> GetDoor(x, y);
-
-    std::string door_name = tile_library[map_tile].name;
+    Door door = (*map -> GetDoor(x, y));
+    std::string door_name = door.name;
 
     if (door.isLocked) {
         mainUI->ConsolePrintWithWait("The door here is locked..", 0, 0);
         int unlockChoice = -1;
         while (unlockChoice < 0) {
+          mainUI->ClearConsole();
           std::string answer;
           std::string output = "Would you like unlock the " + door_name + "? ";
           mainUI->ConsolePrint(output, 0, 0);
           answer = mainUI->ConsoleGetString();
           int answerChoice = processYesOrNoChoice(answer);
+          mainUI->ClearConsole();
           if (answerChoice == 0) {
             LockProc(y, x);
             unlockChoice = answerChoice;
           } else if (answerChoice == 1) {
             std::string output = "You leave the " + door_name + " untouched.";
-            mainUI->ClearConsole();
             mainUI->ConsolePrintWithWait(output, 0, 0);
             unlockChoice = answerChoice;
           } else {
-            mainUI->ClearConsole();
             mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
             DoorProc(y, x);
           };
         } 
-    } if (door.isOpen) {
-        std::string output = "You enter the doorway of the" + door_name; //Building our message
+    } else if (door.isOpen) {
+        std::string output = "You enter the doorway of the " + door_name; //Building our message
         mainUI->ConsolePrintWithWait(output, 0, 0);
         player->SetPos(x, y);
 
@@ -236,25 +235,23 @@ int PlayerUI::DoorProc(int y, int x) {
 
         int openChoice = -1;
         while (openChoice < 0) {
+          mainUI->ClearConsole();
           std::string answer;
           std::string output = "Would you like to open the " + door_name + "? ";
           mainUI->ConsolePrint(output, 0, 0);
           answer = mainUI->ConsoleGetString();
-
           int answerChoice = processYesOrNoChoice(answer);
+          mainUI->ClearConsole();
           if (answerChoice == 0) {
-              std::string output = "You open the " + door_name + " and step into the doorway";
-              mainUI -> ConsolePrint(output, 0, 0);
+              std::string output = "You open the " + door_name;
+              mainUI -> ConsolePrintWithWait(output, 0, 0);
               map -> OpenDoorTile(x, y);
-              player -> SetPos(x, y);
               openChoice = answerChoice;
           } else if (answerChoice == 1) {
               std::string output = "You leave the " + door_name + " untouched.";
-              mainUI->ClearConsole();
               mainUI->ConsolePrintWithWait(output, 0, 0);
               openChoice = answerChoice;
           } else {
-              mainUI->ClearConsole();
               mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
           };
         }
