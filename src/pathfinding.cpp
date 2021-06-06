@@ -3,7 +3,7 @@
 int Pathfinding :: ManhattanPathCostEstimate(Position startPos, Position endPos) {
     //straight-line cost is the minimum absolute distance between the two
     int absoluteCost = (abs(endPos.x-startPos.x)+abs(endPos.y-startPos.y));
-    //std::cout << "abs cost of \n" << absoluteCost;
+    logging -> logline("Manhattan cost of path is: " + std::to_string(absoluteCost));
     return absoluteCost;
 }
 
@@ -38,7 +38,7 @@ bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos ) {
             if (unvisitedNodes.count(currentNode) == 1) {
                 foundNewNode = true;
             } else if (possibleNewNodes.empty()){
-                std::cout << "Ran out of new nodes.. \n";
+                logging -> logline("Ran out of new nodes..");
                 return false;
             } else {
                 possibleNewNodes.erase(currentNode);
@@ -49,7 +49,7 @@ bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos ) {
         //Check that we've looped once (by the pos now being valid), if so make sure we haven't repeated the node search
         if (map -> IsInBoundaries(previousNode.x,previousNode.y)) {
             if (currentNode == previousNode) {
-                std::cout << "Node repeated! Aborting pathing here..\n";
+                logging -> logline("Node repeated! Aborting pathing here..");
                 return false;
             } 
         } 
@@ -112,12 +112,14 @@ bool Pathfinding :: AStarSearch(Position startPos, Position endPos, Path* endPat
 }
 
 bool Pathfinding :: PathRooms() { 
+  logging -> logline("Pathfinding rooms...");
   Room* rooms = map -> GetRooms();
   Room initialRoom = map -> GetRooms()[0];
   int doorCount=0;
   Door* startDoors = initialRoom.getDoors(&doorCount);
-
-     for (unsigned short int roomNo=0; roomNo< map -> GetRoomCount(); roomNo++) {
+  int roomCount = map -> GetRoomCount();
+     for (unsigned short int roomNo=0; roomNo < 1; roomNo++) {
+        logging -> logline("Pathfinding for room no: " + std::to_string(roomNo));
 
          unsigned short int startX = startDoors[0].posX;
          unsigned short int startY = startDoors[0].posY;
@@ -130,19 +132,25 @@ bool Pathfinding :: PathRooms() {
          int targetDoorCount;
          Door* targetDoors = rooms[roomNo].getDoors(&targetDoorCount);
          
-         for (unsigned short int doorNo=0; doorNo<targetDoorCount; doorNo++) {
+         for (unsigned short int doorNo=0; doorNo < targetDoorCount; doorNo++) {
              targetX = targetDoors[doorNo].posX;
              targetY = targetDoors[doorNo].posY;
              
              targetPos = Position(targetX,targetY);
              
              Path* doorPath = new Path();
-             
-             if (AStarSearch(startPos,targetPos,doorPath) == true) {
-                 for (Position pos : (*doorPath) ) {
-                    // TODO Check tile? tile tileType = map -> GetTile(pos.x, pos.y);
-                    map -> SetTile(pos.x, pos.y, cor);
-                 }
+              
+
+             bool pathMade = AStarSearch(startPos,targetPos,doorPath);
+             if (pathMade) {
+               logging -> logline("Pathfinding successful for room.");
+               for (Position pos : (*doorPath) ) {
+                  logging -> logline("Adding path tile at: " + std::to_string(pos.x) + ", " + std::to_string(pos.y));
+                  // TODO Check tile? tile tileType = map -> GetTile(pos.x, pos.y);
+                  map -> SetTile(pos.x, pos.y, cor);
+               }
+             } else {
+                logging -> logline("Pathfinding failed for room.");
              }
              
              delete (doorPath);
@@ -172,8 +180,8 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
     //If the node has not been "visited"/evaluated, evaluate it's cost
     if (visitedNodes.count(neighbor) == 0) {
         visitedNodes.insert(neighbor); //add this node straight to the visited list
-
-        //std::cout << "evaluating " << neighbor.x << ","<< neighbor.y << "\n";
+        
+        logging -> logline("evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
         
         int nonHeuristicCost = nonHeuristicCostMap.at(currentNode);
         int absXDiff = abs(currentNode.x-neighbor.x);
@@ -187,7 +195,7 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
         } else if (nonHeuristicScore >= nonHeuristicCost) return; //ignore this node if the fixed path score is greater than it's cost
         
         //Otherwise, save the path data
-        // std::cout << "saving " << neighbor.x << neighbor.y << "\n";
+        logging -> logline("evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
         navigatedNodes[neighbor] = currentNode; //sets the neighbors path to backtrace to the start pos
         
         nonHeuristicCostMap[neighbor] = nonHeuristicScore;
@@ -209,6 +217,7 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
  */
 void Pathfinding :: ConstructPath(std::map<Position,Position> navigated, Position pathPosition, Path* endPath) {
     while (navigated.count(pathPosition) > 0) {
+        logging -> logline("Building path of node at: " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y));
         //std::cout << "Path node " << pathPosition.x << " " << pathPosition.y << "\n"; 
         pathPosition= navigated.at(pathPosition); //next node navigated to
         (*endPath).push_back(pathPosition);

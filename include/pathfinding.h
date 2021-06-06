@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "position.h"
+#include "logging.h"
 #include "map.h"
 
 class Pathfinding {
@@ -29,6 +30,7 @@ class Pathfinding {
     Pathfinding(Map* map) : map(map) {}
 
   private:
+    Logging* logging = &logging -> getInstance();
     bool EvaluateNodes(Position currentNode, Position endPos);
     void EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode);
     void initialiseMaps();

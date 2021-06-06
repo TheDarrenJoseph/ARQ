@@ -223,8 +223,8 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, Position playerPos)
             maptile_char = tileDetails -> symbol;
           }
                 
-            wmove(mainwin_front, y, x);
-            wprintw_col(mainwin_front, maptile_char, maptile_colour);
+          wmove(mainwin_front, y, x);
+          wprintw_col(mainwin_front, maptile_char, maptile_colour);
         }
       }
 	}

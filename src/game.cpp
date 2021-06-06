@@ -106,6 +106,8 @@ void GameEngine :: StartGame()
   logging -> logline("Placing the player...");
   spawnPlacePlayer();
   //GenerateItems(mediumLoot); 
+  Pathfinding* pathfinding = new Pathfinding(map);
+  pathfinding -> PathRooms();
  
   displayUI->InitScreen (); //prep display
   displayUI->InitWindows(); 
