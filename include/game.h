@@ -3,7 +3,7 @@
 
 #define VERSION "0.89 Linux Native"
 
-
+#include "logging.h"
 #include "characters.h"
 #include "playerUI.h"
 #include "ui.h"
@@ -17,6 +17,8 @@ std::string GetVersion();
 class GameEngine
 {  
     private:
+        Logging* logging = &logging -> getInstance();
+
         int MAX_NPCS=0;
 
         Map* map=NULL;

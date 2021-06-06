@@ -99,9 +99,11 @@ int GameEngine :: MenuScreen(bool gameRunning) {
 }
 
 void GameEngine :: StartGame()
-{
+{ 
+  logging -> logline("Generating NPCs...");
   InitNPCS(); //inititalise all NPCs before doing anything
    
+  logging -> logline("Placing the player...");
   spawnPlacePlayer();
   //GenerateItems(mediumLoot); 
  
@@ -118,9 +120,9 @@ void GameEngine :: StartGame()
       while (GameLoop(&levelEnded,&newLevel) && !levelEnded); //Main game loop
   } 
       
-      //displayUI->DestroyWindows();  
-      endwin ();
-      return;
+  //displayUI->DestroyWindows();  
+  endwin ();
+  return;
 }
 
 /** Loads a new level, either creating a new Map, or loading a pre-existing one.
@@ -158,7 +160,8 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               Pathfinding* pathfinding = new Pathfinding(map);
               //If pathing/making a path to the exit fails, rebuild the map
               if (!pathfinding -> PathRooms() ) {
-                std::cout << "Map level path invalid\n"; //CreateMap(roomChance);
+                logging -> logline("Map level path invalid\n"); 
+                //CreateMap(roomChance);
                 //Map* thisMap = new Map(); 
                 //delete(thisMap);
               }
@@ -264,39 +267,41 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
  
 void GameEngine :: GenerateItems(lootChance thisChance)
 {
+  int itemCount = 0;
   for (int y = 0; y < map->GetGridY(); y++)
     {
       for (int x = 0; x < map->GetGridX(); x++)
-	{
-	  //add items to room tiles
-	  if (map->GetTile(x,y) == rom)
-	    {
-	      //for each of the map->items in the library
-	      for (int  i=0; i<item_size; i++)
-          {
-            //generate a random chance out of 100 for each item
-            int chance = rand() %100+1;
-              
-            Item thisItem = item_library[i];
-              
-            //if the random chance < the number of items (e.g 10, 10%)
-            if (chance<=thisChance)  
-              {
-                map -> AddToContainer(x,y,new Item(thisItem));
-                //map->AddToContainer(x,y,&item_library[i]);
-                break; 
-              }
-          }
-	    }
-																	
-	  else
-	    {
-	      map->AddToContainer(x,y,&item_library[no_item]);
-	    }
-	}
+        {
+          //add items to room tiles
+          if (map->GetTile(x,y) == rom)
+            {
+              //for each of the map->items in the library
+              for (int  i=0; i<item_size; i++)
+                {
+                  //generate a random chance out of 100 for each item
+                  int chance = rand() %100+1;
+                    
+                  Item thisItem = item_library[i];
+                    
+                  //if the random chance < the number of items (e.g 10, 10%)
+                  if (chance<=thisChance)  
+                    {
+                      map -> AddToContainer(x,y,new Item(thisItem));
+                      itemCount++;
+                      //map->AddToContainer(x,y,&item_library[i]);
+                      break; 
+                    }
+                }
+            }
+                                        
+          else
+            {
+              map->AddToContainer(x,y,&item_library[no_item]);
+            }
+        }
     }
    
-  std::cout << "Items generated\n"; 
+  logging -> logline(itemCount + " items generated\n"); 
   return;
 }
  

@@ -14,6 +14,7 @@
 #include <curses.h>
 
 #include "game.h"
+#include "logging.h"
 
 bool running = true;
 
@@ -23,7 +24,10 @@ void Quit()
 }
 
 int main()
-{
+{   
+    Logging* logging = &logging -> getInstance();
+
+    logging -> logline("Starting ARQ...");
     srand(time(NULL));
     
     const int MAX_NPCS = 1; //Number-1 to allow for 0 indexing
@@ -52,6 +56,7 @@ int main()
     
     thisGame.StartGame();
     
+    logging -> logline("Closing ARQ...");
     delete(thisPlayer);
     
     //Clean up our container mess
