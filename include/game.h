@@ -3,6 +3,9 @@
 
 #define VERSION "0.89 Linux Native"
 
+#include <vector>
+#include <limits> //numeric limits for safety
+
 #include "logging.h"
 #include "characters.h"
 #include "playerUI.h"

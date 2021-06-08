@@ -3,7 +3,7 @@
 int Pathfinding :: ManhattanPathCostEstimate(Position startPos, Position endPos) {
     //straight-line cost is the minimum absolute distance between the two
     int absoluteCost = (abs(endPos.x-startPos.x)+abs(endPos.y-startPos.y));
-    logging -> logline("Manhattan cost of path is: " + std::to_string(absoluteCost));
+    //logging -> logline("Manhattan cost of path is: " + std::to_string(absoluteCost));
     return absoluteCost;
 }
 
@@ -21,7 +21,7 @@ int Pathfinding :: ManhattanPathCostEstimate(Position startPos, Position endPos)
  * 
  * @return true if the destination was reached (should mean a complete path), false otherwise
  */
-bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos ) {
+bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos) {
     Position previousNode = Position(-1,-1); //-1 to fail boundary check, and not be checked on the first pass-through
     
     //While we haven't run out of nodes to visit, grab the lowest cost, and try to build our path
@@ -61,8 +61,11 @@ bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos ) {
         
         //Check for reaching our goal
         if (currentNode == endPos) { 
+           logging -> logline("Reached target position: " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
             return true;
-        } else { //Evaluate all neighbors of the current node
+        } else { 
+            //Evaluate all neighbors of the current node
+            //logging -> logline("Checking neighbors of: " + std::to_string(currentNode.x) + "," + std::to_string(currentNode.y));
             for (Position p : map -> GetNeighbors(currentNode.x,currentNode.y)) {
                 EvaluatePathNeighborNode(p,endPos,currentNode);
             }
@@ -89,10 +92,11 @@ void Pathfinding :: initialiseMaps() {
  * @param endPos   The position on the map to path to
  * @param endPath a pointer to the finished path from the result of our search
  */
-bool Pathfinding :: AStarSearch(Position startPos, Position endPos, Path* endPath) {
+Path Pathfinding :: BuildPathUsingAStarSearch(Position startPos, Position endPos) {
         
         bool pathPointsInBoundaries = map -> IsInBoundaries(startPos.x,startPos.y) && map -> IsInBoundaries(endPos.x, endPos.y);
         bool pathPointsNotWalls = !map -> IsWall(startPos.x,startPos.y) && !map -> IsWall(endPos.x,endPos.y);
+        Path path;
         if (pathPointsInBoundaries && pathPointsNotWalls) {
             initialiseMaps();
             unvisitedNodes.insert(Position(startPos.x,startPos.y));
@@ -103,65 +107,48 @@ bool Pathfinding :: AStarSearch(Position startPos, Position endPos, Path* endPat
 
             //Start evaluating our nodes
             if (EvaluateNodes(startPos,endPos)) { 
-              ConstructPath(navigatedNodes, endPos, endPath); //Build a path to the current endPos, set as endPath 
-              return true;
-            } 
+              logging -> logline("Successfully calculated path.");
+              path = ConstructPath(navigatedNodes, endPos); //Build a path to the current endPos, set as endPath 
+            } else {
+              logging -> logline("Failed to calculate path.");
+            }
         }
-    
-    return false;
+    return path;
 }
 
-bool Pathfinding :: PathRooms() { 
-  logging -> logline("Pathfinding rooms...");
-  Room* rooms = map -> GetRooms();
-  Room initialRoom = map -> GetRooms()[0];
-  int doorCount=0;
-  Door* startDoors = initialRoom.getDoors(&doorCount);
-  int roomCount = map -> GetRoomCount();
-     for (unsigned short int roomNo=0; roomNo < 1; roomNo++) {
-        logging -> logline("Pathfinding for room no: " + std::to_string(roomNo));
-
-         unsigned short int startX = startDoors[0].posX;
-         unsigned short int startY = startDoors[0].posY;
-         unsigned short int targetX = startX;
-         unsigned short int targetY = startY;
-         
-         Position startPos = Position(startX,startY);
-         Position targetPos = startPos;
-         
-         int targetDoorCount;
-         Door* targetDoors = rooms[roomNo].getDoors(&targetDoorCount);
-         
-         for (unsigned short int doorNo=0; doorNo < targetDoorCount; doorNo++) {
-             targetX = targetDoors[doorNo].posX;
-             targetY = targetDoors[doorNo].posY;
-             
-             targetPos = Position(targetX,targetY);
-             
-             Path* doorPath = new Path();
-              
-
-             bool pathMade = AStarSearch(startPos,targetPos,doorPath);
-             if (pathMade) {
-               logging -> logline("Pathfinding successful for room.");
-               for (Position pos : (*doorPath) ) {
-                  logging -> logline("Adding path tile at: " + std::to_string(pos.x) + ", " + std::to_string(pos.y));
-                  // TODO Check tile? tile tileType = map -> GetTile(pos.x, pos.y);
-                  map -> SetTile(pos.x, pos.y, cor);
-               }
-             } else {
-                logging -> logline("Pathfinding failed for room.");
-             }
-             
-             delete (doorPath);
-             
-         }
-                  
-     }
+Path Pathfinding :: BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom) {
+    int firstRoomDoorCount = 0;
+    int nextRoomDoorCount = 0;
+    Door* firstRoomDoors = firstRoom -> getDoors(&firstRoomDoorCount);
+    Door* nextRoomDoors = nextRoom -> getDoors(&nextRoomDoorCount);
   
-  //Return based on whether or not you can reach the exit
-  //return LevelPathValid();
-  return true;
+    // TODO potentially randomise door choice
+    Door firstRoomDoor = firstRoomDoors[0];
+    Door nextRoomDoor = nextRoomDoors[0];
+    Position startPos = Position(firstRoomDoor.posX, firstRoomDoor.posY);
+    Position targetPos = Position(nextRoomDoor.posX, nextRoomDoor.posY);
+    return BuildPathUsingAStarSearch(startPos, targetPos);    
+}
+
+std::list<Path> Pathfinding :: BuildPathsBetweenRooms() {
+  logging -> logline("Pathfinding between rooms...");
+  Room* rooms = map -> GetRooms();
+  int roomCount = 3; //map -> GetRoomCount();
+  std::list<Path> paths;
+  for (unsigned short int i=0; i < roomCount - 1; i++) {
+    logging -> logline("Pathfinding for room [" + std::to_string(i) + " / " + std::to_string(roomCount) + "]");
+    Path roomToRoomPath = BuildPathBetweenRooms(&rooms[i], &rooms[i+1]);
+    if (roomToRoomPath.empty()) {
+      logging -> logline("Pathfinding failed for room.");
+      //delete(&roomToRoomPath);
+    } else {
+      logging -> logline("Pathfinding successful for room.");
+      paths.push_back(roomToRoomPath);
+    }
+  }
+
+  logging -> logline("Pathfinding between rooms complete.");
+  return paths;
 }
 
 /** Part of A* Implementation. Evaluates a single neighbor node, defined as a position in our game grid.
@@ -179,23 +166,29 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
    
     //If the node has not been "visited"/evaluated, evaluate it's cost
     if (visitedNodes.count(neighbor) == 0) {
+        //logging -> logline("Evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
         visitedNodes.insert(neighbor); //add this node straight to the visited list
+        // If we cannot traverse the node, return immediately
+        bool neighborTraversible = map -> IsTraversable(neighbor.x,neighbor.y);
+        bool currentNodeTraversible = map -> IsTraversable(currentNode.x,currentNode.y);
+        tile neighbor_tile_type = map -> GetTile(neighbor.x,neighbor.y);
+        tile current_tile_type = map -> GetTile(currentNode.x,currentNode.y);
+        if ((!currentNodeTraversible && ntl != current_tile_type && dor != current_tile_type) || 
+            (!neighborTraversible && ntl != neighbor_tile_type && dor != neighbor_tile_type) ) return;
         
-        logging -> logline("evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
-        
+        bool bothNodesAreCorridors = neighbor_tile_type == cor && current_tile_type == cor;
+
         int nonHeuristicCost = nonHeuristicCostMap.at(currentNode);
         int absXDiff = abs(currentNode.x-neighbor.x);
         int absYDiff = abs(currentNode.y-neighbor.y);
         int nonHeuristicScore = (nonHeuristicCost + absXDiff + absYDiff); //add a constant factor of 1 tile distance to the current path score
-        if (map -> IsWall(neighbor.x,neighbor.y) || map -> IsWall(currentNode.x,currentNode.y)) return; //nonHeuristicScore = std::numeric_limits<int>::max(); //Increase cost for walls
-        
+  
         //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later
         if (unvisitedNodes.count(neighbor) == 0) {
             unvisitedNodes.insert(neighbor);
         } else if (nonHeuristicScore >= nonHeuristicCost) return; //ignore this node if the fixed path score is greater than it's cost
         
         //Otherwise, save the path data
-        logging -> logline("evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
         navigatedNodes[neighbor] = currentNode; //sets the neighbors path to backtrace to the start pos
         
         nonHeuristicCostMap[neighbor] = nonHeuristicScore;
@@ -215,21 +208,24 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
  * @param pathPosition
  * @return The path followed from the position passed
  */
-void Pathfinding :: ConstructPath(std::map<Position,Position> navigated, Position pathPosition, Path* endPath) {
+Path Pathfinding :: ConstructPath(std::map<Position,Position> navigated, Position pathPosition) {
+    Path path;
     while (navigated.count(pathPosition) > 0) {
-        logging -> logline("Building path of node at: " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y));
         //std::cout << "Path node " << pathPosition.x << " " << pathPosition.y << "\n"; 
-        pathPosition= navigated.at(pathPosition); //next node navigated to
-        (*endPath).push_back(pathPosition);
+        pathPosition = navigated.at(pathPosition); //next node navigated to
+        path.push_back(pathPosition);
     }
+    Position startPosition = path.front();
+    logging -> logline("Assembled path from: " + std::to_string(startPosition.x) + "," + std::to_string(startPosition.y) + " to " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y));
+    return path;
 }
 
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level
  * 
  */
 bool Pathfinding :: LevelPathValid() {
-    Path* levelPath = new Path();
-    bool isValid = AStarSearch(map -> GetEntryPosition(), map -> GetExitPosition(), levelPath);
-    delete levelPath;
-    return isValid;
+    Path levelTraversalPath = BuildPathUsingAStarSearch(map -> GetEntryPosition(), map -> GetExitPosition());
+    bool pathFound = !levelTraversalPath.empty();
+    //qdelete &levelTraversalPath;
+    return pathFound;
 }

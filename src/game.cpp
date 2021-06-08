@@ -1,6 +1,4 @@
 #include "game.h"
-#include <vector>
-#include <limits> //numeric limits for safety
 
 
 void GameEngine :: InitNPCS()
@@ -106,9 +104,14 @@ void GameEngine :: StartGame()
   logging -> logline("Placing the player...");
   spawnPlacePlayer();
   //GenerateItems(mediumLoot); 
+
   Pathfinding* pathfinding = new Pathfinding(map);
-  pathfinding -> PathRooms();
- 
+  std::list<Path> roomPaths = pathfinding -> BuildPathsBetweenRooms();
+  for (Path path : roomPaths) {
+    logging -> logline("Adding path to the map...");
+    map -> AddPath(path);
+  }
+
   displayUI->InitScreen (); //prep display
   displayUI->InitWindows(); 
   displayUI->DecorateWindows(); //Box/label the UI
@@ -160,14 +163,10 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
               displayUI->UpdateUI();
               
               Pathfinding* pathfinding = new Pathfinding(map);
-              //If pathing/making a path to the exit fails, rebuild the map
-              if (!pathfinding -> PathRooms() ) {
-                logging -> logline("Map level path invalid\n"); 
-                //CreateMap(roomChance);
-                //Map* thisMap = new Map(); 
-                //delete(thisMap);
+              std::list<Path> roomPaths = pathfinding -> BuildPathsBetweenRooms();
+              for (Path path : roomPaths) {
+                map -> AddPath(path);
               }
-              
               displayUI->ConsolePrintWithWait("DONE [Enter]",0,12);
 
               delete(playerUI);

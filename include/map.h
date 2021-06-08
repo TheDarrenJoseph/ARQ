@@ -12,6 +12,7 @@
 #include <vector>
 #include <stdbool.h>
 
+#include "logging.h"
 #include "tile.h"
 #include "doors.h"
 #include "containers.h"
@@ -20,7 +21,8 @@
 
 class Map
 {
-private:
+  private:
+    Logging* logging = &logging -> getInstance();
     tile game_grid[GRID_Y][GRID_X];
     bool visible_grid[GRID_Y][GRID_X];
     Door door_grid[GRID_Y][GRID_X];
@@ -71,7 +73,7 @@ private:
     Position exitPosition = Position(0,0);
     
    
-    public:
+  public:
     void PaveRooms();
         
     void SetEntryPositions(Position entry, Position exit);
@@ -194,6 +196,7 @@ private:
     
     void AddOppositeDoors(Room* room, Door door, side one, side two);
     void AddDoor(Room* room, Door door, side doorSide);
+    void AddPath(Path path);
 
     /**
      *  x - the x of the top-left of the room

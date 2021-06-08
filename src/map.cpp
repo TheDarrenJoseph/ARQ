@@ -612,3 +612,15 @@ void Map::OpenDoorTile(int x, int y) {
       }
   };
 }
+
+void Map::AddPath(Path path) {
+  for (Position pos : path) {
+    tile tile_type = GetTile(pos.x, pos.y);
+    if (tile_type != cor && tile_type != dor) {
+      logging -> logline("Adding path tile at: " + std::to_string(pos.x) + ", " + std::to_string(pos.y));
+      SetTile(pos.x, pos.y, cor);
+    } else {
+      return;
+    }
+  }
+}

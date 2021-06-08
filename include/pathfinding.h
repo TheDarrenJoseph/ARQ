@@ -2,6 +2,7 @@
 #define PATHFINDING_H
 
 #include <cstdlib>
+#include <list>
 #include <set>
 #include <map>
 #include <vector>
@@ -23,8 +24,8 @@ class Pathfinding {
     // Costs with our 
     std::map<Position,int> heuristicCostMap;
 
-    bool PathRooms();
-    void ConstructPath(std::map<Position,Position> navigated, Position pathPosition, Path* endPath);
+    Path BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom);
+    std::list<Path> BuildPathsBetweenRooms();
     bool LevelPathValid();
 
     Pathfinding(Map* map) : map(map) {}
@@ -35,7 +36,8 @@ class Pathfinding {
     void EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode);
     void initialiseMaps();
     int ManhattanPathCostEstimate(Position startPos, Position endPos);
-    bool AStarSearch(Position startPos, Position endPos, Path* endPath);
+    Path BuildPathUsingAStarSearch(Position startPos, Position endPos);
+    Path ConstructPath(std::map<Position,Position> navigated, Position pathPosition);
 
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {
