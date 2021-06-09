@@ -1,5 +1,6 @@
 #Ignore build objects
 *.out
 *.o
+*.log
 #Ignore emacs backups
 *\~
