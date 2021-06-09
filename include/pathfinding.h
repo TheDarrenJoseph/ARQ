@@ -20,9 +20,9 @@ class Pathfinding {
     std::set<Position> visitedNodes;
     std::set<Position> unvisitedNodes;
     std::map<Position,Position> navigatedNodes;
-    std::map<Position,int> nonHeuristicCostMap;
+    std::map<Position,int> fScores;
     // Costs with our 
-    std::map<Position,int> heuristicCostMap;
+    std::map<Position,int> gScores;
 
     Path BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom);
     std::list<Path> BuildPathsBetweenRooms();
@@ -34,8 +34,9 @@ class Pathfinding {
     Logging* logging = &logging -> getInstance();
     bool EvaluateNodes(Position currentNode, Position endPos);
     void EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode);
-    void initialiseMaps();
+    void InitialiseMaps(Position startPos, Position endPos);
     int ManhattanPathCostEstimate(Position startPos, Position endPos);
+    Position findLowestCostPosition();
     Path BuildPathUsingAStarSearch(Position startPos, Position endPos);
     Path ConstructPath(std::map<Position,Position> navigated, Position pathPosition);
 

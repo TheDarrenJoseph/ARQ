@@ -39,16 +39,14 @@ std::list<Position> Map :: GetNeighbors(int x, int y) {
 
 bool Map::CanPlaceRoom(Room* room)
 {
-  if ( !(room->GetEndPos().x>GRID_X || room->GetEndPos().y>GRID_Y) ) {
+  if ( IsInBoundaries(room -> GetStartPos()) && IsInBoundaries(room -> GetEndPos()) ) {
     if (roomCount < MAX_ROOMS) {
       for (int i=0; i < roomCount; i++) {
         if (rooms[i].intersects(*room)) return false;
       }
-      
       return true;
     }
   }
-  
   return false;
 }
 
@@ -116,12 +114,12 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   //Check the 4 corners
   
   //TOP RIGHT
-  if (x == GRID_X-size && y == 0) {
+  if (x == GetGridX()-size && y == 0) {
       AddOppositeDoors(room, door, TOP, RIGHT);
       return true;
   }
   //BOTTOM LEFT
-  if (x == 0 && y == GRID_Y-size) {
+  if (x == 0 && y == GetGridY()-size) {
       AddOppositeDoors(room, door, BOTTOM, LEFT);
       return true;
   }
@@ -131,7 +129,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
       return true;
   }
   //BOTTOM RIGHT
-  if (x == GRID_X-size && y == GRID_Y-size) {
+  if (x == GetGridX()-size && y == GetGridY()-size) {
       AddOppositeDoors(room, door, BOTTOM, RIGHT);
       return true;
   }
@@ -148,13 +146,13 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
   }
   
   //Right
-  if (x == GRID_X-size) {
+  if (x == GetGridX()-size) {
       AddDoor(room, door,LEFT);
       return true;
   }
   
   //Bottom
-  if (y == GRID_Y-size) {
+  if (y == GetGridY()-size) {
       AddDoor(room, door,TOP);
       return true;
   }
@@ -263,11 +261,14 @@ void Map :: PaveRoom(Room r) {
         //Paves the inside of a room    
         for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
             for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
-                if (game_grid[y][x] == ntl) 
+                if (game_grid[y][x] == ntl) {
                     game_grid[y][x] = rom;
-		possibleSpawns.push_back(Position(x,y));
+                    possibleSpawns.push_back(Position(x,y));
+                }
             }
         }
+    } else {
+        logging -> logline("Cannot pave, room positions out of bounds.");
     }
 }
 
@@ -278,7 +279,7 @@ void Map :: PaveRooms() {
 }
 
 bool Map::IsInBoundaries(int x, int y) {
-    if ((x < 0) || (x > GRID_X) || (y < 0) || (y > GRID_Y)) {
+    if ((x < 0) || (x >= GetGridX()) || (y < 0) || (y >=  GetGridY())) {
         return false;
     } 
     
@@ -286,10 +287,7 @@ bool Map::IsInBoundaries(int x, int y) {
 }
 
 bool Map::IsInBoundaries(Position p) {
-    int x = p.x;
-    int y = p.y;
-    
-    return IsInBoundaries(x,y);
+    return IsInBoundaries(p.x,p.y);
 }
 
 bool Map::IsWall(int x, int y) {
@@ -300,6 +298,21 @@ bool Map::IsWall(int x, int y) {
     tile t = game_grid[y][x];
     if (t == wa1 || t == wa2 || t == wa3 || t == win) return true;
     else return false;
+}
+
+bool Map::IsWall(Position p) {
+    return IsWall(p.x, p.y);
+}
+
+bool Map::IsPaveable(Position p) {
+    if (!IsInBoundaries(p)) {
+        return false;
+    }
+
+    bool isWall = IsWall(p);
+    tile t = game_grid[p.y][p.x];
+    bool paveableTile = (t == ntl || t == cor || t == rom || t == dor);
+    return !isWall && paveableTile;
 }
 
 bool Map::IsTraversable(int x, int y) {
@@ -402,10 +415,10 @@ int Map::MoveCharacter(Character* c, int x, int y)
  */
 int Map::MovePlayer(int x, int y, int* npcID)
 {
-    if ((x > 0) || (y > 0) || (x < GRID_X) || (y < GRID_Y)) {
-		//Run an encounter check and convert it's return values if needed
-        int encounterCode = EncounterCheck(x, y, npcID); 
-		if (encounterCode) return encounterCode; //Retun any non-zero value 
+    if ((x > 0) || (y > 0) || (x < GetGridX()) || (y < GetGridY())) {
+      //Run an encounter check and convert it's return values if needed
+      int encounterCode = EncounterCheck(x, y, npcID); 
+      if (encounterCode) return encounterCode; //Retun any non-zero value 
     }
     
     tile t = GetTile(x, y);

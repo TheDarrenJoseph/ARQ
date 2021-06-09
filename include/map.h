@@ -1,8 +1,8 @@
 #ifndef GRID_H
 #define GRID_H
 
-#define GRID_X 100 //Fallback/default size values
-#define GRID_Y 30
+#define GRID_X 50 //Fallback/default size values
+#define GRID_Y 15
 
 #include <cstdlib>
 #include <iostream>
@@ -87,6 +87,8 @@ class Map
     bool IsInBoundaries(int x, int y);
     bool IsInBoundaries(Position p);
     bool IsWall(int x, int y);
+    bool IsWall(Position p);
+    bool IsPaveable(Position p);
     bool IsTraversable(int x, int y);
     
     /**

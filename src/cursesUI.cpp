@@ -149,8 +149,8 @@ int CursesUI::wprintNoRefresh(WINDOW* win, std::string text)
 
 void CursesUI::DrawItems(Map* m)
 {
-    for (int y = 0; y < GRID_Y; y++) {
-        for (int x = 0; x < GRID_X; x++) {
+    for (int y = 0; y < m -> GetGridY(); y++) {
+        for (int x = 0; x < m -> GetGridX(); x++) {
             const Item* item = m->GetItem(x, y);
             if ((item != NULL) && (item -> IsLootable())) {
                 int colour = item -> colour;
@@ -164,8 +164,8 @@ void CursesUI::DrawItems(Map* m)
 
 void CursesUI::DrawContainers(Map* m)
 {
-  for (int y = 0; y < GRID_Y; y++) {
-    for (int x = 0; x < GRID_X; x++) {
+  for (int y = 0; y < m -> GetGridY(); y++) {
+    for (int x = 0; x < m -> GetGridX(); x++) {
       Container container = m -> GetContainer(x, y);
       if (container.id == 98) //Check for an item type, && it not being an empty item 
       {

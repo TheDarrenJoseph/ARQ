@@ -429,7 +429,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
     int eid;
 
     //Sanity check!
-    if ((x < 0) | (y < 0) | (x >= GRID_X) | (y >= GRID_Y)) {
+    if ((x < 0) | (y < 0) | (x >= map -> GetGridX()) | (y >= map -> GetGridY())) {
         mainUI->ConsolePrintWithWait("There's a large Granite wall here!", 0, 0); //Just give an out of bounds message that sounds vaguely believable
         return;
     }

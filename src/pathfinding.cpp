@@ -7,81 +7,68 @@ int Pathfinding :: ManhattanPathCostEstimate(Position startPos, Position endPos)
     return absoluteCost;
 }
 
+Position Pathfinding :: findLowestCostPosition() {
+  std::map<Position,int> possiblePositions = fScores;
+  Position newPosition = Position(-1,-1);
+  if (possiblePositions.empty()){
+      logging -> logline("Ran out of new nodes..");
+      return newPosition;
+  } 
+
+  bool foundNewNode = false;
+  while (!foundNewNode) {
+      //Check for the lowest node using our CompareMapLessThanCost comparison function
+      std::pair<Position, int> lowestCostNode = *std::min_element(possiblePositions.begin(), possiblePositions.end(), &Pathfinding::CompareMapLessThanCost);
+      newPosition  = lowestCostNode.first; 
+      if (unvisitedNodes.count(newPosition) == 1) {
+          return newPosition;
+      } else {
+          possiblePositions.erase(newPosition);
+      }
+  }
+  return newPosition;
+}
+
 /** Part of A* Implementation.
- * Evaluates all unvisited nodes based on the heuristicCostMap (the lowest heuristic cost nodes are picked and evaluated)
- * 
- * @param currentNode the startPosition 
- * @param previousNode
- * @param endPos
- * @param visitedNodes
- * @param unvisitedNodes
- * @param navigatedNodes
- * @param nonHeuristicCostMap
- * @param heuristicCostMap
- * 
  * @return true if the destination was reached (should mean a complete path), false otherwise
  */
-bool Pathfinding :: EvaluateNodes(Position currentNode, Position endPos) {
-    Position previousNode = Position(-1,-1); //-1 to fail boundary check, and not be checked on the first pass-through
-    
+bool Pathfinding :: EvaluateNodes(Position startPos, Position endPos) {
+    logging -> logline("Evaluating nodes for path: " + std::to_string(startPos.x) + "," + std::to_string(startPos.y) + " - " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
     //While we haven't run out of nodes to visit, grab the lowest cost, and try to build our path
     while(!unvisitedNodes.empty()) {
-        std::map<Position,int> possibleNewNodes = heuristicCostMap; //create a new map as a copy of all heuristic scores for nodes, so we can modify it
-        
-        bool foundNewNode = false;
-        while (!foundNewNode) {
-			      //Check for the lowest node using our CompareMapLessThanCost comparison function
-            std::pair<Position, int> lowestCostNode = *std::min_element(possibleNewNodes.begin(), possibleNewNodes.end(), &Pathfinding::CompareMapLessThanCost);
-            currentNode = lowestCostNode.first; 
-            
-            //Only care if this node is unvisited
-            if (unvisitedNodes.count(currentNode) == 1) {
-                foundNewNode = true;
-            } else if (possibleNewNodes.empty()){
-                logging -> logline("Ran out of new nodes..");
-                return false;
-            } else {
-                possibleNewNodes.erase(currentNode);
-            }
-            
-        }
-        
-        //Check that we've looped once (by the pos now being valid), if so make sure we haven't repeated the node search
-        if (map -> IsInBoundaries(previousNode.x,previousNode.y)) {
-            if (currentNode == previousNode) {
-                logging -> logline("Node repeated! Aborting pathing here..");
-                return false;
-            } 
+        Position currentPos = findLowestCostPosition();
+        if (map -> IsPaveable(currentPos)) {
+          //Check for reaching our goal
+          if (currentPos == endPos) { 
+             logging -> logline("Reached target position: " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
+              return true;
+          } else { 
+              //Evaluate all neighbors of the current node
+              //logging -> logline("Checking neighbors of: " + std::to_string(currentPos.x) + "," + std::to_string(currentPos.y));
+              for (Position p : map -> GetNeighbors(currentPos.x,currentPos.y)) {
+                  EvaluatePathNeighborNode(p,endPos,currentPos);
+              }
+          }
+
         } 
-        
-        //Print data about the current node
-        //std::cout << "Lowest cost node=" << currentNode.x << " " << currentNode.y << "\n";
-        unvisitedNodes.erase(currentNode);
-        visitedNodes.insert(currentNode);    
-        
-        //Check for reaching our goal
-        if (currentNode == endPos) { 
-           logging -> logline("Reached target position: " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
-            return true;
-        } else { 
-            //Evaluate all neighbors of the current node
-            //logging -> logline("Checking neighbors of: " + std::to_string(currentNode.x) + "," + std::to_string(currentNode.y));
-            for (Position p : map -> GetNeighbors(currentNode.x,currentNode.y)) {
-                EvaluatePathNeighborNode(p,endPos,currentNode);
-            }
-        }
-        previousNode = currentNode;
-        
+        unvisitedNodes.erase(currentPos);
+        visitedNodes.insert(currentPos);    
     }
-    
+
   return false;  
 }
 
-void Pathfinding :: initialiseMaps() {
-  for (unsigned int x=0; x<GRID_X; x++) {
-    for (unsigned int y=0; y<GRID_Y; y++) {
-      heuristicCostMap[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
-      nonHeuristicCostMap[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
+void Pathfinding :: InitialiseMaps(Position startPos, Position endPos) {
+  for (unsigned int x=0; x < map -> GetGridX(); x++) {
+    for (unsigned int y=0; y < map -> GetGridY(); y++) {
+      logging -> logline("Initialising scores for pos " + std::to_string(x) + "," + std::to_string(y));
+      if (startPos.x == x && startPos.y == y) {
+        gScores[startPos] = 0;
+        fScores[startPos] = ManhattanPathCostEstimate(startPos, endPos); 
+      } else {
+        fScores[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
+        gScores[Position(x,y)] = std::numeric_limits<int>::max(); //~infinity default values to ensure valid comparisons
+      }
     }
   }
 }
@@ -98,12 +85,10 @@ Path Pathfinding :: BuildPathUsingAStarSearch(Position startPos, Position endPos
         bool pathPointsNotWalls = !map -> IsWall(startPos.x,startPos.y) && !map -> IsWall(endPos.x,endPos.y);
         Path path;
         if (pathPointsInBoundaries && pathPointsNotWalls) {
-            initialiseMaps();
+            InitialiseMaps(startPos, endPos);
             unvisitedNodes.insert(Position(startPos.x,startPos.y));
-            //Manhattan cost the startPos default cost (the distance between the two points absolutely)
-            heuristicCostMap[startPos] = ManhattanPathCostEstimate(startPos, endPos); 
             //assign the starPos to have a cost of 0
-            nonHeuristicCostMap[startPos] = 0; 
+            //assign the heuristic estimate cost of taking this path from startPos to the endNode
 
             //Start evaluating our nodes
             if (EvaluateNodes(startPos,endPos)) { 
@@ -133,18 +118,19 @@ Path Pathfinding :: BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom) {
 std::list<Path> Pathfinding :: BuildPathsBetweenRooms() {
   logging -> logline("Pathfinding between rooms...");
   Room* rooms = map -> GetRooms();
-  int roomCount = 3; //map -> GetRoomCount();
+  int roomCount = map -> GetRoomCount();
   std::list<Path> paths;
-  for (unsigned short int i=0; i < roomCount - 1; i++) {
-    logging -> logline("Pathfinding for room [" + std::to_string(i) + " / " + std::to_string(roomCount) + "]");
-    Path roomToRoomPath = BuildPathBetweenRooms(&rooms[i], &rooms[i+1]);
-    if (roomToRoomPath.empty()) {
-      logging -> logline("Pathfinding failed for room.");
-      //delete(&roomToRoomPath);
-    } else {
-      logging -> logline("Pathfinding successful for room.");
-      paths.push_back(roomToRoomPath);
-    }
+  for (unsigned short int a=0; a < roomCount - 1; a++) {
+      Room* roomA = &rooms[a];
+      Room* roomB = &rooms[a+1];
+      logging -> logline("Pathfinding for room [" + std::to_string(a) + " / " + std::to_string(roomCount) + "]");
+      Path roomToRoomPath = BuildPathBetweenRooms(roomA, roomB);
+      if (roomToRoomPath.empty()) {
+        logging -> logline("Failed to path room " + std::to_string(a) + " to room " + std::to_string(a+1));
+      } else {
+        logging -> logline("Pathfinding successful for room.");
+        paths.push_back(roomToRoomPath);
+      }
   }
 
   logging -> logline("Pathfinding between rooms complete.");
@@ -162,40 +148,39 @@ std::list<Path> Pathfinding :: BuildPathsBetweenRooms() {
  * @param nonHeuristicCostMap a map of integer costs from our start position (based purely on distance) (requires all nodes with int max/infinity values by default, and a value of 0 for our start position)
  * @param heuristicCostMap a map of costs using our heuristic (requires all nodes with int max/infinity values by default, and a heuristic cost applied to our start position)
  */
-void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentNode ) {
-   
+void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentPos) {
+  
     //If the node has not been "visited"/evaluated, evaluate it's cost
     if (visitedNodes.count(neighbor) == 0) {
-        //logging -> logline("Evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
-        visitedNodes.insert(neighbor); //add this node straight to the visited list
-        // If we cannot traverse the node, return immediately
-        bool neighborTraversible = map -> IsTraversable(neighbor.x,neighbor.y);
-        bool currentNodeTraversible = map -> IsTraversable(currentNode.x,currentNode.y);
-        tile neighbor_tile_type = map -> GetTile(neighbor.x,neighbor.y);
-        tile current_tile_type = map -> GetTile(currentNode.x,currentNode.y);
-        if ((!currentNodeTraversible && ntl != current_tile_type && dor != current_tile_type) || 
-            (!neighborTraversible && ntl != neighbor_tile_type && dor != neighbor_tile_type) ) return;
-        
-        bool bothNodesAreCorridors = neighbor_tile_type == cor && current_tile_type == cor;
+        if (gScores.count(currentPos) == 0) {
+          logging -> logline("No gScore cost for current pos: " + std::to_string(currentPos.x) + "," + std::to_string(currentPos.y));
+          return;
+        }
+        if (gScores.count(neighbor) == 0) {
+          logging -> logline("No gScore cost for neighbor pos: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
+          return;
+        }
 
-        int nonHeuristicCost = nonHeuristicCostMap.at(currentNode);
-        int absXDiff = abs(currentNode.x-neighbor.x);
-        int absYDiff = abs(currentNode.y-neighbor.y);
-        int nonHeuristicScore = (nonHeuristicCost + absXDiff + absYDiff); //add a constant factor of 1 tile distance to the current path score
-  
-        //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later
-        if (unvisitedNodes.count(neighbor) == 0) {
-            unvisitedNodes.insert(neighbor);
-        } else if (nonHeuristicScore >= nonHeuristicCost) return; //ignore this node if the fixed path score is greater than it's cost
-        
-        //Otherwise, save the path data
-        navigatedNodes[neighbor] = currentNode; //sets the neighbors path to backtrace to the start pos
-        
-        nonHeuristicCostMap[neighbor] = nonHeuristicScore;
-        unsigned int heuristicCostEstimate = ManhattanPathCostEstimate(neighbor, endPos);
-        unsigned int heuristicCost = nonHeuristicCostMap[neighbor] + heuristicCostEstimate; //Add the manhattan costing to the non heuristic values
-        heuristicCostMap[neighbor] = heuristicCost; //add the cost value to this spot on the heuristic cost map
-        
+        //logging -> logline("Evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
+        int tentativeGScore = gScores.at(currentPos);
+        int distanceFromCurrentToNeighbor =  ManhattanPathCostEstimate(currentPos, neighbor);
+        int currentNeighborGScore = gScores.at(neighbor);
+        //logging -> logline("Tentative gScore: " + std::to_string(tentativeGScore));
+        //logging -> logline("Curent neighbor gScore: " + std::to_string(currentNeighborGScore));
+        if (tentativeGScore < currentNeighborGScore) {
+          logging -> logline("SAVING Tentative gScore for neighbor: " + std::to_string(tentativeGScore));
+          navigatedNodes[neighbor] = currentPos; //sets the neighbors path to backtrace to the start pos
+          gScores[neighbor] = tentativeGScore;
+          unsigned int heuristicNeighborCostEstimate = ManhattanPathCostEstimate(neighbor, endPos);
+          unsigned int heuristicCost = gScores[neighbor] + heuristicNeighborCostEstimate; 
+          fScores[neighbor] = heuristicCost; //add the cost value to this spot on the heuristic cost map
+          logging -> logline("SAVING Heuristic fScore for neighbor: " + std::to_string(heuristicCost));
+          //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later
+          if (unvisitedNodes.count(neighbor) == 0) unvisitedNodes.insert(neighbor);          
+        } else {
+          logging -> logline("Tentative gScore: " + std::to_string(tentativeGScore) +" >= current neighbor gScore: " + std::to_string(currentNeighborGScore));
+        }
+        if (visitedNodes.count(neighbor) == 0) visitedNodes.insert(neighbor);          
     }
 
 }
