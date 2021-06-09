@@ -20,7 +20,7 @@ Position Pathfinding :: findLowestCostPosition() {
       //Check for the lowest node using our CompareMapLessThanCost comparison function
       std::pair<Position, int> lowestCostNode = *std::min_element(possiblePositions.begin(), possiblePositions.end(), &Pathfinding::CompareMapLessThanCost);
       newPosition  = lowestCostNode.first; 
-      if (unvisitedNodes.count(newPosition) == 1) {
+      if (map -> IsPaveable(newPosition) && unvisitedNodes.count(newPosition) == 1) {
           return newPosition;
       } else {
           possiblePositions.erase(newPosition);
