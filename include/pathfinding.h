@@ -17,11 +17,13 @@
 class Pathfinding {
   public:
     Map* map;
-    std::set<Position> visitedNodes;
+    // Nodes to search
     std::set<Position> unvisitedNodes;
+    // Nodes belonging to a path starting at a Position
     std::map<Position,Position> navigatedNodes;
+    // Total estimated cost of a path from a node Position to an end node
     std::map<Position,int> fScores;
-    // Costs with our 
+    // Total cost to reach a specific position
     std::map<Position,int> gScores;
 
     Path BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom);
@@ -38,7 +40,7 @@ class Pathfinding {
     int ManhattanPathCostEstimate(Position startPos, Position endPos);
     Position findLowestCostPosition();
     Path BuildPathUsingAStarSearch(Position startPos, Position endPos);
-    Path ConstructPath(std::map<Position,Position> navigated, Position pathPosition);
+    Path ConstructPath(Position pathPosition);
 
     //Compares the pairs within a map based on their rvalues, returns true if lval is < than the rval
     static bool CompareMapLessThanCost(std::pair<Position,int> lval, std::pair<Position,int> rval) {

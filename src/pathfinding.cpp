@@ -38,30 +38,29 @@ bool Pathfinding :: EvaluateNodes(Position startPos, Position endPos) {
     while(!unvisitedNodes.empty()) {
         Position currentPos = findLowestCostPosition();
         if (map -> IsPaveable(currentPos)) {
+          tile currentTile = map -> GetTile(currentPos);
           //Check for reaching our goal
           if (currentPos == endPos) { 
              logging -> logline("Reached target position: " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
-              return true;
+             return true;
           } else { 
               //Evaluate all neighbors of the current node
-              //logging -> logline("Checking neighbors of: " + std::to_string(currentPos.x) + "," + std::to_string(currentPos.y));
+              logging -> logline("Checking neighbors of: " + std::to_string(currentPos.x) + "," + std::to_string(currentPos.y));
               for (Position p : map -> GetNeighbors(currentPos.x,currentPos.y)) {
                   EvaluatePathNeighborNode(p,endPos,currentPos);
               }
           }
-
         } 
         unvisitedNodes.erase(currentPos);
-        visitedNodes.insert(currentPos);    
     }
-
-  return false;  
+    logging -> logline("Ran out of nodes to calculate path: " + std::to_string(startPos.x) + "," + std::to_string(startPos.y) + " - " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));
+    return false;  
 }
 
 void Pathfinding :: InitialiseMaps(Position startPos, Position endPos) {
   for (unsigned int x=0; x < map -> GetGridX(); x++) {
     for (unsigned int y=0; y < map -> GetGridY(); y++) {
-      logging -> logline("Initialising scores for pos " + std::to_string(x) + "," + std::to_string(y));
+      //logging -> logline("Initialising scores for pos " + std::to_string(x) + "," + std::to_string(y));
       if (startPos.x == x && startPos.y == y) {
         gScores[startPos] = 0;
         fScores[startPos] = ManhattanPathCostEstimate(startPos, endPos); 
@@ -71,6 +70,8 @@ void Pathfinding :: InitialiseMaps(Position startPos, Position endPos) {
       }
     }
   }
+  unvisitedNodes.clear();
+  navigatedNodes.clear();
 }
 
 /** Builds a path between two points, avoiding walls, currently only works with startPos<endPos (top-left to bottom-right)
@@ -81,24 +82,23 @@ void Pathfinding :: InitialiseMaps(Position startPos, Position endPos) {
  */
 Path Pathfinding :: BuildPathUsingAStarSearch(Position startPos, Position endPos) {
         
-        bool pathPointsInBoundaries = map -> IsInBoundaries(startPos.x,startPos.y) && map -> IsInBoundaries(endPos.x, endPos.y);
-        bool pathPointsNotWalls = !map -> IsWall(startPos.x,startPos.y) && !map -> IsWall(endPos.x,endPos.y);
-        Path path;
-        if (pathPointsInBoundaries && pathPointsNotWalls) {
-            InitialiseMaps(startPos, endPos);
-            unvisitedNodes.insert(Position(startPos.x,startPos.y));
-            //assign the starPos to have a cost of 0
-            //assign the heuristic estimate cost of taking this path from startPos to the endNode
+  bool pathPointsInBoundaries = map -> IsInBoundaries(startPos.x,startPos.y) && map -> IsInBoundaries(endPos.x, endPos.y);
+  bool pathPointsNotWalls = !map -> IsWall(startPos.x,startPos.y) && !map -> IsWall(endPos.x,endPos.y);
+  if (pathPointsInBoundaries && pathPointsNotWalls) {
+      InitialiseMaps(startPos, endPos);
+      unvisitedNodes.insert(Position(startPos.x,startPos.y));
+      //assign the starPos to have a cost of 0
+      //assign the heuristic estimate cost of taking this path from startPos to the endNode
 
-            //Start evaluating our nodes
-            if (EvaluateNodes(startPos,endPos)) { 
-              logging -> logline("Successfully calculated path.");
-              path = ConstructPath(navigatedNodes, endPos); //Build a path to the current endPos, set as endPath 
-            } else {
-              logging -> logline("Failed to calculate path.");
-            }
-        }
-    return path;
+      //Start evaluating our nodes
+      if (EvaluateNodes(startPos,endPos)) { 
+        logging -> logline("Successfully calculated path.");
+        return ConstructPath(endPos); //Build a path to the current endPos, set as endPath 
+      } else {
+        logging -> logline("Failed to calculate path.");
+      }
+  }
+  return Path();    
 }
 
 Path Pathfinding :: BuildPathBetweenRooms(Room* firstRoom, Room* nextRoom) {
@@ -151,7 +151,7 @@ std::list<Path> Pathfinding :: BuildPathsBetweenRooms() {
 void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos, Position currentPos) {
   
     //If the node has not been "visited"/evaluated, evaluate it's cost
-    if (visitedNodes.count(neighbor) == 0) {
+    if (unvisitedNodes.count(neighbor) == 0) {
         if (gScores.count(currentPos) == 0) {
           logging -> logline("No gScore cost for current pos: " + std::to_string(currentPos.x) + "," + std::to_string(currentPos.y));
           return;
@@ -168,41 +168,39 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
         //logging -> logline("Tentative gScore: " + std::to_string(tentativeGScore));
         //logging -> logline("Curent neighbor gScore: " + std::to_string(currentNeighborGScore));
         if (tentativeGScore < currentNeighborGScore) {
-          logging -> logline("SAVING Tentative gScore for neighbor: " + std::to_string(tentativeGScore));
+          //logging -> logline("SAVING Tentative gScore for neighbor: " + std::to_string(tentativeGScore));
           navigatedNodes[neighbor] = currentPos; //sets the neighbors path to backtrace to the start pos
           gScores[neighbor] = tentativeGScore;
           unsigned int heuristicNeighborCostEstimate = ManhattanPathCostEstimate(neighbor, endPos);
           unsigned int heuristicCost = gScores[neighbor] + heuristicNeighborCostEstimate; 
           fScores[neighbor] = heuristicCost; //add the cost value to this spot on the heuristic cost map
-          logging -> logline("SAVING Heuristic fScore for neighbor: " + std::to_string(heuristicCost));
+          //logging -> logline("SAVING Heuristic fScore for neighbor: " + std::to_string(heuristicCost));
           //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later
-          if (unvisitedNodes.count(neighbor) == 0) unvisitedNodes.insert(neighbor);          
-        } else {
+          unvisitedNodes.insert(neighbor);          
+        } else if (tentativeGScore != std::numeric_limits<int>::max() && currentNeighborGScore != std::numeric_limits<int>::max()) {
           logging -> logline("Tentative gScore: " + std::to_string(tentativeGScore) +" >= current neighbor gScore: " + std::to_string(currentNeighborGScore));
         }
-        if (visitedNodes.count(neighbor) == 0) visitedNodes.insert(neighbor);          
     }
 
 }
  
-
-/** Navigates along the map of navigated nodes from a given position until the path ends, 
- *  it builds a Path of these nodes and returns it.
- * 
- * @param navigated
- * @param pathPosition
- * @return The path followed from the position passed
- */
-Path Pathfinding :: ConstructPath(std::map<Position,Position> navigated, Position pathPosition) {
-    Path path;
-    while (navigated.count(pathPosition) > 0) {
-        //std::cout << "Path node " << pathPosition.x << " " << pathPosition.y << "\n"; 
-        pathPosition = navigated.at(pathPosition); //next node navigated to
-        path.push_back(pathPosition);
+Path Pathfinding :: ConstructPath(Position endPos) {
+    //std::set<Position> pathNodes;
+    Path* path = new Path();
+    Position* pathPositionPtr = new Position(endPos);
+    Position pathPosition = *pathPositionPtr;
+    while (navigatedNodes.count(pathPosition) > 0) {
+        logging -> logline("Building path " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y));
+        path -> push_back(pathPosition);
+        //pathNodes.insert(*pos);
+        // Avoid looping paths
+        //if (pathNodes.count(*pos) == 0) return *path;
+        pathPosition = navigatedNodes.at(pathPosition); //next node navigated to
+        //navigatedNodes.erase(pathPosition);
     }
-    Position startPosition = path.front();
-    logging -> logline("Assembled path from: " + std::to_string(startPosition.x) + "," + std::to_string(startPosition.y) + " to " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y));
-    return path;
+    Position startPosition = path -> front();
+    logging -> logline("Assembled path from: " + std::to_string(startPosition.x) + "," + std::to_string(startPosition.y) + " to " + std::to_string(pathPosition.x) + "," + std::to_string(pathPosition.y) + " using " + std::to_string(path -> size()) + " path nodes");
+    return *path;
 }
 
 /** Subfunction for PathRooms that checks that a suitable path exists for the player to traverse the level

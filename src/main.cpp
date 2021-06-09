@@ -44,16 +44,10 @@ int main()
             
     Item* testItem = new Item(98,"Test Item","X",2,2,0,true); //inventory testing
     thisPlayer->AddToInventory(testItem);
-    
-    
-    //Map and playerUI are new initialised as the GameEngine will delete all of these when done (these pointers get modified for new maps)
-    Map* thisMap = new Map(MAX_NPCS,&npcs[0],thisPlayer);
-    logging -> logline("Created initial map of size: " + std::to_string(thisMap -> GetGridX()+1) + ", " + std::to_string(thisMap -> GetGridY()+1));
-
 
     CursesUI thisUI = CursesUI();
+    Map* thisMap;
     PlayerUI* playerUI = new PlayerUI(MAX_NPCS,&thisUI,thisMap,thisPlayer,&npcs[0]);
-    
     GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, thisMap, &thisUI, playerUI);
     
     thisGame.StartGame();

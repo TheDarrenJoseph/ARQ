@@ -28,7 +28,6 @@ class GameEngine
         std::list<Map*> levels = {};
         
         unsigned long int levelIndex=0;
-        std::list<Map*>::iterator currentLevel = levels.begin();
         
         Player* player=NULL;
         NPC* npcs=NULL;
@@ -39,17 +38,22 @@ class GameEngine
         bool fogOfWar = false;
         
     public:
+        void SetMap(Map* map);
+
         void InitNPCS();
         
         void SettingsMenu();
         int MenuScreen(bool gameRunning);
         int MainMenu(bool gameRunning);
         
-        void spawnPlacePlayer();
+        void SpawnPlacePlayer(spawn_position spawnPosition);
         
         void StartGame();
         
         bool GameLoop(bool* levelEnded, bool* newLevel);
+        void InitialiseMap(spawn_position spawnPosition);
+        void GenerateLevel();
+        void LoadLevel(int levelIdx);
         void ChangeLevel(bool* levelEnded, bool* downLevel);
                 
         Player* GetPlayer();
@@ -117,7 +121,7 @@ class GameEngine
             
             srand(time(NULL)); //set time for randomiser
             
-            map = (m);
+            SetMap(m);
             
             this->displayUI = ui;
             this->playerUI = playerUI;

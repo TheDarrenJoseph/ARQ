@@ -30,8 +30,8 @@ public:
         this->y = y;
         
     }
-    
-    //Overriding assignment operator
+
+    //Overriding equality operator
     bool operator==(const Position& p) {  
         if (this->x == p.x && this->y == p.y) {
             return true;

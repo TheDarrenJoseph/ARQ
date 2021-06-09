@@ -7,16 +7,16 @@
 #include "doors.h"
 
 void Map :: SetEntryPositions(Position entry, Position exit) {
-    entryPosition = entry;
-    exitPosition = exit;
+    this -> entryPosition = entry;
+    this -> exitPosition = exit;
 }
 
 Position Map :: GetEntryPosition() {
-    return entryPosition;
+    return this -> entryPosition;
 }
 
 Position Map :: GetExitPosition() {
-    return exitPosition;
+    return this -> exitPosition;
 }
 
 std::list<Position> Map :: GetNeighbors(int x, int y) {
@@ -229,6 +229,7 @@ void Map::CreateMap(int roomChance) {
         }
     }
 
+    logging -> logline("Paving rooms..");
     PaveRooms();
     AddEntryPoints();
 }
@@ -249,7 +250,11 @@ void Map :: AddEntryPoints() {
       }
       
       SetTile(chosenExit.x,chosenExit.y,ext);
+      logging -> logline("Chosen entry point: " + std::to_string(chosenEntry.x) +"," +  std::to_string(chosenEntry.y));
+      logging -> logline("Chosen exit point: " + std::to_string(chosenExit.x) +"," +  std::to_string(chosenExit.y));
       SetEntryPositions(chosenEntry,chosenExit);
+    } else {
+        logging -> logline("No spawn positions found!");
     }
 }
 
@@ -563,35 +568,6 @@ int Map::GetGridY()
     return gridY;
 }
 
-
-/*
-void DrawInv(area* a)
-{
-  for (int y = 0; y<3; y++)
-    {
-      //draw each item on this row to the screen
-      for(int x = 0; x<3; x++)
-        {	 
-          WINDOW* thisWindow = invwins_front[y][x];
-         
-          werase(thisWindow);
-          wmove(thisWindow,0,0); 
-      	 
-          item* itm = a->GetItem(x,y);      
-       
-          //int colour = itm->colour;
-          std::string str = itm->name;
-         
-          const char* symbol = str.c_str();
-
-          wprintw_col (thisWindow, symbol, 0);
-          wrefresh(thisWindow);
-        }; 
-    };  
-  return;DoorProc
-}
- */
-
 int Map::ContainerProc(int x, int y)
 {
     return GetContainer(x, y).HasItems();
@@ -627,13 +603,19 @@ void Map::OpenDoorTile(int x, int y) {
 }
 
 void Map::AddPath(Path path) {
+  if (path.empty()) {
+    logging -> logline("Cannot add an empty path!");
+    return;
+  }
+
+  logging -> logline("Adding path of " + std::to_string(path.size()) + " nodes to the map.");
   for (Position pos : path) {
     tile tile_type = GetTile(pos.x, pos.y);
-    if (tile_type != cor && tile_type != dor) {
-      logging -> logline("Adding path tile at: " + std::to_string(pos.x) + ", " + std::to_string(pos.y));
+    if (tile_type != cor && tile_type != dor && tile_type != rom) {
+      logging -> logline("Adding path at tile: " + std::to_string(pos.x) + "," + std::to_string(pos.y));
       SetTile(pos.x, pos.y, cor);
     } else {
-      return;
+      logging -> logline("Position already passable, ignoring pathing of: " + std::to_string(pos.x) + "," + std::to_string(pos.y));
     }
   }
 }

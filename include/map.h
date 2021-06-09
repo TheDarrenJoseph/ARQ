@@ -19,6 +19,8 @@
 #include "characters.h"
 #include "room.h"
 
+enum spawn_position {ENTRY,EXIT};
+
 class Map
 {
   private:

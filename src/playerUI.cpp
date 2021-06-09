@@ -430,7 +430,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
 
     //Sanity check!
     if ((x < 0) | (y < 0) | (x >= map -> GetGridX()) | (y >= map -> GetGridY())) {
-        mainUI->ConsolePrintWithWait("There's a large Granite wall here!", 0, 0); //Just give an out of bounds message that sounds vaguely believable
+        mainUI->ConsolePrintWithWait("You can't see anything!", 0, 0); //Just give an out of bounds message that sounds vaguely believable
         return;
     }
 
@@ -491,7 +491,6 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
         
         case 5: //Entrance
          mainUI->ClearConsole();
-         mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);
          *levelEnded = true;
          *downLevel = false; //False takes us up to a previous level
          break;

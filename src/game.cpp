@@ -1,5 +1,8 @@
 #include "game.h"
 
+void GameEngine :: SetMap(Map* map) {
+  this -> map = map;
+}
 
 void GameEngine :: InitNPCS()
 {
@@ -54,11 +57,20 @@ int GameEngine :: MainMenu(bool gameRunning) {
     return displayUI->Menu(text);
 }
 
-/** Sets the entry and exit points for this level, also places the player at the entry position  */
-void GameEngine :: spawnPlacePlayer() {
-    //std::vector<Position> possibleSpawns = map->GetPossibleSpawns();
-    Position chosenEntry = map->GetEntryPosition();
-    player->SetPos(chosenEntry.x, chosenEntry.y); //place the player there
+void GameEngine :: SpawnPlacePlayer(spawn_position spawnPosition) {
+  Position spawnPos;
+  switch (spawnPosition) {
+    case ENTRY:
+      logging -> logline("Spawning player at entry");
+      spawnPos = this -> map -> GetEntryPosition();
+      break;
+  case EXIT:
+      logging -> logline("Spawning player at exit");
+      spawnPos = this -> map -> GetExitPosition();
+      break;
+  } 
+  player->SetPos(spawnPos.x, spawnPos.y); //place the player there
+
 }
 
 //The main menu screen for game-start
@@ -98,19 +110,8 @@ int GameEngine :: MenuScreen(bool gameRunning) {
 
 void GameEngine :: StartGame()
 { 
-  logging -> logline("Generating NPCs...");
-  InitNPCS(); //inititalise all NPCs before doing anything
-   
-  logging -> logline("Placing the player...");
-  spawnPlacePlayer();
-  //GenerateItems(mediumLoot); 
-
-  Pathfinding* pathfinding = new Pathfinding(map);
-  std::list<Path> roomPaths = pathfinding -> BuildPathsBetweenRooms();
-  for (Path path : roomPaths) {
-    logging -> logline("Adding path to the map...");
-    map -> AddPath(path);
-  }
+  GenerateLevel();
+  LoadLevel(0);
 
   displayUI->InitScreen (); //prep display
   displayUI->InitWindows(); 
@@ -130,6 +131,55 @@ void GameEngine :: StartGame()
   return;
 }
 
+void GameEngine :: InitialiseMap(spawn_position spawnPosition) {
+  logging -> logline("Generating NPCs...");
+  InitNPCS(); //inititalise all NPCs before doing anything
+   
+  logging -> logline("Placing the player...");
+  SpawnPlacePlayer(spawnPosition);
+  //GenerateItems(mediumLoot); 
+      
+  delete(playerUI);
+  playerUI = new PlayerUI(MAX_NPCS,displayUI, this -> map,player,&npcs[0]);
+  //player->SetPos(newPosition.x,newPosition.y);
+  
+  Pathfinding* pathfinding = new Pathfinding(map);
+  std::list<Path> roomPaths = pathfinding -> BuildPathsBetweenRooms();
+  for (Path path : roomPaths) {
+    logging -> logline("Adding a path to the map...");
+    map -> AddPath(path);
+  }
+}
+
+void GameEngine :: GenerateLevel() {
+  logging -> logline("Generating Map...");
+  Map* newMap = new Map(MAX_NPCS, &npcs[0], player);
+  levels.push_back(newMap);
+  //SetMap(newMap); //Rebuild the map
+  logging -> logline("Created map of size: " + std::to_string(newMap -> GetGridX()+1) + ", " + std::to_string(newMap -> GetGridY()+1)); 
+}
+
+void GameEngine :: LoadLevel(int levelIdx) {
+  if (levelIndex == (std::numeric_limits<unsigned long int>::max()) ) {
+      displayUI->ShowNotification("The door is useless! (You have gone too deep!)");
+      return; //Return without changing level or resetting the levelEnded flag, ends the main loop
+  }
+
+  if (levelIdx < levels.size()) {
+      
+      std::list<Map*>::iterator levelIterator = levels.begin();
+      for (int i=0; i < levelIdx; i++) {
+        levelIterator++;
+      }
+      
+      SetMap(*levelIterator);  
+      spawn_position spawnPosition = (levelIdx == levelIndex || levelIdx > levelIndex) ? ENTRY : EXIT;
+      InitialiseMap(spawnPosition);
+      levelIndex = levelIdx;
+
+  }
+}
+
 /** Loads a new level, either creating a new Map, or loading a pre-existing one.
  * 
  * @param levelEnded whether or not an exit has been reached
@@ -140,69 +190,27 @@ void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
         displayUI->ShowNotification("The door is useless! (You have gone too deep!)");
         return; //Return without changing level or resetting the levelEnded flag, ends the main loop
     }
+        
+    if ((*downLevel)) {
+        displayUI->ShowNotification("You go down a level!");
+        displayUI->ClearConsole();
+        displayUI->ConsolePrint("Generating a new level..",0,0);
+        displayUI->UpdateUI();
+        
+        // Generate a new level
+        GenerateLevel();
+        LoadLevel(levelIndex+1);
+    } else if (!(*downLevel)) { //UP -- Otherwise check if we've gone back a level
+        displayUI->ShowNotification("You go up a level!");
+        if (levels.size()>0 && levelIndex>0) {
+          LoadLevel(levelIndex-1);
+        } else {
+            displayUI->ShowNotification("You escaped to the surface!");
+            return; //Return without changing level or resetting the levelEnded flag, ends the main loop
+        }
+    } 
     
-    Position newPosition = map->GetEntryPosition(); //Set to entrance by default
-      
-      if ((*downLevel)) {
-          if(levels.empty()) {
-              levels.push_front(map);
-              currentLevel = levels.begin();
-          }
-          
-          //Make a new level (levelIndex starts from 0)
-          if ((levelIndex == levels.size()-1)) {
-              displayUI->ClearConsole();
-              displayUI->ConsolePrint("Generating a new level..",0,0);
-              displayUI->UpdateUI();
-              //Re-run map init to place player and exit (spawnPlacePlayer and extras?)
-              map = new Map(MAX_NPCS, &npcs[0], player); //Rebuild the map
-              levels.push_back(map);
-              
-              displayUI->ClearConsole();
-              displayUI->ConsolePrint("Pathing rooms..",1,1);
-              displayUI->UpdateUI();
-              
-              Pathfinding* pathfinding = new Pathfinding(map);
-              std::list<Path> roomPaths = pathfinding -> BuildPathsBetweenRooms();
-              for (Path path : roomPaths) {
-                map -> AddPath(path);
-              }
-              displayUI->ConsolePrintWithWait("DONE [Enter]",0,12);
-
-              delete(playerUI);
-              playerUI = new PlayerUI(MAX_NPCS,displayUI,map,player,&npcs[0]);
-              //InitNPCS(); 
-              spawnPlacePlayer();
-          }
-          
-          displayUI->ShowNotification("You go down a level!");
-          currentLevel++; //Go down a level
-          levelIndex++;
-         
-          newPosition = (*currentLevel)->GetEntryPosition();
-      } else if (!(*downLevel)) { //UP -- Otherwise check if we've gone back a level
-          
-          displayUI->ShowNotification("You go up a level!");
-
-          if (levels.size()>0 && levelIndex>0) {
-              // std::cout<<"Going up a level..\n";
-              currentLevel--;//Go up a level
-              levelIndex--;
-              
-              newPosition = (*currentLevel)->GetExitPosition();
-          } else {
-              displayUI->ShowNotification("You escaped to the surface!");
-              return; //Return without changing level or resetting the levelEnded flag, ends the main loop
-          }
-      } 
-      
-      map = *currentLevel;
-      
-      delete(playerUI);
-      playerUI = new PlayerUI(MAX_NPCS,displayUI,map,player,&npcs[0]);
-      player->SetPos(newPosition.x,newPosition.y);
-      
-      *levelEnded=false;
+    *levelEnded=false;
 }
 
 /**
