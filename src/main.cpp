@@ -37,12 +37,12 @@ int main()
     Player* thisPlayer = new Warrior();
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container* bag = new Container(98,"Bag","X",2,2,0,true); //inventory testing
-    Container* box = new Container(98,"Box","X",2,2,0,true); //inventory testing
+    Container* bag = new Container(98,"Bag","X",2,2,5,true); //inventory testing
+    Container* box = new Container(98,"Box","X",2,2,5,true); //inventory testing
     thisPlayer->AddToInventory(bag);
     thisPlayer->AddToInventory(box);
             
-    Item* testItem = new Item(98,"Test Item","X",2,2,0,true); //inventory testing
+    Item* testItem = new Item(98,"Test Item","X",2,2,100,true); //inventory testing
     thisPlayer->AddToInventory(testItem);
 
     CursesUI thisUI = CursesUI();

@@ -135,7 +135,7 @@ class Player : public Character
   Container* inventory = NULL;
  // NPC* npcs;
   
-  unsigned long int loot=0;
+  unsigned long int lootScore=0;
   
   
   public :
@@ -173,7 +173,7 @@ class Player : public Character
     
   Player& operator=(const Player& c) {  
       this->inventory = c.inventory;
-      this->loot = c.loot;
+      this->lootScore = c.lootScore;
       
       return *this;
   }
@@ -182,7 +182,7 @@ class Player : public Character
   Player(const Player& p) : Character(p.symbol,p.colour,p.name,p.health) {  
       
       this->inventory = p.inventory;
-      this->loot = p.loot;
+      this->lootScore = p.lootScore;
   }
     
     ~Player() {

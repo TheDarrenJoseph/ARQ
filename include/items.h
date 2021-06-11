@@ -13,7 +13,8 @@ enum lootChance {noLoot,lowLoot,mediumLoot,highLoot};
 enum itemType{ITEM,CONTAINER};
 
 struct Item
-{
+{ 
+  private:
   int id=0;
   std::string name="";
   char symbol= ' ';
@@ -22,7 +23,15 @@ struct Item
   int value=0;
   bool lootable=false;
   
+  public:
   virtual itemType getType() const { return ITEM; } 
+  virtual int GetId() const { return id; } 
+  virtual std::string GetName() const { return name; } 
+  virtual char GetSymbol() const { return symbol; } 
+  virtual int GetColour() const { return colour; } 
+  virtual int GetWeight() const { return weight; } 
+  virtual int GetValue() const { return value; } 
+  virtual bool IsLootable() { return lootable; } 
 
   bool IsLootable() const {
     return this -> lootable;

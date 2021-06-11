@@ -1,6 +1,3 @@
-#include <iostream>
-#include <curses.h>  
-
 #include "cursesUI.h"
 
 using std::string;
@@ -153,8 +150,8 @@ void CursesUI::DrawItems(Map* m)
         for (int x = 0; x < m -> GetGridX(); x++) {
             const Item* item = m->GetItem(x, y);
             if ((item != NULL) && (item -> IsLootable())) {
-                int colour = item -> colour;
-                char symbol = item -> symbol;
+                int colour = item -> GetColour();
+                char symbol = item -> GetSymbol();
                 wmove(mainwin_front, y, x);
                 wprintw_col(mainwin_front, &symbol, colour);
             }
@@ -167,10 +164,10 @@ void CursesUI::DrawContainers(Map* m)
   for (int y = 0; y < m -> GetGridY(); y++) {
     for (int x = 0; x < m -> GetGridX(); x++) {
       Container container = m -> GetContainer(x, y);
-      if (container.id == 98) //Check for an item type, && it not being an empty item 
+      if (container.GetId() == 98) //Check for an item type, && it not being an empty item 
       {
-        int colour = container.colour;
-        char symbol = container.symbol;
+        int colour = container.GetColour();
+        char symbol = container.GetSymbol();
         wmove(mainwin_front, y, x);
         wprintw_col(mainwin_front, &symbol, colour);
       }
@@ -334,36 +331,34 @@ void CursesUI :: HighlightInvLine(int yIndex) {
 void CursesUI::ListInv(Container* c, long unsigned int invIndex)
 {   
     box(invwin_rear, 0, 0);
-    wprint_at(invwin_rear,c->name.c_str(),0,1);
+    wprint_at(invwin_rear,c -> GetName().c_str(),0,1);
     
+    // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
+    const int COL_1 = 0;
+    const int COL_2 = 20;
+    const int COL_3 = 33;
       //For each line of the window
-    wprint_at(invwin_rear,"NAME",1,1);
-    wprint_at(invwin_rear,"WEIGHT",1,12);
-    wprint_at(invwin_rear,"VALUE",1,24);
+    wprint_at(invwin_rear,"NAME", 1, COL_1+1); // +1 for border
+    wprint_at(invwin_rear,"WEIGHT (Kg)", 1, COL_2);
+    wprint_at(invwin_rear,"VALUE", 1, COL_3);
     
     wrefresh(invwin_rear);
-    
     long unsigned int invSize = c->GetSize();    
-    
-    for (long unsigned int i=0;  i<(long unsigned int)INVWIN_FRONT_Y-1 && (invIndex+i)<invSize; i++) {
-                //thisIndex += i;
-                char buffer[20];
-            
+    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y-1;
+    for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
                 const Item* thisItem = c->GetItem(invIndex+i);
-                
-                sprintf(buffer,"%-12s",thisItem->name.c_str());
-                wprint_at(invwin_front,buffer,i,0);
+                char buffer[20];            
+                sprintf(buffer,"%-20s",thisItem->GetName().c_str());
+                wprint_at(invwin_front, buffer, i, COL_1);
                
                 //Weight
-                sprintf(buffer,"%-4d",c->weight);
-                wprint_at(invwin_front,buffer,i,14);
+                sprintf(buffer,"%-04d",thisItem->GetWeight());
+                wprint_at(invwin_front, buffer, i, COL_2);
                
                 //Value
-                sprintf(buffer,"%-4d",c->value);
-                wprint_at(invwin_front,buffer,i,20);
-    }
-        
-    //wrefresh(invwin_front);
+                sprintf(buffer,"%-04d",thisItem->GetValue());
+                wprint_at(invwin_front, buffer, i, COL_3);
+    }        
     return;
 }
 
@@ -431,6 +426,7 @@ void CursesUI::ConsolePrint(std::string text, int posX, int posY)
 {
     wmove(consolewin_front, posY, posX);
     wprintw(consolewin_front, text.c_str());
+    wrefresh(consolewin_front);
 }
 
 void CursesUI::ClearConsole()

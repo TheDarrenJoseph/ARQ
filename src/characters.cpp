@@ -196,13 +196,14 @@ Container* Player :: GetInventory()
 
 void Player :: SetLoot(unsigned long int i)
 {
-  this->loot = i;
+  this->lootScore = i;
   return;
 }
 
 unsigned long int Player :: GetLootScore ()
 {
-  return this->loot;
+  // TODO recalculate this upon item pickup / inventory management, or flag for inv change?
+  return this -> inventory -> GetTotalLootScore();
 }
 
 int Player :: GetLootCount ()
@@ -223,7 +224,7 @@ int Player :: GetKeyCount() {
         {
             invTile = GetFromInventory(i);
             
-            if (invTile->id == key) {
+            if (invTile -> GetId() == key) {
                 keyCount++;
             }
             
@@ -242,7 +243,7 @@ void Player :: RemoveKeyCount(int keyCount) {
             
             if (removedCount == keyCount) {
                 return;
-            } else  if (invTile->id == key) {
+            } else  if (invTile -> GetId() == key) {
                inventory->RemoveItem(i);
             };
             

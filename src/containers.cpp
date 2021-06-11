@@ -90,6 +90,26 @@ int Container :: HasItems()
     }
 }
 
+int Container :: GetTotalLootScore() {
+  int totalScore = 0;
+  for (const Item* itemPtr : inv) {
+    int value = 0;
+    itemType type = itemPtr -> getType();
+    switch (type) {
+      case ITEM:
+        value = itemPtr -> GetValue();
+        break;
+      case CONTAINER:
+        Container* container = (Container*) itemPtr;
+        value = container -> GetTotalLootScore();
+        break;
+    }
+    totalScore += value;
+    logging -> logline("Tallying item value for a " + itemPtr -> GetName() + " : " + std::to_string(value));
+  }
+  return totalScore;
+}
+
 
 
 

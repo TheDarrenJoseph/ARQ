@@ -2,6 +2,8 @@
 #define CURSES_UI_H
 
 #include <string>
+#include <iostream>
+#include <curses.h>  
 #include "ui.h"
 #include "tile.h"
 #include "position.h"

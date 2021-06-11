@@ -68,7 +68,7 @@ void PlayerUI::Battle(int npc_id)
                 if (p_move != 0) {
                     npcs[npc_id].SetHealth(npcs[npc_id].GetHealth() - playerDamage);
 
-                    hitTextStream << "You use your " << p_choice.name.c_str() << " and strike the enemy for " << playerDamage << " damage " << "\n";
+                    hitTextStream << "You use your " << p_choice.GetName().c_str() << " and strike the enemy for " << playerDamage << " damage " << "\n";
                     mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 } else if (p_move == 0 && npc_move != 0) {
                     player->SetHealth(player->GetHealth() - npcDamage);
@@ -81,7 +81,7 @@ void PlayerUI::Battle(int npc_id)
                 if (npc_move != 0 && p_move != 0) {
                     player->SetHealth(player->GetHealth() - npcDamage);
 
-                    hitTextStream << "Your enemy uses their " << npc_choice.name.c_str() << " and deals " << npcDamage << " damage " << "\n";
+                    hitTextStream << "Your enemy uses their " << npc_choice.GetName().c_str() << " and deals " << npcDamage << " damage " << "\n";
                     mainUI->ConsolePrintWithWait(hitTextStream.str(), 0, 0);
                 } else if (npc_move == 0 && p_move != 0) {
                     npcs[npc_id].SetHealth(npcs[npc_id].GetHealth() - playerDamage);
@@ -141,7 +141,7 @@ int PlayerUI::BattleTurn(int npc_id) {
 
     for (int i = 0; i < 3; i++) {
         const weapon* weps = player->GetWeps();
-        std::string wepName = weps[i].name;
+        std::string wepName = weps[i].GetName();
         mainUI->ConsolePrint(wepName, 0, (9 * i));
     }
 
@@ -291,7 +291,7 @@ void PlayerUI::LockProc(int y, int x) {
             for (int i = 0; i < INV_SIZE; i++) {
                 inv_tile = player->GetFromInventory(i);
 
-                if (inv_tile->name == item_library[lockpick].name) {
+                if (inv_tile->GetName() == item_library[lockpick].GetName()) {
                     lockpick_count++; //Add to our lockpick count
                 }
 
@@ -303,7 +303,7 @@ void PlayerUI::LockProc(int y, int x) {
                 for (int i = 0; i < INV_SIZE; i++) {
                     inv_tile = player->GetFromInventory(i);
 
-                    if (inv_tile->name == item_library[lockpick].name) {
+                    if (inv_tile->GetName() == item_library[lockpick].GetName()) {
                         int lockno = 1;
                         std::ostringstream lockContextStream;
                         mainUI->ClearConsole();
@@ -379,7 +379,7 @@ void PlayerUI::LockProc(int y, int x) {
 int PlayerUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
 {
     std::string answer;
-    std::string itm_name = itm->name.c_str();
+    std::string itm_name = itm->GetName().c_str();
 
     char promptbuffer[30];
     sprintf(&promptbuffer[0], "There's a %s on the floor..", itm_name);
@@ -531,7 +531,7 @@ bool PlayerUI::TextInput()
     } else if (lowerCasedAnswer == "inventory") {
       AccessPlayerInv();
     } else {
-        mainUI->ConsolePrintWithWait("unrecognised input, use 'help' for a examples. ", 0, 0);
+      mainUI->ConsolePrintWithWait("unrecognised input, use 'help' for a examples. ", 0, 0);
     }
 
     return true;
@@ -702,17 +702,23 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
         
         mainUI->ListInv(c,invIndex);
         mainUI->HighlightInvLine(index);      
-           
-        int choice =mainUI->ConsoleGetInput();
+        mainUI -> ClearConsole();
+        mainUI -> ConsolePrint("Up/Down - Select an item ", 0, 0);
+        mainUI -> ConsolePrint("c - Enter Command",0,1);
+        mainUI -> ConsolePrint("q - Close window",0,2);
+        int choice = mainUI->ConsoleGetInput();
+        selection = InventoryInput(choice, index, c, playerInv);   
         long unsigned int invSize = c->GetSize()-1; 
         
-        if (choice == KEY_UP) {
+        switch (choice) {
+          case KEY_UP:
             if (index>0) {
                 index--; 
             } else if (index==0 && invIndex>0) {
                 invIndex--;
             }
-        } else if(choice == KEY_DOWN) { 
+            break;
+          case KEY_DOWN:
             unsigned long int invWindowLimit = INVWIN_FRONT_Y-2;
             //Checking against the window boundary. invSize-1 allows
             if (index<invWindowLimit && index<invSize) {
@@ -721,9 +727,8 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
                 } else {
                     index++; 
                 }
-            } 
-        } else {
-            selection = InventoryInput(choice, index, c, playerInv);
+            }
+            break;
         }
     }
     
