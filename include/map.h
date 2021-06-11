@@ -148,9 +148,9 @@ class Map
      * 0 - moved successfully
      * 1 - door found
      * 2 - trap found
-     * 
      * 3 - Enemy found
-     * 4 - Dead body found
+     * 4 - Single item found
+     * 5 - Container / Dead body found
      * 
      * 99 - Cannot move
      */
@@ -158,7 +158,7 @@ class Map
 
     int MoveNPCS ();
     void DropCharacterItems(Character* c);
-    int DropPlayerItem(Player* p, Item* thisItem, int index);
+    int DropPlayerItem(Player* p, const Item* thisItem, int index);
    
     bool  LevelPathValid();
     void PaveRoom(Room r);
@@ -186,9 +186,11 @@ class Map
     //Returns whether there is an area at x,y, and if it contains items
     int ContainerProc (int x ,int y); 
 
+    bool HasContainerAt(int x, int y);
     Container GetContainer(int x, int y);
     void SetContainer(int x, int y, Container a);
 
+    bool HasDoorAt(int x, int y);
     Door* GetDoor(int x, int y);
     void SetDoor(int x, int y, Door door);
     

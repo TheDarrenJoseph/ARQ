@@ -325,7 +325,9 @@ bool Map::IsTraversable(int x, int y) {
         return false;
     } else {
         tile t = game_grid[y][x];
-        return tile_library[t].traversible;
+        ContainerType containerType = container_grid[y][x].GetContainerType();
+        // We can walk over any traversible tile and any AREA even if it containins items
+        return tile_library[t].traversible && !OBJECT == containerType;
     }
 }
 
@@ -409,7 +411,7 @@ int Map::MoveCharacter(Character* c, int x, int y)
  * 
  * Encounters
  * 3 - Enemy found
- * 4 - Dead body found
+ * 4 - Container / Dead body found
  * 
  * Entryways
  * 5 - entrance
@@ -431,7 +433,13 @@ int Map::MovePlayer(int x, int y, int* npcID)
     else if (t == ext) return 6;
     else if (t == ded) return 2;
 
-    return MoveCharacter(player, x, y);
+    // TODO refactor to ContainerProc
+    Container container = GetContainer(x,y);
+    if (container.IsImpassable()) {
+      return 4;
+    } else {
+      return MoveCharacter(player, x, y);
+    }
 }
 
 /** Returns a movement code for each npc
@@ -460,16 +468,13 @@ int Map::MoveNPCS()
 /* Makes an area/dead body that contains the characters possesions*/
 void Map::DropCharacterItems(Character* c)
 {
-
-    Container body = c->DropItems();
-
+    Container* body = c->DropItems();
     int x, y;
     c->GetPos(&x, &y);
-
-    SetContainer(x, y, body);
+    SetContainer(x, y, *body);
 }
 
-int Map::DropPlayerItem(Player* p, Item* thisItem, int index)
+int Map::DropPlayerItem(Player* p, const Item* thisItem, int index)
 {
     int x, y;
     p->GetPos(&x, &y);
@@ -538,6 +543,11 @@ void Map::AddToContainer(int x, int y, const Item* i)
     container_grid[y][x].AddItem(i);
 }
 
+bool Map::HasContainerAt(int x, int y)
+{
+  return GetContainer(x,y).IsLootable();
+}
+
 Container Map::GetContainer(int x, int y)
 {
     return container_grid[y][x];
@@ -547,6 +557,12 @@ void Map::SetContainer(int x, int y, Container c)
 {
     container_grid[y][x] = c;
 }
+
+bool Map::HasDoorAt(int x, int y)
+{
+    return game_grid[y][x] == dor;
+}
+
 
 Door* Map::GetDoor(int x, int y)
 {

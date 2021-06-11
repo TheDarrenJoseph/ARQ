@@ -22,6 +22,11 @@ std::list<const Item*>::iterator Container :: indexToIterator(long unsigned i) {
     }
 }
 
+ContainerType Container :: GetContainerType() {
+  return this -> containerType;
+}
+
+
 long unsigned int Container :: GetSize() {
     return inv.size();
 }
@@ -65,11 +70,24 @@ const Item* Container :: GetItem(long unsigned int i) {
     
 }
 
+bool Container :: IsOpenable() {
+  if (this -> containerType == OBJECT) {
+    return true;
+  } else {
+    return this -> HasItems() && this -> IsLootable();
+  }
+}
+
+bool Container :: IsImpassable() {
+  // We can always open container objects
+  return (this -> containerType == OBJECT);
+}
+
 //Returns an integer to determine the contents of this area
 //Returns 1 for multiple items, and 2 for one
 int Container :: HasItems()
 {
-    long unsigned int count = inv.size();
+  long unsigned int count = inv.size();
  
   switch (count)
     {
@@ -105,7 +123,7 @@ int Container :: GetTotalLootScore() {
         break;
     }
     totalScore += value;
-    logging -> logline("Tallying item value for a " + itemPtr -> GetName() + " : " + std::to_string(value));
+    //logging -> logline("Tallying item value for a " + itemPtr -> GetName() + " : " + std::to_string(value));
   }
   return totalScore;
 }

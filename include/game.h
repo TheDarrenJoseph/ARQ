@@ -61,9 +61,7 @@ class GameEngine
         
         Map* GetMap();
         unsigned long int GetLevelIndex(); //Get the current level number
-        
-        int EncounterCheck(int x, int y, int* npcID);
-        
+                
         void GenerateItems(lootChance thisChance);
         
         /** Shallow-copies from another game-engine to preserve external data control

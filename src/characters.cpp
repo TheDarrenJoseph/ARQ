@@ -117,14 +117,15 @@ void Character :: SetPos(int x, int y)
 }
 
 /* Returns an area/dead body that contains the characters possesions*/
-Container Character :: DropItems()
+Container* Character :: DropItems()
 {
- std::string name = this->name.c_str();
- std::string thisName = "Dead " + name;
-  Container body = Container(1,thisName,"X",1,6,0,true);
-  
-  body.AddItem(&(*weps[1]));
-  body.AddItem(&(*weps[2]));
+  std::string name = this->name.c_str();
+  std::string thisName = "Dead " + name;
+
+  Container* body = GetInventory();
+  body -> SetName("X");
+  body -> AddItem(&(*weps[1]));
+  body -> AddItem(&(*weps[2]));
 
   //thisContainer->ReplaceItem(1,1,new outfit(this->currentOutfit));
 
@@ -171,28 +172,27 @@ outfit Character :: GetOutfit()
   return currentOutfit;
 }
 
-/////////////////////////////////////////////////
-
-void Player :: AddToInventory(Item* i)
+void Character :: AddToInventory(const Item* i)
 {
   inventory->AddItem(i);
 }
 
-void Player :: SetInventory(int index, const Item* item)
+void Character :: SetInventory(int index, const Item* item)
 {
   inventory->ReplaceItem(index,item); 
 }
 
-const Item* Player :: GetFromInventory(int index)
+const Item* Character :: GetFromInventory(int index)
 {
   return inventory->GetItem(index);
 }
 
-Container* Player :: GetInventory()
+Container* Character :: GetInventory()
 {
   return inventory;
 }  
 
+/////////////////////////////////////////////////
 
 void Player :: SetLoot(unsigned long int i)
 {

@@ -189,8 +189,8 @@ int PlayerUI::processYesOrNoChoice(std::string choice) {
 }
 
 
-
-int PlayerUI::DoorProc(int y, int x) {
+int PlayerUI::DoorProc(int x, int y) {
+  if (map -> HasDoorAt(x, y)) {
     Door door = (*map -> GetDoor(x, y));
     std::string door_name = door.name;
 
@@ -214,7 +214,7 @@ int PlayerUI::DoorProc(int y, int x) {
             unlockChoice = answerChoice;
           } else {
             mainUI->ConsolePrint("Not a yes or no answer, try again..", 0, 0);
-            DoorProc(y, x);
+            DoorProc(x, y);
           };
         } 
     } else if (door.isOpen) {
@@ -249,7 +249,9 @@ int PlayerUI::DoorProc(int y, int x) {
         }
 
     }
-
+  } else {
+    logging -> logline("Player tried to open a door at: " + std::to_string(x) + ", " + std::to_string(y));
+  }
     return (0);
 }
 
@@ -376,43 +378,77 @@ void PlayerUI::LockProc(int y, int x) {
     return;
 }
 
-int PlayerUI::PlayerItemProc(Player* p, Item* itm, int x, int y)
+void PlayerUI::PlayerContainerProc(Player* p, Container* container)
 {
     std::string answer;
-    std::string itm_name = itm->GetName().c_str();
-
+    std::string containerName = container->GetName().c_str();
+    logging -> logline("Processing encountered container: " + containerName);
+    
+    std::string prompt;
     char promptbuffer[30];
-    sprintf(&promptbuffer[0], "There's a %s on the floor..", itm_name);
+    ContainerType containerType = container -> GetContainerType();
+    int answerChoice = 0;
+    if (containerType == OBJECT) {
+      sprintf(&promptbuffer[0], "There's a %s here..", containerName);
+      std::string prompt = promptbuffer;
+      mainUI->ConsolePrintWithWait(prompt, 0, 0);
+
+      sprintf(&promptbuffer[0], "Would you like to open the %s?", containerName);
+      prompt = promptbuffer;
+      mainUI->ConsolePrintWithWait(prompt, 0, 0);
+      answer = mainUI->ConsoleGetString();
+      answerChoice = processYesOrNoChoice(answer);
+
+    if (answerChoice == 0) {
+        AccessContainer(container, false); 
+    } else if (answerChoice == 1) {
+        sprintf(&promptbuffer[0], "You leave the %s untouched..", containerName);
+        prompt = promptbuffer;
+        mainUI->ConsolePrintWithWait(prompt, 0, 0);
+    } else {
+        mainUI->ConsolePrintWithWait("Incorrect choice, please answer yes or no.. ", 0, 0);
+        PlayerContainerProc(p, container);
+    }
+  }
+}
+
+int PlayerUI::PlayerItemProc(Player* p, const Item* itm, Position itemPosition)
+{
+    std::string answer;
+    const char* itm_name_buf = itm->GetName().c_str();
+    std::string itm_name = itm_name_buf;
+    logging -> logline("Processing encountered item: " + itm_name);
+    char promptbuffer[30];
+    sprintf(&promptbuffer[0], "There's a %s on the floor..", itm_name_buf);
     std::string prompt = promptbuffer;
     mainUI->ConsolePrintWithWait(prompt, 0, 0);
 
 
-    sprintf(&promptbuffer[0], "Would you like to pick up the %s?", itm_name);
+    sprintf(&promptbuffer[0], "Would you like to pick up the %s?", itm_name_buf);
     prompt = promptbuffer;
     mainUI->ConsolePrintWithWait(prompt, 0, 0);
     answer = mainUI->ConsoleGetString();
     int answerChoice = processYesOrNoChoice(answer);
 
     if (answerChoice == 0) {
+        // TODO remvove from map
         p->AddToInventory(itm);
 
         std::string prompt;
-        sprintf(&promptbuffer[0], "You pick up the %s..", itm_name);
+        sprintf(&promptbuffer[0], "You pick up the %s..", itm_name_buf);
         prompt = promptbuffer;
         mainUI->ConsolePrintWithWait(prompt, 0, 0);
-       // p->SetInventoryTile(x, y, new Item(item_library[no_item]));
-        p->SetPos(x, y);
+        p->SetPos(itemPosition.x, itemPosition.y);
         return (0);
  
     } else if (answerChoice == 1) {
-        sprintf(&promptbuffer[0], "You leave the %s untouched..", itm_name);
+        sprintf(&promptbuffer[0], "You leave the %s untouched..", itm_name_buf);
         prompt = promptbuffer;
         mainUI->ConsolePrintWithWait(prompt, 0, 0);
-        p->SetPos(x, y);
         return (0);
     } else {
         mainUI->ConsolePrintWithWait("Incorrect choice, please answer yes or no.. ", 0, 0);
-        PlayerItemProc(p, itm, x, y);
+        PlayerItemProc(p, itm, itemPosition);
     }
 
     return (0);
@@ -451,14 +487,14 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait(output, 0, 0);
 
-        TileProc(y, x, map->GetTile(x, y));
+        TileProc(map->GetTile(x, y));
     }
 
     ////////////////////
     switch (map->MovePlayer(x, y, &eid)) {
         //Door    
     case 1:
-        DoorProc(y, x);
+        DoorProc(x, y);
         break;
 
         //Trap    
@@ -466,7 +502,7 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
         break;
 
     //Enemy    
-    case 3:
+    case 3: {
         enemy_name = npcs[eid].GetName();
         output = "You are confronted by a " + enemy_name;
         mainUI->ClearConsole();
@@ -474,37 +510,56 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
 
         Battle(eid);
         break;
-
-      //Dead body
-    case 4:
-        enemy_name = npcs[eid].GetName();
-
-        output = "There is the corpse of a" + enemy_name + "here..";
-        
-        //Do you want to search it?
-        //mainUI->AccessContainer(container_grid[x][y]);
-        
-        mainUI->ClearConsole();
-        mainUI->ConsolePrintWithWait(output, 0, 0);
-
+      }
+    // Containers 
+    case 4: {
+        Container container = map -> GetContainer(x,y);
+        PlayerContainerProc(player, &container);
         break;
-        
-        case 5: //Entrance
-         mainUI->ClearConsole();
-         *levelEnded = true;
-         *downLevel = false; //False takes us up to a previous level
-         break;
-        
-        case 6: //Exit
-            mainUI->ClearConsole();
-            mainUI->ConsolePrintWithWait("You have reached the exit!", 0, 0);
-            *levelEnded = true;
-            *downLevel = true;
-            return;
-            break;
+    }
+    case 5: //Entrance
+      mainUI->ClearConsole();
+      *levelEnded = true;
+      *downLevel = false; //False takes us up to a previous level
+      break;
+    case 6: //Exit
+        mainUI->ClearConsole();
+        mainUI->ConsolePrintWithWait("You have reached the exit!", 0, 0);
+        *levelEnded = true;
+        *downLevel = true;
+        return;
+        break;
     }
 
     return;
+}
+
+void PlayerUI::Interact() {
+    mainUI->ClearConsole();
+    mainUI->ConsolePrintWithWait("What would you like to interact with? (use directions to select, q to cancel)", 0, 0); 
+    int choice = mainUI->ConsoleGetInput();
+ 
+    Position playerPos = player -> GetPosition();
+
+    int targetX = playerPos.x;
+    int targetY = playerPos.y;
+    if (choice == KEY_UP || choice == 'w') targetY--;
+    else if (choice == KEY_RIGHT || choice == 'd') targetX++;
+    else if (choice == KEY_DOWN || choice == 's') targetY++;
+    else if (choice == KEY_LEFT || choice == 'a') targetX--;
+    else if (choice == 'q') return;
+
+    logging -> logline("Player pos: " + std::to_string(playerPos.x) + ", " + std::to_string(playerPos.y));
+    logging -> logline("Player tried to interact at: " + std::to_string(targetX) + ", " + std::to_string(targetY));
+    Container container = map -> GetContainer(targetX, targetY);
+    if (map -> HasDoorAt(targetX, targetY)) {
+      DoorProc(targetX, targetY);
+    } else if (container.IsOpenable()){ 
+      AccessContainer(&container, false);
+    } else {
+      mainUI->ClearConsole();
+      mainUI->ConsolePrintWithWait("There's nothing to interact with here.", 0, 0); 
+    }
 }
 
 /** A function to handle command input from the player.
@@ -520,16 +575,14 @@ bool PlayerUI::TextInput()
     if (lowerCasedAnswer == "help") {
         mainUI->ConsolePrint("ihelp - interactions", 1, 0);
         mainUI->ConsolePrintWithWait("info - game info", 2, 0); //getch on last line 
-
     } else if (lowerCasedAnswer == "ihelp") {
-        mainUI->ConsolePrintWithWait("drop - drop item (selection)", 0, 0);
-    } else if (lowerCasedAnswer == "info") {
-        mainUI->ShowInfo();
-    } else if ((lowerCasedAnswer == "exit") || (lowerCasedAnswer == "quit")) {
-        mainUI->ConsolePrintWithWait("Quitting.. ", 0, 0);
-        return false;
+        mainUI->ConsolePrintWithWait("inventory - access inventory (i)", 0, 0);
+        mainUI->ConsolePrintWithWait("use - interact with a door/container (u)", 0, 0);
+        mainUI->ConsolePrintWithWait("Pause menu (q)", 0, 0);
     } else if (lowerCasedAnswer == "inventory") {
       AccessPlayerInv();
+    } else if (lowerCasedAnswer == "use") {
+      Interact();
     } else {
       mainUI->ConsolePrintWithWait("unrecognised input, use 'help' for a examples. ", 0, 0);
     }
@@ -569,6 +622,7 @@ bool PlayerUI::Input(bool* levelEnded, bool* downLevel)
     else if (choice == 'q' || choice == KEY_EXIT ) return false;
     else if (choice == 'c') return TextInput();
     else if (choice == 'i') AccessPlayerInv();
+    else if (choice == 'u') Interact();
 
         //handle any movement input
     if ((x != thisX) || (y != thisY)) {
@@ -633,9 +687,9 @@ void PlayerUI :: AccessListCommand(Container* c, int index, bool playerInv) {
 
     mainUI->ConsolePrintWithWait(PROMPT_TEXT, 0, 0);
     std::string input = mainUI->ConsoleGetString();
-
+    logging -> logline("Player inputted: '" + input + "'");
     if (input == "drop") {
-        
+        map -> DropPlayerItem(player, c->GetItem(index), index);
     } else if (input == "move") {
         //1. Player Inv
         //2.. Location Inv
@@ -716,9 +770,9 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
         choice = mainUI->ConsoleGetInput();
         long unsigned int containerSize = c->GetSize()-1; 
         long unsigned int lowestInvIndex = containerSize - INV_WINDOW_LINES;
-        logging -> logline("Container size: " + std::to_string(containerSize));
-        logging -> logline("Lowest inv index: " + std::to_string(lowestInvIndex));
-        logging -> logline("inv index: " + std::to_string(invStartIndex));
+        //logging -> logline("Container size: " + std::to_string(containerSize));
+        //logging -> logline("Lowest inv index: " + std::to_string(lowestInvIndex));
+        //logging -> logline("inv index: " + std::to_string(invStartIndex));
         switch (choice) {
           case KEY_UP:
             if (selectionIndex>0) {
@@ -742,7 +796,7 @@ void PlayerUI::AccessContainer(Container * c, bool playerInv)
     
 }
 
-void PlayerUI::TileProc(int y, int x, tile t) {
+void PlayerUI::TileProc(tile t) {
     if (t == ent) {
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("The way you came in is locked..", 0, 0);

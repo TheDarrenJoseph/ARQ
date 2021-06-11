@@ -38,15 +38,15 @@ int main()
     Player* thisPlayer = new Warrior();
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container* bag = new Container(1,"Bag","X",2,2,5,true); //inventory testing
-    Container* box = new Container(2,"Box","X",2,2,5,true); //inventory testing
+    Container* bag = new Container(2, OBJECT, "Bag","X",2,2,100, 5,true); //inventory testing
+    Container* box = new Container(3, OBJECT,"Box","X",2,2,100, 5,true); //inventory testing
     thisPlayer->AddToInventory(bag);
     thisPlayer->AddToInventory(box);
      
     std::list<Item*> testItems;
     //inventory testing
     for (int i=0; i<50; i++) {
-      Item* testItem = new Item(3+i,"Test Item " + std::to_string(i),"X",2,2,100 + i,true); 
+      Item* testItem = new Item(3+i,"Test Item " + std::to_string(i),"X",2,2, 100 + i,true); 
       thisPlayer->AddToInventory(testItem);
       testItems.push_back(testItem);
     }

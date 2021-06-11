@@ -7,6 +7,7 @@
 #include "cursesUI.h"
 #include "map.h"
 #include "characters.h"
+#include "position.h"
 
 #define PROMPT_TEXT "ARQ: "
 
@@ -28,10 +29,12 @@ public:
     
     int processYesOrNoChoice(std::string choice);
     int DoorProc (int y, int x);
-    void LockProc(int door_y, int door_x);
+    void LockProc(int door_x, int door_y);
     
-    int PlayerItemProc(Player* p, Item* itm, int x, int y);
+    void PlayerContainerProc(Player* p, Container* container);
+    int PlayerItemProc(Player* p, const Item* itm, Position itemPosition);
     void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);
+    void Interact();
     bool TextInput();
     bool InventoryInput(int choice, int index,  Container* c, bool playerInv);
     void ShowControls();
@@ -47,7 +50,7 @@ public:
     void AccessContainer (Container* c,bool playerInv);
 
     
-    void TileProc(int y, int x,tile t);
+    void TileProc(tile t);
     
     PlayerUI(int maxNPCS, UI* mainUI, Map* map, Player* player, NPC* npcs){
         MAX_NPCS = maxNPCS;

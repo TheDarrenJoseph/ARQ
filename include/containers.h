@@ -6,6 +6,7 @@
 #include "items.h"
 #include "logging.h"
 
+enum ContainerType{OBJECT,AREA};
 
 //enum containerIndex {no_container,body,chest,container_size};
 
@@ -15,12 +16,16 @@ struct Container : public Item
 {  
     
   private:
+    ContainerType containerType;
+    int weightLimit = 0;
     Logging* logging = &logging -> getInstance();
     std::list<const Item*>::iterator indexToIterator(long unsigned int i);
     bool sizeCheck(long unsigned int i);
 
   public:
   std::list<const Item*> inv = std::list<const Item*>();
+
+  ContainerType GetContainerType();
 
   Item* GetInv();
   
@@ -35,6 +40,9 @@ struct Container : public Item
   const Item* GetItem(long unsigned int i);
   long unsigned int GetSize();
   
+  bool IsOpenable();
+  bool IsImpassable();
+
   int HasItems();
 
   int GetTotalLootScore();
@@ -43,19 +51,21 @@ struct Container : public Item
       return CONTAINER;
   }
   
-  Container() : Container (99,"None"," ",0,0,0,false)
+  Container() : Container (latestId++, AREA, "Floor","$",0,0,100,0,true)
     {
       
     };
   
-  Container(int id, std::string name, const char* symbol, int colour, int weight, int value, bool lootable) : Item(id, name, symbol, colour, weight, value, lootable)
+  Container(int id, ContainerType containerType, std::string name, const char* symbol, int colour, int weight, int weightLimit, int value, bool lootable) : Item(id, name, symbol, colour, weight, value, lootable)
     {
-     
+      this -> containerType = containerType;
+      this -> weightLimit = weightLimit;
     };
 
   Container(const Container* toCopy)  : Item (toCopy)
     {
-      
+      this -> containerType = toCopy -> containerType;
+      this -> weightLimit = toCopy -> weightLimit;
     };
     
   virtual ~Container() {

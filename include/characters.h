@@ -13,6 +13,7 @@
 class Character
 {
  protected:
+  Container* inventory = NULL;
   int posX = 0;
   int posY = 0;
   
@@ -51,6 +52,12 @@ class Character
   std::string GetName();
   int GetMaxHealth();
   int GetHealth ();
+  
+  void AddToInventory(const Item* i);
+  void SetInventory(int index, const Item* i);
+
+  Container* GetInventory();
+  const Item* GetFromInventory(int index);
 
   void SetWeps(weaponIndex one, weaponIndex two, weaponIndex three);
   const weapon* GetWeps(); //returns a pointer to a 1D array of weapons
@@ -60,7 +67,7 @@ class Character
   
   void SetHealth(int);
 
-  Container DropItems(); //Drops the players inv on death as a dead body
+  Container* DropItems(); //Drops the players inv on death as a dead body
    
   Character (char charSymbol, int col, std::string name, int health) 
     {
@@ -72,12 +79,13 @@ class Character
       max_health = health;
       SetCharacter(charSymbol,col,name,health);
    	
-      for (int i=0; i<3; i++)
-	{
-   	  weps[i] = &weapon_library[no_weapon];
-	}
+      for (int i=0; i<3; i++){
+          weps[i] = &weapon_library[no_weapon];
+      }
    	 
       SetOutfit(outfit_library[no_outfit]);
+
+      this->inventory = new Container(0, OBJECT, name + "'s Inventory","X",2,0,100,0,true);
     };
     
   void copyCharacter(const Character& c) {  
@@ -89,12 +97,12 @@ class Character
       max_health = c.max_health;
       
       //assigning pointers
-      for (int i=0; i<3; i++)
-	{
-   	  weps[i] = c.weps[i];
-	}
+      for (int i=0; i<3; i++) {
+        weps[i] = c.weps[i];
+      }
    	 
       this->currentOutfit = c.currentOutfit;
+      this->inventory = new Container(c.inventory);
   }
     
   //Override assignment operator
@@ -131,60 +139,48 @@ class NPC : public Character
 class Player : public Character
 {
  private:
-
-  Container* inventory = NULL;
  // NPC* npcs;
-  
   unsigned long int lootScore=0;
   
-  
   public :
-  int DropItem(Item* thisItem, int invX, int invY);
-  
-  void AddToInventory(Item* i);
-  void SetInventory(int index, const Item* i);
+    void SetLoot(unsigned long int x);
+    unsigned long int GetLootScore();
 
-  Container* GetInventory();
-  const Item* GetFromInventory(int index);
-  
-  void SetLoot(unsigned long int x);
-  unsigned long int GetLootScore();
-
-  int GetLootCount ();
-  int GetKeyCount();
-  void RemoveKeyCount(int keyCount);
-  
-  //int AreaProc (int x ,int y);
- 
-  Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
-    {
-      //initialise the item inventory
-      inventory = new Container(0, "Player's Inventory","X",2,0,0,true);
-  
-	  for (long unsigned int i=0; i<INV_SIZE; i++)
-	    {
-	      //inventory->AddItem(new Item(item_library[2]));
-            //  inventory->AddItem ((Item*) &item_library[2]);
-            // Item itm = Item(98,"Shoop","X",2,2,0,true); //inventory testing
-             // inventory->AddItem(&itm);
-	    }
-	
-    };
+    int GetLootCount ();
+    int GetKeyCount();
+    void RemoveKeyCount(int keyCount);
     
-  Player& operator=(const Player& c) {  
-      this->inventory = c.inventory;
-      this->lootScore = c.lootScore;
+    //int AreaProc (int x ,int y);
+   
+    Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
+      {
+        //initialise the item inventory
+        inventory = new Container(0, OBJECT, "Player's Inventory","X",2,0,100,0,true);
+    
+      for (long unsigned int i=0; i<INV_SIZE; i++)
+        {
+          //inventory->AddItem(new Item(item_library[2]));
+              //  inventory->AddItem ((Item*) &item_library[2]);
+              // Item itm = Item(98,"Shoop","X",2,2,0,true); //inventory testing
+               // inventory->AddItem(&itm);
+        }
+    
+      };
       
-      return *this;
-  }
-    
-  //Copy constructor  
-  Player(const Player& p) : Character(p.symbol,p.colour,p.name,p.health) {  
+    Player& operator=(const Player& c) {  
+        this->inventory = c.inventory;
+        this->lootScore = c.lootScore;
+        
+        return *this;
+    }
       
-      this->inventory = p.inventory;
-      this->lootScore = p.lootScore;
-  }
-    
+    //Copy constructor  
+    Player(const Player& p) : Character(p.symbol,p.colour,p.name,p.health) {  
+        
+        this->inventory = p.inventory;
+        this->lootScore = p.lootScore;
+    }
+      
     ~Player() {
         delete(inventory); //Calls the destructor for this container
     }

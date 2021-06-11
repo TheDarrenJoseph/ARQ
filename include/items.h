@@ -15,23 +15,25 @@ enum itemType{ITEM,CONTAINER};
 struct Item
 { 
   private:
-  int id=0;
-  std::string name="";
-  char symbol= ' ';
-  int colour=0;
-  int weight=0;
-  int value=0;
-  bool lootable=false;
+    int id=0;
+    std::string name="";
+    char symbol= ' ';
+    int colour=0;
+    int weight=0;
+    int value=0;
+    bool lootable=false;
   
   public:
-  virtual itemType getType() const { return ITEM; } 
-  virtual int GetId() const { return id; } 
-  virtual std::string GetName() const { return name; } 
-  virtual char GetSymbol() const { return symbol; } 
-  virtual int GetColour() const { return colour; } 
-  virtual int GetWeight() const { return weight; } 
-  virtual int GetValue() const { return value; } 
-  virtual bool IsLootable() { return lootable; } 
+    static unsigned long long int latestId;
+    virtual itemType getType() const { return ITEM; } 
+    virtual long long int GetId() const { return id; } 
+    virtual std::string GetName() const { return name; } 
+    void SetName(std::string name);
+    virtual char GetSymbol() const { return symbol; } 
+    virtual int GetColour() const { return colour; } 
+    virtual int GetWeight() const { return weight; } 
+    virtual int GetValue() const { return value; } 
+    virtual bool IsLootable() { return lootable; } 
 
   bool IsLootable() const {
     return this -> lootable;
@@ -39,7 +41,7 @@ struct Item
 
   Item()
   {
-    id = 0;
+    id = latestId++;
     name = "None";
     symbol = ' ';
     colour = 0;

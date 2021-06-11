@@ -164,7 +164,7 @@ void CursesUI::DrawContainers(Map* m)
   for (int y = 0; y < m -> GetGridY(); y++) {
     for (int x = 0; x < m -> GetGridX(); x++) {
       Container container = m -> GetContainer(x, y);
-      if (container.GetId() == 98) //Check for an item type, && it not being an empty item 
+      if (container.HasItems())
       {
         int colour = container.GetColour();
         char symbol = container.GetSymbol();
