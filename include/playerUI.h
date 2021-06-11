@@ -14,6 +14,8 @@
 class PlayerUI {
 private:
     Logging* logging = &logging -> getInstance();
+    void ProcessMovementInput(int choice, Position* p);
+
 public:
     UI* mainUI = NULL;
     

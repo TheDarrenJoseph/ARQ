@@ -537,28 +537,25 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
 void PlayerUI::Interact() {
     mainUI->ClearConsole();
     mainUI->ConsolePrintWithWait("What would you like to interact with? (use directions to select, q to cancel)", 0, 0); 
-    int choice = mainUI->ConsoleGetInput();
  
     Position playerPos = player -> GetPosition();
-
-    int targetX = playerPos.x;
-    int targetY = playerPos.y;
-    if (choice == KEY_UP || choice == 'w') targetY--;
-    else if (choice == KEY_RIGHT || choice == 'd') targetX++;
-    else if (choice == KEY_DOWN || choice == 's') targetY++;
-    else if (choice == KEY_LEFT || choice == 'a') targetX--;
-    else if (choice == 'q') return;
-
-    logging -> logline("Player pos: " + std::to_string(playerPos.x) + ", " + std::to_string(playerPos.y));
-    logging -> logline("Player tried to interact at: " + std::to_string(targetX) + ", " + std::to_string(targetY));
-    Container container = map -> GetContainer(targetX, targetY);
-    if (map -> HasDoorAt(targetX, targetY)) {
-      DoorProc(targetX, targetY);
-    } else if (container.IsOpenable()){ 
-      AccessContainer(&container, false);
-    } else {
-      mainUI->ClearConsole();
-      mainUI->ConsolePrintWithWait("There's nothing to interact with here.", 0, 0); 
+    Position inputPos = Position(playerPos);
+    int choice = mainUI->ConsoleGetInput();
+    ProcessMovementInput(choice, &inputPos);
+    if (choice == 'q') return;
+    
+    if (inputPos != playerPos) {
+      logging -> logline("Player pos: " + std::to_string(playerPos.x) + ", " + std::to_string(playerPos.y));
+      logging -> logline("Player tried to interact at: " + std::to_string(inputPos.x) + ", " + std::to_string(inputPos.y));
+      Container container = map -> GetContainer(inputPos.x, inputPos.y);
+      if (map -> HasDoorAt(inputPos.x, inputPos.y)) {
+        DoorProc(inputPos.x, inputPos.y);
+      } else if (container.IsOpenable()){ 
+        AccessContainer(&container, false);
+      } else {
+        mainUI->ClearConsole();
+        mainUI->ConsolePrintWithWait("There's nothing to interact with here.", 0, 0); 
+      }
     }
 }
 
@@ -599,39 +596,33 @@ void PlayerUI::ShowControls()
     mainUI->ConsolePrint("Arrow Keys to move.. ", 0, 1);
 }
 
+void PlayerUI::ProcessMovementInput(int choice, Position* p) {
+  if (choice == KEY_UP || choice == 'w') p->y--;
+  else if (choice == KEY_DOWN || choice == 's') p->y++;
+  else if (choice == KEY_RIGHT || choice == 'd') p->x++;
+  else if (choice == KEY_LEFT || choice == 'a') p->x--;
+}
+
 /**
  * 
  * @return false to exit or change level, true otherwise.
  */
 bool PlayerUI::Input(bool* levelEnded, bool* downLevel)
 {
-    int x;
-    int y;
-    player->GetPos(&x, &y); /*Get current position for movement*/
+    Position playerPos = player->GetPosition(); /*Get current position for movement*/
 
-    int thisX = x; //set movement positions to default
-    int thisY = y;
+    Position inputPos = Position(playerPos);
 
     ShowControls();
     int choice = mainUI->ConsoleGetInput();
-
-    if (choice == KEY_UP || choice == 'w') thisY--;
-    else if (choice == KEY_RIGHT || choice == 'd') thisX++;
-    else if (choice == KEY_DOWN || choice == 's') thisY++;
-    else if (choice == KEY_LEFT || choice == 'a') thisX--;
-    else if (choice == 'q' || choice == KEY_EXIT ) return false;
+    if (choice == 'q' || choice == KEY_EXIT ) return false;
     else if (choice == 'c') return TextInput();
     else if (choice == 'i') AccessPlayerInv();
     else if (choice == 'u') Interact();
+    ProcessMovementInput(choice, &inputPos);
 
-        //handle any movement input
-    if ((x != thisX) || (y != thisY)) {
-        PlayerMoveTurn(thisX, thisY,levelEnded,downLevel);
-        
-        if (*levelEnded) return false;
-    }
-    
-    return true;
+    if (inputPos != playerPos) PlayerMoveTurn(inputPos.x, inputPos.y, levelEnded, downLevel);
+    return !(*levelEnded);
 }
 
 void PlayerUI::DrawNPCS()
