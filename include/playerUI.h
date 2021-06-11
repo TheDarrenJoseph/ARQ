@@ -11,7 +11,8 @@
 #define PROMPT_TEXT "ARQ: "
 
 class PlayerUI {
-    
+private:
+    Logging* logging = &logging -> getInstance();
 public:
     UI* mainUI = NULL;
     
@@ -42,6 +43,7 @@ public:
 
 //    int AccessArea (Inventory* a);
     void AccessListCommand(Container* c,int index, bool playerInv);
+    void PrintAccessContainerHints();
     void AccessContainer (Container* c,bool playerInv);
 
     

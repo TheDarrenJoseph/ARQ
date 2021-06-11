@@ -685,6 +685,14 @@ bool PlayerUI::InventoryInput(int choice, int index, Container* c, bool playerIn
 }
 
 
+void PlayerUI::PrintAccessContainerHints() {
+
+    mainUI -> ClearConsole();
+    mainUI -> ConsolePrint("Up/Down - Select an item ", 0, 0);
+    mainUI -> ConsolePrint("c - Enter Command",0,1);
+    mainUI -> ConsolePrint("q - Close window",0,2);
+}
+
 /**
  * 
  * @param c         
@@ -694,38 +702,38 @@ bool PlayerUI::InventoryInput(int choice, int index, Container* c, bool playerIn
 void PlayerUI::AccessContainer(Container * c, bool playerInv)
 {
     bool selection = true;
-    long unsigned int index = 0;
-    long unsigned int invIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    
+    long unsigned int selectionIndex = 0;
+    long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    const unsigned long int INV_WINDOW_LINES = INVWIN_FRONT_Y-2;
+
     //Selection loop
-    while(selection == true) {
-        
-        mainUI->ListInv(c,invIndex);
-        mainUI->HighlightInvLine(index);      
-        mainUI -> ClearConsole();
-        mainUI -> ConsolePrint("Up/Down - Select an item ", 0, 0);
-        mainUI -> ConsolePrint("c - Enter Command",0,1);
-        mainUI -> ConsolePrint("q - Close window",0,2);
-        int choice = mainUI->ConsoleGetInput();
-        selection = InventoryInput(choice, index, c, playerInv);   
-        long unsigned int invSize = c->GetSize()-1; 
-        
+    int choice = -1;
+    while(InventoryInput(choice, selectionIndex, c, playerInv)) {
+        PrintAccessContainerHints();
+        mainUI->ListInv(c,invStartIndex);
+        mainUI->HighlightInvLine(selectionIndex);      
+
+        choice = mainUI->ConsoleGetInput();
+        long unsigned int containerSize = c->GetSize()-1; 
+        long unsigned int lowestInvIndex = containerSize - INV_WINDOW_LINES;
+        logging -> logline("Container size: " + std::to_string(containerSize));
+        logging -> logline("Lowest inv index: " + std::to_string(lowestInvIndex));
+        logging -> logline("inv index: " + std::to_string(invStartIndex));
         switch (choice) {
           case KEY_UP:
-            if (index>0) {
-                index--; 
-            } else if (index==0 && invIndex>0) {
-                invIndex--;
+            if (selectionIndex>0) {
+                selectionIndex--; 
+            } else if (selectionIndex==0 && invStartIndex>0) {
+                invStartIndex--;
             }
             break;
           case KEY_DOWN:
-            unsigned long int invWindowLimit = INVWIN_FRONT_Y-2;
-            //Checking against the window boundary. invSize-1 allows
-            if (index<invWindowLimit && index<invSize) {
-                if (index==invWindowLimit-1 && invIndex<invSize) {
-                    invIndex++;
+            //Checking against the window boundary. containerSize allows
+            if (selectionIndex < INV_WINDOW_LINES && selectionIndex < containerSize) {
+                if (selectionIndex == INV_WINDOW_LINES-1 && invStartIndex < containerSize && invStartIndex < lowestInvIndex) {
+                    invStartIndex++;
                 } else {
-                    index++; 
+                  selectionIndex++; 
                 }
             }
             break;

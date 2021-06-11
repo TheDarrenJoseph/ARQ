@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <list>
 
 #include <cmath>
 #include <sstream>
@@ -37,13 +38,18 @@ int main()
     Player* thisPlayer = new Warrior();
     
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
-    Container* bag = new Container(98,"Bag","X",2,2,5,true); //inventory testing
-    Container* box = new Container(98,"Box","X",2,2,5,true); //inventory testing
+    Container* bag = new Container(1,"Bag","X",2,2,5,true); //inventory testing
+    Container* box = new Container(2,"Box","X",2,2,5,true); //inventory testing
     thisPlayer->AddToInventory(bag);
     thisPlayer->AddToInventory(box);
-            
-    Item* testItem = new Item(98,"Test Item","X",2,2,100,true); //inventory testing
-    thisPlayer->AddToInventory(testItem);
+     
+    std::list<Item*> testItems;
+    //inventory testing
+    for (int i=0; i<50; i++) {
+      Item* testItem = new Item(3+i,"Test Item " + std::to_string(i),"X",2,2,100 + i,true); 
+      thisPlayer->AddToInventory(testItem);
+      testItems.push_back(testItem);
+    }
 
     CursesUI thisUI = CursesUI();
     Map* thisMap;
@@ -58,8 +64,9 @@ int main()
     //Clean up our container mess
     delete(bag);
     delete(box);
-    delete(testItem);
-    
+    for (Item* testItem : testItems) {
+      delete(testItem);
+    }
     //Free each npc?
     //for (int npcNo=0; npcNo<MAX_NPCS; npcNo++) {
      //   delete(&npcs[npcNo]);

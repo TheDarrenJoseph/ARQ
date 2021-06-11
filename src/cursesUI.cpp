@@ -272,32 +272,6 @@ void CursesUI::DrawPlayerStats(std::string name, int health, long unsigned int l
     return;
 }
 
-//make sure any overloads of this func are up-to-date with the header
-//void CursesUI::ListInv(Container* c)
-//{
-//    for (int y = 0; y < 3; y++) {
-//        //draw each item on this row to the screen
-//        for (int x = 0; x < 3; x++) {
-//            WINDOW* thisWindow = invwins_front[y][x];
-//
-//            werase(thisWindow);
-//            wmove(thisWindow, 0, 0);
-//
-//            Item* itm = c->GetItem(x, y);
-//
-//            //int colour = itm->colour;
-//            std::string str = itm->name;
-//
-//            const char* symbol = str.c_str();
-//
-//            wprintw_col(thisWindow, symbol, 0);
-//            //wrefresh(thisWindow);
-//        };
-//    };
- //   return;
-//}
-
-
 void CursesUI :: ClearInvHighlighting() {
     //Clear other highlighting
     for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
