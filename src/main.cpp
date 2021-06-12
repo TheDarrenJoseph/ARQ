@@ -42,7 +42,8 @@ int main()
     Container* box = new Container(3, OBJECT,"Box","X",2,2,100, 5,true); //inventory testing
     thisPlayer->AddToInventory(bag);
     thisPlayer->AddToInventory(box);
-     
+    
+
     std::list<Item*> testItems;
     //inventory testing
     for (int i=0; i<50; i++) {
@@ -53,6 +54,12 @@ int main()
 
     CursesUI thisUI = CursesUI();
     Map* thisMap;
+
+    // TODO fix assignment operator (Segfault)
+    //Container* testChest = new Container(4, OBJECT,"Tester's Chest","O",2,2,100, 5,true); //inventory testing
+    //Position playerPos = thisPlayer -> GetPosition();
+    //thisMap -> SetContainer(playerPos.x+1, playerPos.y+1, *testChest);
+
     PlayerUI* playerUI = new PlayerUI(MAX_NPCS,&thisUI,thisMap,thisPlayer,&npcs[0]);
     GameEngine thisGame = GameEngine(thisPlayer,&npcs[0], MAX_NPCS, thisMap, &thisUI, playerUI);
     

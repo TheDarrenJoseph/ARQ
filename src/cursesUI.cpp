@@ -23,7 +23,7 @@ void CursesUI::InitWindows() {
     consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, maxY-5, 3); //Creates the console window for content
 
     invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
-    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X,4,4);
+    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
 
     std::cout << "Display Initialised\n";
 }
@@ -277,6 +277,7 @@ void CursesUI :: ClearInvHighlighting() {
     for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
         mvwchgat(invwin_front, y, 0, INVWIN_FRONT_X, A_NORMAL, 0, NULL);
     }
+    wrefresh(invwin_front);
 }
 
 /** Highlights xChars characters at the specified x,yIndex
@@ -315,8 +316,11 @@ void CursesUI::ListInv(Container* c, long unsigned int invIndex)
     wprint_at(invwin_rear,"NAME", 1, COL_1+1); // +1 for border
     wprint_at(invwin_rear,"WEIGHT (Kg)", 1, COL_2);
     wprint_at(invwin_rear,"VALUE", 1, COL_3);
-    
-    wrefresh(invwin_rear);
+    //box(invwin_rear, 0, 0);
+    //box(invwin_front, 0, 0);
+    //wrefresh(invwin_rear);
+    //wrefresh(invwin_front);
+
     long unsigned int invSize = c->GetSize();    
     long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y-1;
     for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
@@ -333,6 +337,13 @@ void CursesUI::ListInv(Container* c, long unsigned int invIndex)
                 sprintf(buffer,"%-04d",thisItem->GetValue());
                 wprint_at(invwin_front, buffer, i, COL_3);
     }        
+
+    int maxX, maxY;
+    getmaxyx(invwin_rear, maxY, maxX);
+    // Footer instructions
+    wprint_at(invwin_rear,"(o)pen, (m)move", maxY-1, 1); // Add commands to the bottom of the window
+    wrefresh(invwin_rear);
+    //wrefresh(invwin_front);
     return;
 }
 
@@ -396,6 +407,13 @@ void CursesUI::UpdateUI()
     wrefresh(consolewin_front);
 }
 
+void CursesUI::ClearConsoleAndPrint(std::string text) 
+{
+  ClearConsole();
+  ConsolePrint(text, 0, 0);
+}
+
+
 void CursesUI::ConsolePrint(std::string text, int posX, int posY)
 {
     wmove(consolewin_front, posY, posX);
@@ -408,12 +426,11 @@ void CursesUI::ClearConsole()
     werase(consolewin_front);
 }
 
-void CursesUI::ConsolePrintWithWait(std::string text, int posX, int posY)
+int CursesUI::ConsolePrintWithWait(std::string text, int posX, int posY)
 {
     wmove(consolewin_front, posY, posX);
     wprintw(consolewin_front, text.c_str());
-
-    wgetch(consolewin_front);
+    return ConsoleGetInput();
 }
 
 /** Allows grabbing of a single keyboard key press from the input console, 
@@ -424,6 +441,7 @@ void CursesUI::ConsolePrintWithWait(std::string text, int posX, int posY)
 int CursesUI::ConsoleGetInput() {
     keypad(consolewin_front, TRUE);
     return wgetch(consolewin_front); 
+    keypad(consolewin_front, FALSE);
 }
 
 std::string CursesUI::ConsoleGetString()

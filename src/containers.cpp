@@ -60,6 +60,14 @@ void Container :: RemoveItem(long unsigned int i) {
 
 }  
 
+void Container :: RemoveItem(const Item* item) {
+  std::list<const Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
+  if (iter != inv.end()) {
+    inv.erase(iter);
+  }
+}
+
+
 const Item* Container :: GetItem(long unsigned int i) {
   
    if(sizeCheck(i)) { //Boundary check

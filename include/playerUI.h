@@ -5,20 +5,22 @@
 #include <sstream>
 
 #include "cursesUI.h"
+#include "inventoryUI.h"
+#include "playerInventoryFunctions.h"
 #include "map.h"
 #include "characters.h"
 #include "position.h"
+#include "stringUtils.h"
 
-#define PROMPT_TEXT "ARQ: "
-
-class PlayerUI {
+class PlayerUI : public InventoryFunctions {
 private:
     Logging* logging = &logging -> getInstance();
     void ProcessMovementInput(int choice, Position* p);
 
 public:
     UI* mainUI = NULL;
-    
+    InventoryUI* inventoryUI = NULL;
+
     Map* map = NULL;
     
     NPC* npcs = NULL;
@@ -45,22 +47,25 @@ public:
     void DrawPlayer();
     void AccessPlayerInv();
     void DrawPlayerEquipment();
-
-//    int AccessArea (Inventory* a);
-    void AccessListCommand(Container* c,int index, bool playerInv);
-    void PrintAccessContainerHints();
-    void AccessContainer (Container* c,bool playerInv);
-
     
     void TileProc(tile t);
-    
+
+    // PlayerInventoryFunctions
+    int DropPlayerItem(const Item* thisItem);
+    int MoveContainer(Container* container);
+
     PlayerUI(int maxNPCS, UI* mainUI, Map* map, Player* player, NPC* npcs){
         MAX_NPCS = maxNPCS;
         
         this->mainUI = mainUI;
+        this->inventoryUI = new InventoryUI(mainUI, player -> GetInventory(), this);
         this->map = map;
         this->player = player;
         this->npcs = npcs;
+    }
+
+    ~PlayerUI() {
+      free(this -> inventoryUI);
     }
 };
 

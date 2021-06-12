@@ -21,8 +21,8 @@
 #define INVWIN_REAR_X MAINWIN_REAR_X-2
 #define INVWIN_REAR_Y MAINWIN_REAR_Y-CONSOLEWIN_REAR_Y-1
 
-#define INVWIN_FRONT_X INVWIN_REAR_X-2
-#define INVWIN_FRONT_Y INVWIN_REAR_Y-2
+#define INVWIN_FRONT_X INVWIN_REAR_X-3
+#define INVWIN_FRONT_Y INVWIN_REAR_Y-3
 
 #define INV_ITEM_Y 10 //The number of chars wide an inventory slot should be (How much text it can hold)
 
@@ -78,8 +78,9 @@ public:
     virtual void UpdateUI();
 
     virtual void ClearConsole();
+    virtual void ClearConsoleAndPrint (std::string text);
     virtual void ConsolePrint(std::string text, int posX, int posY);
-    virtual void ConsolePrintWithWait(std::string text, int posX, int posY);
+    virtual int ConsolePrintWithWait(std::string text, int posX, int posY);
     virtual int ConsoleGetInput();
     virtual std::string ConsoleGetString();
     

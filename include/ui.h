@@ -6,6 +6,9 @@
 #include "position.h"
 #include "map.h"
 
+#define PROMPT_TEXT "ARQ: "
+
+
 class UI {
 public:
     virtual void InitWindows() = 0;
@@ -33,8 +36,9 @@ public:
     virtual void UpdateUI() = 0;
     
     virtual void ClearConsole() = 0;
+    virtual void ClearConsoleAndPrint (std::string text) = 0;
     virtual void ConsolePrint (std::string text, int posX, int posY) = 0;
-    virtual void ConsolePrintWithWait (std::string text, int posX, int posY) = 0;
+    virtual int ConsolePrintWithWait (std::string text, int posX, int posY) = 0;
     virtual int ConsoleGetInput() = 0;
     virtual std::string ConsoleGetString() = 0;
     virtual void ClearConsoleHighlighting() = 0;

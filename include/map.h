@@ -158,7 +158,6 @@ class Map
 
     int MoveNPCS ();
     void DropCharacterItems(Character* c);
-    int DropPlayerItem(Player* p, const Item* thisItem, int index);
    
     bool  LevelPathValid();
     void PaveRoom(Room r);

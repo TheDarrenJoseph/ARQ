@@ -1,5 +1,4 @@
 #include "playerUI.h"
-#include "stringUtils.h"
 
 void PlayerUI::Battle(int npc_id)
 {
@@ -121,8 +120,8 @@ void PlayerUI::Battle(int npc_id)
 }
 
 void PlayerUI::AccessPlayerInv() {
-    AccessContainer(player->GetInventory(),true);
-    mainUI->UpdateUI();
+    inventoryUI -> AccessContainer(player->GetInventory(), true);
+    mainUI->UpdateUI(); 
 }
 
 void PlayerUI::DrawPlayerEquipment() {
@@ -400,7 +399,7 @@ void PlayerUI::PlayerContainerProc(Player* p, Container* container)
       answerChoice = processYesOrNoChoice(answer);
 
     if (answerChoice == 0) {
-        AccessContainer(container, false); 
+       inventoryUI -> AccessContainer(container, false); 
     } else if (answerChoice == 1) {
         sprintf(&promptbuffer[0], "You leave the %s untouched..", containerName);
         prompt = promptbuffer;
@@ -536,11 +535,10 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
 
 void PlayerUI::Interact() {
     mainUI->ClearConsole();
-    mainUI->ConsolePrintWithWait("What would you like to interact with? (use directions to select, q to cancel)", 0, 0); 
- 
+    
     Position playerPos = player -> GetPosition();
     Position inputPos = Position(playerPos);
-    int choice = mainUI->ConsoleGetInput();
+    int choice = mainUI->ConsolePrintWithWait("What would you like to interact with? (use directions to select, q to cancel)", 0, 0); 
     ProcessMovementInput(choice, &inputPos);
     if (choice == 'q') return;
     
@@ -551,7 +549,7 @@ void PlayerUI::Interact() {
       if (map -> HasDoorAt(inputPos.x, inputPos.y)) {
         DoorProc(inputPos.x, inputPos.y);
       } else if (container.IsOpenable()){ 
-        AccessContainer(&container, false);
+        this -> inventoryUI -> AccessContainer(&container, false);
       } else {
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("There's nothing to interact with here.", 0, 0); 
@@ -666,126 +664,6 @@ void PlayerUI::DrawPlayer()
 //    
 //}
 
-/** Allows the user to enter a command to perform operations on things in a list/inventory
- *  This allows dropping/moving items, etc
- * @param index The currently selected item index
- * @param mainUI The UI to call to
- * @param playerInv whether or not this is the player's inventory (to disable "take", etc)
- * @return 
- */
-void PlayerUI :: AccessListCommand(Container* c, int index, bool playerInv) {
-    echo();
-
-    mainUI->ConsolePrintWithWait(PROMPT_TEXT, 0, 0);
-    std::string input = mainUI->ConsoleGetString();
-    logging -> logline("Player inputted: '" + input + "'");
-    if (input == "drop") {
-        map -> DropPlayerItem(player, c->GetItem(index), index);
-    } else if (input == "move") {
-        //1. Player Inv
-        //2.. Location Inv
-    } else if (input == "open") {
-        //if (inventory->)
-        const Item* itm = c->GetItem(index);   
-        
-        //Dynamic cast to type check
-        const Container* c = dynamic_cast<const Container*> (itm);
-        
-        //If incorrectly cast (item), pointer will be NULL
-        if (c != NULL) {
-            AccessContainer((Container*)itm,false); //Cast and pass
-        }
-      
-    } else {
-        mainUI->ClearConsole();
-        mainUI->ConsolePrintWithWait("Huh?",0,0);
-    }
-    
-    mainUI->ClearConsole(); //Clear ready for output
-}
-
-/**
- * 
- * @param choice int code for the player input
- * @param index The current selected item index in this list
- * @param c A pointer to this container
- * @param playerInv Whether or not this is the player's inventory or another container
- * @return 
- */
-bool PlayerUI::InventoryInput(int choice, int index, Container* c, bool playerInv) {
-     switch(choice) {
-            case ('q') : {
-                return false;
-                break;
-            }
-            case ('c') : {
-                AccessListCommand(c, index, playerInv);
-                break;
-            }
-           case ('i') : { //Item info
-                break;
-            }
-        }
-     return true;
-}
-
-
-void PlayerUI::PrintAccessContainerHints() {
-
-    mainUI -> ClearConsole();
-    mainUI -> ConsolePrint("Up/Down - Select an item ", 0, 0);
-    mainUI -> ConsolePrint("c - Enter Command",0,1);
-    mainUI -> ConsolePrint("q - Close window",0,2);
-}
-
-/**
- * 
- * @param c         
- * @param playerInv whether or not we are current looking at the player's inventory, disables 'take'
- * @return 
- */
-void PlayerUI::AccessContainer(Container * c, bool playerInv)
-{
-    bool selection = true;
-    long unsigned int selectionIndex = 0;
-    long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    const unsigned long int INV_WINDOW_LINES = INVWIN_FRONT_Y-2;
-
-    //Selection loop
-    int choice = -1;
-    while(InventoryInput(choice, selectionIndex, c, playerInv)) {
-        PrintAccessContainerHints();
-        mainUI->ListInv(c,invStartIndex);
-        mainUI->HighlightInvLine(selectionIndex);      
-
-        choice = mainUI->ConsoleGetInput();
-        long unsigned int containerSize = c->GetSize()-1; 
-        long unsigned int lowestInvIndex = containerSize - INV_WINDOW_LINES;
-        //logging -> logline("Container size: " + std::to_string(containerSize));
-        //logging -> logline("Lowest inv index: " + std::to_string(lowestInvIndex));
-        //logging -> logline("inv index: " + std::to_string(invStartIndex));
-        switch (choice) {
-          case KEY_UP:
-            if (selectionIndex>0) {
-                selectionIndex--; 
-            } else if (selectionIndex==0 && invStartIndex>0) {
-                invStartIndex--;
-            }
-            break;
-          case KEY_DOWN:
-            //Checking against the window boundary. containerSize allows
-            if (selectionIndex < INV_WINDOW_LINES && selectionIndex < containerSize) {
-                if (selectionIndex == INV_WINDOW_LINES-1 && invStartIndex < containerSize && invStartIndex < lowestInvIndex) {
-                    invStartIndex++;
-                } else {
-                  selectionIndex++; 
-                }
-            }
-            break;
-        }
-    }
-    
-}
 
 void PlayerUI::TileProc(tile t) {
     if (t == ent) {
@@ -804,4 +682,24 @@ void PlayerUI::TileProc(tile t) {
     };
 
 }
+
+int PlayerUI::DropPlayerItem(const Item* thisItem)
+{
+    int x, y;
+    player -> GetPos(&x, &y);
+    //if the player is at an area where items can be placed, add the item
+    if (map -> CanPlaceItems(x, y)) {
+        map -> AddToContainer(x, y, thisItem); //replace the map tile with the item
+        player -> GetInventory() -> RemoveItem(thisItem); //clear the inventory tile
+        return 0;
+    }
+
+    return 1;
+}
+
+int PlayerUI::MoveContainer(Container* container)
+{   
+    return 1;
+}
+
 

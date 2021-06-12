@@ -474,26 +474,6 @@ void Map::DropCharacterItems(Character* c)
     SetContainer(x, y, *body);
 }
 
-int Map::DropPlayerItem(Player* p, const Item* thisItem, int index)
-{
-    int x, y;
-    p->GetPos(&x, &y);
-
-    //if the player is at an area where items can be placed, add the item
-    if (CanPlaceItems(x, y)) {
-        AddToContainer(x, y, thisItem); //replace the map tile with the item
-
-        p->GetInventory()->RemoveItem(index); //clear the inventory tile
-
-        return 0;
-    }
-
-    else {
-        return 1;
-    }
-
-}
-
 tile Map::GetTile(int x, int y)
 {
     return game_grid[y][x];

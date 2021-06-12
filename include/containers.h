@@ -1,6 +1,7 @@
 #ifndef CONTAINERS_H
 #define CONTAINERS_H
 
+#include <algorithm>
 #include <string>
 #include <list>
 #include "items.h"
@@ -36,6 +37,7 @@ struct Container : public Item
   
   
   void RemoveItem(long unsigned int i);
+  void  RemoveItem(const Item* item);
  
   const Item* GetItem(long unsigned int i);
   long unsigned int GetSize();
