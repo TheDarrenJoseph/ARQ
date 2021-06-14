@@ -22,6 +22,7 @@ public:
 
     virtual void HighlightInv(int xChars, int xIndex, int yIndex)=0;
     virtual void HighlightInvLine(int index)=0;
+    virtual void UnhighlightInvLine(int yIndex)=0;
     virtual void ListInv(Container* c,unsigned long int invIndex) = 0;
     //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;

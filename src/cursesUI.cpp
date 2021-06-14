@@ -285,18 +285,21 @@ void CursesUI :: ClearInvHighlighting() {
  * @param xChars
  * @param yIndex
  */
-void CursesUI :: HighlightInv(int xChars, int xIndex, int yIndex) {
-   
-    
+void CursesUI :: HighlightInv(int xChars, int xIndex, int yIndex) {    
     //Index/Selection highlight
     mvwchgat(invwin_front, yIndex, xIndex, xChars, A_BLINK, 1, NULL); 
     wrefresh(invwin_front);
 }
 
 void CursesUI :: HighlightInvLine(int yIndex) {
-    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X -1 , A_BLINK, 1, NULL); //add red blink to the current line
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_BLINK, 1, NULL); //add red blink to the current line
     wrefresh(invwin_front);
- }
+}
+
+void CursesUI :: UnhighlightInvLine(int yIndex) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1, A_NORMAL, 0, NULL);
+    wrefresh(invwin_front);
+}
 
 /**
  * 
@@ -322,7 +325,7 @@ void CursesUI::ListInv(Container* c, long unsigned int invIndex)
     //wrefresh(invwin_front);
 
     long unsigned int invSize = c->GetSize();    
-    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y-1;
+    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
     for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
                 const Item* thisItem = c->GetItem(invIndex+i);
                 char buffer[20];            

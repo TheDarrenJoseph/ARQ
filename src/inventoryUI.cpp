@@ -75,41 +75,55 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     bool selection = true;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    const unsigned long int INV_WINDOW_LINES = INVWIN_FRONT_Y-2;
+    const unsigned long int ITEM_LINE_COUNT = INVWIN_FRONT_Y;
 
     //Selection loop
     int choice = -1;
+    mainUI->ListInv(c,invStartIndex);
     while(InventoryInput(choice, selectionIndex, c, playerInv)) {
         PrintAccessContainerHints();
-        mainUI->ListInv(c,invStartIndex);
         mainUI->HighlightInvLine(selectionIndex);      
 
         choice = mainUI->ConsoleGetInput();
         long unsigned int containerSize = c->GetSize(); 
-        long unsigned int lowestInvIndex = containerSize - INV_WINDOW_LINES;
-        logging -> logline("Container size: " + std::to_string(containerSize));
-        //logging -> logline("Lowest inv index: " + std::to_string(lowestInvIndex));
-        //logging -> logline("inv index: " + std::to_string(invStartIndex));
+        logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
+        logging -> logline("Container SIZE: " + std::to_string(containerSize));
+
+        int maxScrollIndex = 0;
+        if (containerSize > ITEM_LINE_COUNT) maxScrollIndex = (containerSize - ITEM_LINE_COUNT);
+
+        int maxSelectionIndex =  ITEM_LINE_COUNT-1;
+        if (containerSize < ITEM_LINE_COUNT) maxSelectionIndex = ITEM_LINE_COUNT - (ITEM_LINE_COUNT - containerSize) - 1;
+        logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
+
+        long unsigned int newSelectionIndex = selectionIndex;
+        bool redrawList = false;
         switch (choice) {
           case KEY_UP:
             if (selectionIndex>0) {
-                selectionIndex--; 
+                newSelectionIndex--; 
             } else if (selectionIndex==0 && invStartIndex>0) {
                 invStartIndex--;
+                redrawList = true;
             }
             break;
           case KEY_DOWN:
             //Checking against the window boundary. containerSize allows
-            if (selectionIndex < INV_WINDOW_LINES && selectionIndex < containerSize) {
-                if (selectionIndex == INV_WINDOW_LINES-1 && invStartIndex < containerSize && invStartIndex < lowestInvIndex) {
-                  invStartIndex++;
-                } else {
-                  selectionIndex++; 
-                }
+            if (selectionIndex < maxSelectionIndex) {
+              newSelectionIndex++; 
+            } else if (selectionIndex == ITEM_LINE_COUNT-1 && invStartIndex < maxScrollIndex) {
+              invStartIndex++;
+              redrawList = true;
             }
             break;
         }
-        mainUI-> ClearInvHighlighting();
+
+        mainUI->UnhighlightInvLine(selectionIndex);      
+        selectionIndex = newSelectionIndex;
+        if (redrawList) mainUI->ListInv(c,invStartIndex);
+        logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
+        logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
+        logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
     }
     
 }

@@ -41,7 +41,7 @@ int main()
     Container* bag = new Container(2, OBJECT, "Bag","X",2,2,100, 5,true); //inventory testing
     Container* box = new Container(3, OBJECT,"Box","X",2,2,100, 5,true); //inventory testing
     thisPlayer->AddToInventory(bag);
-    thisPlayer->AddToInventory(box);
+    //thisPlayer->AddToInventory(box);
     
 
     std::list<Item*> testItems;
