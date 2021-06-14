@@ -26,6 +26,8 @@ public:
     virtual void ListInv(Container* c,unsigned long int invIndex) = 0;
     //virtual void ListInv(Inventory* a) = 0;
     virtual void ClearInvHighlighting() = 0;
+    virtual void ClearInvWindow() = 0;
+    virtual void EraseInvWindow() = 0;
     
     virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos)=0;
     virtual void DrawCharacter (int x, int y, int colour, char symbol) = 0;

@@ -8,7 +8,7 @@
  * @param playerInv Whether or not this is the player's inventory or another container
  * @return 
  */
-bool InventoryUI::InventoryInput(int choice, int index, Container* c, bool playerInv) {
+bool InventoryUI::InventoryInput(int choice, int index, int invStartIndex, Container* c, bool playerInv) {
      switch(choice) {
             case ('q') : {
                 return false;
@@ -25,8 +25,14 @@ bool InventoryUI::InventoryInput(int choice, int index, Container* c, bool playe
                 OpenContainer(c, index);
                 break;
             }
+          case ('t') : {
+                TakeItem(c, index, playerInv);
+                mainUI->ListInv(c,invStartIndex);
+                break;
+            }
            case ('d') : {
                 DropItem(c -> GetItem(index), playerInv);
+                mainUI->ListInv(c,invStartIndex);
                 break;
             }
         }
@@ -42,12 +48,22 @@ void InventoryUI::PrintAccessContainerHints() {
     mainUI -> ConsolePrint("q - Close window",0,2);
 }
 
+void InventoryUI::TakeItem(Container* container, int index, bool playerInv) {
+  if (playerInv) {
+    logging -> logline("Taking item from " + container -> GetName() + " at index: " + std::to_string(index));
+    inventoryFunctions -> TakeItem(container, index);
+  } else {
+    mainUI->ClearConsoleAndPrint("You cannot take from your own inventory.");
+  }
+}
+
+
 void InventoryUI::DropItem(const Item* item, bool playerInv) {
   if (playerInv) {
     inventoryFunctions -> DropPlayerItem(item);
     mainUI->ClearConsoleAndPrint("Dropped the " + item -> GetName());
   } else {
-    mainUI->ClearConsoleAndPrint("Cannot drop a container. Perhaps move it? ");
+    mainUI->ClearConsoleAndPrint("You cannot drop that.");
   }
 }
 
@@ -72,6 +88,7 @@ void InventoryUI::OpenContainer(Container * parent, int index) {
  */
 void InventoryUI::AccessContainer(Container * c, bool playerInv)
 {
+    mainUI -> ClearInvWindow();
     bool selection = true;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
@@ -80,50 +97,52 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     //Selection loop
     int choice = -1;
     mainUI->ListInv(c,invStartIndex);
-    while(InventoryInput(choice, selectionIndex, c, playerInv)) {
+    while(InventoryInput(choice, selectionIndex + invStartIndex, invStartIndex, c, playerInv)) {
         PrintAccessContainerHints();
         mainUI->HighlightInvLine(selectionIndex);      
 
         choice = mainUI->ConsoleGetInput();
         long unsigned int containerSize = c->GetSize(); 
-        logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
-        logging -> logline("Container SIZE: " + std::to_string(containerSize));
+        if (containerSize > 0) {
+          //logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
+          //logging -> logline("Container SIZE: " + std::to_string(containerSize));
 
-        int maxScrollIndex = 0;
-        if (containerSize > ITEM_LINE_COUNT) maxScrollIndex = (containerSize - ITEM_LINE_COUNT);
+          int maxScrollIndex = 0;
+          if (containerSize > ITEM_LINE_COUNT) maxScrollIndex = (containerSize - ITEM_LINE_COUNT);
 
-        int maxSelectionIndex =  ITEM_LINE_COUNT-1;
-        if (containerSize < ITEM_LINE_COUNT) maxSelectionIndex = ITEM_LINE_COUNT - (ITEM_LINE_COUNT - containerSize) - 1;
-        logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
+          int maxSelectionIndex =  ITEM_LINE_COUNT-1;
+          if (containerSize < ITEM_LINE_COUNT) maxSelectionIndex = ITEM_LINE_COUNT - (ITEM_LINE_COUNT - containerSize) - 1;
+          //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
 
-        long unsigned int newSelectionIndex = selectionIndex;
-        bool redrawList = false;
-        switch (choice) {
-          case KEY_UP:
-            if (selectionIndex>0) {
-                newSelectionIndex--; 
-            } else if (selectionIndex==0 && invStartIndex>0) {
-                invStartIndex--;
+          long unsigned int newSelectionIndex = selectionIndex;
+          bool redrawList = false;
+          switch (choice) {
+            case KEY_UP:
+              if (selectionIndex>0) {
+                  newSelectionIndex--; 
+              } else if (selectionIndex==0 && invStartIndex>0) {
+                  invStartIndex--;
+                  redrawList = true;
+              }
+              break;
+            case KEY_DOWN:
+              //Checking against the window boundary. containerSize allows
+              if (selectionIndex < maxSelectionIndex) {
+                newSelectionIndex++; 
+              } else if (selectionIndex == ITEM_LINE_COUNT-1 && invStartIndex < maxScrollIndex) {
+                invStartIndex++;
                 redrawList = true;
-            }
-            break;
-          case KEY_DOWN:
-            //Checking against the window boundary. containerSize allows
-            if (selectionIndex < maxSelectionIndex) {
-              newSelectionIndex++; 
-            } else if (selectionIndex == ITEM_LINE_COUNT-1 && invStartIndex < maxScrollIndex) {
-              invStartIndex++;
-              redrawList = true;
-            }
-            break;
-        }
+              }
+              break;
+          }
 
-        mainUI->UnhighlightInvLine(selectionIndex);      
-        selectionIndex = newSelectionIndex;
-        if (redrawList) mainUI->ListInv(c,invStartIndex);
-        logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
-        logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
-        logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
+          mainUI->UnhighlightInvLine(selectionIndex);      
+          selectionIndex = newSelectionIndex;
+          if (redrawList) mainUI->ListInv(c,invStartIndex);
+          //logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
+          //logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
+          //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
+      }
     }
     
 }

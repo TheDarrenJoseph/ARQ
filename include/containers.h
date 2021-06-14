@@ -41,12 +41,14 @@ struct Container : public Item
  
   const Item* GetItem(long unsigned int i);
   long unsigned int GetSize();
+  long unsigned int GetWeightLimit();
   
   bool IsOpenable();
   bool IsImpassable();
 
   int HasItems();
 
+  int GetTotalWeight();
   int GetTotalLootScore();
   
   itemType getType()  {

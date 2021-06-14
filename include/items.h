@@ -66,7 +66,7 @@ struct Item
   {
     this -> id = id;
     this -> name = name;
-    this -> symbol = (*symbol);
+    this -> symbol = symbol[0];
     this -> colour = colour;
     this -> weight = weight;
     this -> value = value;

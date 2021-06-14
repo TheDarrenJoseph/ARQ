@@ -51,6 +51,7 @@ public:
     void TileProc(tile t);
 
     // PlayerInventoryFunctions
+    int TakeItem(Container* container, int index);
     int DropPlayerItem(const Item* thisItem);
     int MoveContainer(Container* container);
 

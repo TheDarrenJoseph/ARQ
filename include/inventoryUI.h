@@ -11,11 +11,12 @@
 class InventoryUI {
   private:
     Logging* logging = &logging -> getInstance();
+    void TakeItem(Container* container, int index, bool playerInv);
     void DropItem(const Item* item, bool playerInv);
     void OpenContainer(Container * c, int index);
 
   public:
-    bool InventoryInput(int choice, int index, Container* c, bool playerInv);
+    bool InventoryInput(int choice, int index, int invStartIndex, Container* c, bool playerInv);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);
     void AccessListCommand(Container* c, int index, bool playerInv);

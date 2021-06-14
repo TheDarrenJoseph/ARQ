@@ -683,6 +683,13 @@ void PlayerUI::TileProc(tile t) {
 
 }
 
+int PlayerUI::TakeItem(Container* container, int index)
+{
+  const Item* item = container -> GetItem(index);
+  player -> AddToInventory(item);
+  container -> RemoveItem(index);
+}
+
 int PlayerUI::DropPlayerItem(const Item* thisItem)
 {
     int x, y;

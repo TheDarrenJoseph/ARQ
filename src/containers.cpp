@@ -31,6 +31,11 @@ long unsigned int Container :: GetSize() {
     return inv.size();
 }
 
+
+long unsigned int Container :: GetWeightLimit() {
+    return this -> weightLimit;
+}
+
 bool Container :: sizeCheck(long unsigned int i) {
     return ((!inv.empty()) && i<inv.size());
 }
@@ -114,6 +119,25 @@ int Container :: HasItems()
       return 2;
       break;
     }
+}
+
+int Container :: GetTotalWeight() {
+  int totalWeight = 0;
+  for (const Item* itemPtr : inv) {
+    int weight = 0;
+    itemType type = itemPtr -> getType();
+    switch (type) {
+      case ITEM:
+        weight = itemPtr -> GetWeight();
+        break;
+      case CONTAINER:
+        Container* container = (Container*) itemPtr;
+        weight = container -> GetTotalWeight();
+        break;
+    }
+    totalWeight += weight;
+  }
+  return totalWeight;
 }
 
 int Container :: GetTotalLootScore() {

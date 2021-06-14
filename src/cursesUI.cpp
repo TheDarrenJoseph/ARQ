@@ -126,6 +126,13 @@ int CursesUI::wprintw_col(WINDOW* winchoice, const char *text, int color_choice)
     return (0);
 }
 
+int CursesUI::wprintw_col_char(WINDOW* winchoice, char symbol, int color_choice) { 
+    wattron(winchoice, COLOR_PAIR(color_choice)); //turns on the chosen colour pair
+    waddch(winchoice, symbol);
+    wattroff(winchoice, COLOR_PAIR(color_choice)); //turns off the chosen colour pair
+    return (0);
+}
+
 int CursesUI::wprint_at(WINDOW* winchoice, const char *text, int pos_y, int pos_x)
 {
     wmove(winchoice, pos_y, pos_x);
@@ -153,7 +160,7 @@ void CursesUI::DrawItems(Map* m)
                 int colour = item -> GetColour();
                 char symbol = item -> GetSymbol();
                 wmove(mainwin_front, y, x);
-                wprintw_col(mainwin_front, &symbol, colour);
+                wprintw_col_char(mainwin_front, symbol, colour);
             }
         }
     }
@@ -169,7 +176,7 @@ void CursesUI::DrawContainers(Map* m)
         int colour = container.GetColour();
         char symbol = container.GetSymbol();
         wmove(mainwin_front, y, x);
-        wprintw_col(mainwin_front, &symbol, colour);
+        wprintw_col_char(mainwin_front, symbol, colour);
       }
     }
   }
@@ -280,6 +287,17 @@ void CursesUI :: ClearInvHighlighting() {
     wrefresh(invwin_front);
 }
 
+void CursesUI :: ClearInvWindow() {
+  wclear(invwin_front);
+  wclear(invwin_rear);
+}
+
+void CursesUI :: EraseInvWindow() {
+  werase(invwin_front);
+  werase(invwin_rear);
+}
+
+
 /** Highlights xChars characters at the specified x,yIndex
  * 
  * @param xChars
@@ -344,7 +362,11 @@ void CursesUI::ListInv(Container* c, long unsigned int invIndex)
     int maxX, maxY;
     getmaxyx(invwin_rear, maxY, maxX);
     // Footer instructions
-    wprint_at(invwin_rear,"(o)pen, (m)move", maxY-1, 1); // Add commands to the bottom of the window
+    char buffer[30];            
+    sprintf(buffer,"%03d/%03dkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
+    wprint_at(invwin_rear,"(o)pen, (t)ake, (m)ove", maxY-1, 1); // Add commands to the bottom of the window
+    wprint_at(invwin_rear, buffer, maxY-1, maxX-11); // Add commands to the bottom of the window
+
     wrefresh(invwin_rear);
     //wrefresh(invwin_front);
     return;

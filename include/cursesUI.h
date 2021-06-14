@@ -43,6 +43,7 @@ private:
 public:
     
     int wprintw_col(WINDOW* winchoice, const char* text, int color_choice);
+    int wprintw_col_char(WINDOW* winchoice, char symbol, int color_choice);
     int wprint_at(WINDOW* winchoice, const char* text, int pos_y, int pos_x);
     int wprintNoRefresh(WINDOW* win, std::string text);
 
@@ -65,9 +66,10 @@ public:
     virtual void UnhighlightInvLine(int yIndex);
 
     virtual void ListInv(Container* c,long unsigned int invIndex);
-//    virtual void ListInv(Inventory* a);
     virtual void ClearInvHighlighting();
-   
+    virtual void ClearInvWindow();
+    virtual void EraseInvWindow();
+
     virtual void CalculateViewBoundaries(Position playPos, int viewDistance, Position* viewStart, Position* viewEnd);
     virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos);
     virtual void DrawCharacter(int x, int y, int colour, char symbol);
