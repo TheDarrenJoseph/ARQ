@@ -35,6 +35,9 @@ bool InventoryUI::InventoryInput(int choice, int index, int invStartIndex, Conta
                 mainUI->ListInv(c,invStartIndex);
                 break;
             }
+           case ('m') : {
+                break;
+            }
         }
      return true;
 }
@@ -92,57 +95,28 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     bool selection = true;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    const unsigned long int ITEM_LINE_COUNT = INVWIN_FRONT_Y;
 
     //Selection loop
     int choice = -1;
     mainUI->ListInv(c,invStartIndex);
+    ContainerSelection containerSelection = ContainerSelection(c, INVWIN_FRONT_Y);
     while(InventoryInput(choice, selectionIndex + invStartIndex, invStartIndex, c, playerInv)) {
-        PrintAccessContainerHints();
-        mainUI->HighlightInvLine(selectionIndex);      
+      PrintAccessContainerHints();
+      mainUI->HighlightInvLine(selectionIndex);      
 
-        choice = mainUI->ConsoleGetInput();
-        long unsigned int containerSize = c->GetSize(); 
-        if (containerSize > 0) {
-          //logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
-          //logging -> logline("Container SIZE: " + std::to_string(containerSize));
+      choice = mainUI->ConsoleGetInput();
+      long unsigned int containerSize = c->GetSize(); 
+      containerSelection.HandleSelection(choice);
 
-          int maxScrollIndex = 0;
-          if (containerSize > ITEM_LINE_COUNT) maxScrollIndex = (containerSize - ITEM_LINE_COUNT);
+      selectionIndex = containerSelection.GetSelectionIndex();
+      invStartIndex = containerSelection.GetInvStartIndex();
+      logging -> logline("new selectionIndex: " + std::to_string(selectionIndex));
+      logging -> logline("new invStartIndex: " + std::to_string(invStartIndex));
 
-          int maxSelectionIndex =  ITEM_LINE_COUNT-1;
-          if (containerSize < ITEM_LINE_COUNT) maxSelectionIndex = ITEM_LINE_COUNT - (ITEM_LINE_COUNT - containerSize) - 1;
-          //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
+      mainUI->UnhighlightInvLine(containerSelection.GetPreviousSelectionIndex());      
+      if (containerSelection.IsRedrawList()) mainUI->ListInv(c,invStartIndex);
 
-          long unsigned int newSelectionIndex = selectionIndex;
-          bool redrawList = false;
-          switch (choice) {
-            case KEY_UP:
-              if (selectionIndex>0) {
-                  newSelectionIndex--; 
-              } else if (selectionIndex==0 && invStartIndex>0) {
-                  invStartIndex--;
-                  redrawList = true;
-              }
-              break;
-            case KEY_DOWN:
-              //Checking against the window boundary. containerSize allows
-              if (selectionIndex < maxSelectionIndex) {
-                newSelectionIndex++; 
-              } else if (selectionIndex == ITEM_LINE_COUNT-1 && invStartIndex < maxScrollIndex) {
-                invStartIndex++;
-                redrawList = true;
-              }
-              break;
-          }
-
-          mainUI->UnhighlightInvLine(selectionIndex);      
-          selectionIndex = newSelectionIndex;
-          if (redrawList) mainUI->ListInv(c,invStartIndex);
-          //logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
-          //logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
-          //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
-      }
+      //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
     }
     
 }

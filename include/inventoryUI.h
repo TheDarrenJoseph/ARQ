@@ -7,10 +7,13 @@
 #include "cursesUI.h"
 #include "containers.h"
 #include "stringUtils.h"
+#include "containerSelection.h"
 
 class InventoryUI {
   private:
     Logging* logging = &logging -> getInstance();
+    Item* selectedItem = NULL;
+    bool movingItem = false;
     void TakeItem(Container* container, int index, bool playerInv);
     void DropItem(const Item* item, bool playerInv);
     void OpenContainer(Container * c, int index);

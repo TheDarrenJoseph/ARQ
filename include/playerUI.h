@@ -53,7 +53,7 @@ public:
     // PlayerInventoryFunctions
     int TakeItem(Container* container, int index);
     int DropPlayerItem(const Item* thisItem);
-    int MoveContainer(Container* container);
+    int MoveItem(Item* item,  Item* targetItem);
 
     PlayerUI(int maxNPCS, UI* mainUI, Map* map, Player* player, NPC* npcs){
         MAX_NPCS = maxNPCS;

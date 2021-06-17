@@ -704,8 +704,16 @@ int PlayerUI::DropPlayerItem(const Item* thisItem)
     return 1;
 }
 
-int PlayerUI::MoveContainer(Container* container)
+int PlayerUI::MoveItem(Item* item, Item* targetItem)
 {   
+  //Dynamic cast to type check
+  const Container* targetContainer = dynamic_cast<const Container*> (targetItem);
+  //If incorrectly cast (item), pointer will be NULL
+  if (targetContainer != NULL) {
+    // Move into container
+  } else {
+    // Insert at this index
+  }
     return 1;
 }
 
