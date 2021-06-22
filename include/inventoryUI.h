@@ -19,7 +19,7 @@ class InventoryUI {
     void OpenContainer(Container * c, int index);
 
   public:
-    bool InventoryInput(int choice, int index, int invStartIndex, Container* c, bool playerInv);
+    bool InventoryInput(ContainerSelection* containerSelection, int inputChoice, bool playerInv);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);
     void AccessListCommand(Container* c, int index, bool playerInv);

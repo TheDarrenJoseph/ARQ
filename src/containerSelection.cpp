@@ -16,6 +16,31 @@ void ContainerSelection :: HandleSelection(int choice) {
     long unsigned int newSelectionIndex = this -> selectionIndex;
     this -> redrawList = false;
     switch (choice) {
+      case KEY_PPAGE:
+        // Either page up or jump to top of current page
+        if (selectionIndex==0 && invStartIndex >= itemViewLineCount) {
+            newSelectionIndex = maxSelectionIndex;
+            invStartIndex -= itemViewLineCount; 
+        } else if (selectionIndex == 0) {
+            newSelectionIndex = 0;
+            invStartIndex = 0; 
+        } else {
+          newSelectionIndex = 0;
+        }
+        this -> redrawList = true;
+        break;
+      case KEY_NPAGE:
+        // Either page down or jump to bottom of current page
+        if (selectionIndex == maxSelectionIndex && invStartIndex+itemViewLineCount <= maxScrollIndex) {
+            newSelectionIndex = 0;
+            invStartIndex += itemViewLineCount; 
+        } else if (selectionIndex == maxSelectionIndex) {
+            invStartIndex = maxScrollIndex; 
+        } else {
+          newSelectionIndex = maxSelectionIndex;
+        }
+        this -> redrawList = true;
+        break;
       case KEY_UP:
         if (selectionIndex>0) {
             newSelectionIndex--; 

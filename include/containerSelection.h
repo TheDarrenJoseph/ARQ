@@ -10,8 +10,11 @@ class ContainerSelection {
     long unsigned int previousSelectionIndex = 0;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    long unsigned int containerIndex = selectionIndex + invStartIndex;
     bool redrawList = false;
     Container* container;
+    Item* movingItem;
+    Item* selectedItem;
     unsigned int itemViewLineCount;
 
   public:
@@ -29,8 +32,16 @@ class ContainerSelection {
       return this -> invStartIndex;
     }
 
+    long unsigned int GetContainerIndex() {
+      return this -> containerIndex;
+    }
+
+    Container* GetContainer() {
+      return this -> container;
+    }
+
     bool IsRedrawList() {
-      return this -> invStartIndex;
+      return this -> redrawList;
     }
 
     ContainerSelection(Container* container, const unsigned int itemViewLineCount) {

@@ -8,38 +8,42 @@
  * @param playerInv Whether or not this is the player's inventory or another container
  * @return 
  */
-bool InventoryUI::InventoryInput(int choice, int index, int invStartIndex, Container* c, bool playerInv) {
-     switch(choice) {
-            case ('q') : {
-                return false;
-                break;
-            }
-            case ('c') : {
-                AccessListCommand(c, index, playerInv);
-                break;
-            }
-           case ('i') : { //Item info
-                break;
-            }
-           case ('o') : {
-                OpenContainer(c, index);
-                break;
-            }
-          case ('t') : {
-                TakeItem(c, index, playerInv);
-                mainUI->ListInv(c,invStartIndex);
-                break;
-            }
-           case ('d') : {
-                DropItem(c -> GetItem(index), playerInv);
-                mainUI->ListInv(c,invStartIndex);
-                break;
-            }
-           case ('m') : {
-                break;
-            }
-        }
-     return true;
+bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice, bool playerInv) {
+  unsigned int invStartIndex = containerSelection -> GetInvStartIndex();
+  unsigned int containerIndex = containerSelection -> GetContainerIndex();;
+
+  Container* container = containerSelection -> GetContainer();
+  switch(inputChoice) {
+    case ('q') : {
+      return false;
+      break;
+    }
+    case ('c') : {
+      AccessListCommand(container, containerIndex, playerInv);
+      break;
+    }
+    case ('i') : { //Item info
+      break;
+    }
+    case ('o') : {
+      OpenContainer(container, containerIndex);
+      break;
+    }
+    case ('t') : {
+      TakeItem(container, containerIndex, playerInv);
+      mainUI->ListInv(container, invStartIndex);
+      break;
+    }
+    case ('d') : {
+      DropItem(container -> GetItem(containerIndex), playerInv);
+      mainUI->ListInv(container, invStartIndex);
+      break;
+    }
+    case ('m') : {
+      break;
+    }
+  }
+  return true;
 }
 
 
@@ -97,16 +101,16 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
 
     //Selection loop
-    int choice = -1;
+    int inputChoice = -1;
     mainUI->ListInv(c,invStartIndex);
     ContainerSelection containerSelection = ContainerSelection(c, INVWIN_FRONT_Y);
-    while(InventoryInput(choice, selectionIndex + invStartIndex, invStartIndex, c, playerInv)) {
+    while(InventoryInput(&containerSelection, inputChoice, playerInv)) {
       PrintAccessContainerHints();
       mainUI->HighlightInvLine(selectionIndex);      
 
-      choice = mainUI->ConsoleGetInput();
+      inputChoice = mainUI->ConsoleGetInput();
       long unsigned int containerSize = c->GetSize(); 
-      containerSelection.HandleSelection(choice);
+      containerSelection.HandleSelection(inputChoice);
 
       selectionIndex = containerSelection.GetSelectionIndex();
       invStartIndex = containerSelection.GetInvStartIndex();
