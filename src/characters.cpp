@@ -134,12 +134,12 @@ Container* Character :: DropItems()
  
 void Character :: SetWeps (weaponIndex one, weaponIndex two, weaponIndex three)
 {  
-  this->weps[0] = &weapon_library[one];
-  this->weps[1] = &weapon_library[two];
-  this->weps[2] = &weapon_library[three];
+  this->weps[0] = &ItemLibrary.weapon_library[one];
+  this->weps[1] = &ItemLibrary.weapon_library[two];
+  this->weps[2] = &ItemLibrary.weapon_library[three];
 }
   
-const weapon* Character :: GetWeps()
+weapon* Character :: GetWeps()
 {
   return weps[0];
 }
@@ -172,17 +172,17 @@ outfit Character :: GetOutfit()
   return currentOutfit;
 }
 
-void Character :: AddToInventory(const Item* i)
+void Character :: AddToInventory(Item* i)
 {
   inventory->AddItem(i);
 }
 
-void Character :: SetInventory(int index, const Item* item)
+void Character :: SetInventory(int index, Item* item)
 {
   inventory->ReplaceItem(index,item); 
 }
 
-const Item* Character :: GetFromInventory(int index)
+Item* Character :: GetFromInventory(int index)
 {
   return inventory->GetItem(index);
 }
@@ -217,7 +217,7 @@ int Player :: GetLootCount ()
 }
 
 int Player :: GetKeyCount() {
-    const Item* invTile;
+    Item* invTile;
     int keyCount = 0;
     
         for(int i = 0; i < INV_SIZE; i++)
@@ -234,7 +234,7 @@ int Player :: GetKeyCount() {
 
 
 void Player :: RemoveKeyCount(int keyCount) {
-    const Item* invTile;
+    Item* invTile;
     int removedCount = 0;
     
     for(int i = 0; i < INV_SIZE; i++)

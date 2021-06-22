@@ -500,25 +500,25 @@ void Map::SetTile(int x, int y, tile t)
 }
 
 
-const Item* Map::GetItem(int x, int y)
+Item* Map::GetItem(int x, int y)
 {
     int size = container_grid[y][x].GetSize();
     if(size>0) {
           return &container_grid[y][x];
     } else {
-        return &item_library[0];
+        return &ItemLibrary.item_library[0];
     }
 
 }    
 
-const Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
+Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
 {
     return container_grid[containerY][containerX].GetItem(index);
 }
 
 //Adds an item to the area
 
-void Map::AddToContainer(int x, int y, const Item* i)
+void Map::AddToContainer(int x, int y, Item* i)
 {
     container_grid[y][x].AddItem(i);
 }

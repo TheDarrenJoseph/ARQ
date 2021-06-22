@@ -177,10 +177,10 @@ class Map
     
     void SetTile(int x, int y,tile t);
 
-    const Item* GetItem(int x, int y);
-    const Item* GetContainerItem(int containerX, int containerY,unsigned long int index);
+    Item* GetItem(int x, int y);
+    Item* GetContainerItem(int containerX, int containerY,unsigned long int index);
     
-    void AddToContainer(int x, int y,const Item* i);
+    void AddToContainer(int x, int y, Item* i);
     
     //Returns whether there is an area at x,y, and if it contains items
     int ContainerProc (int x ,int y); 

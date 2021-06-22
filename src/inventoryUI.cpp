@@ -40,6 +40,15 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
       break;
     }
     case ('m') : {
+      Item* movingItem = containerSelection -> GetMovingItem();
+      if (movingItem == NULL) {
+        Item* movingItem = container -> GetItem(containerIndex);
+        containerSelection -> SetMovingItem(movingItem);
+        mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
+      } else {
+        Item* targetItem = container -> GetItem(containerIndex);
+        this -> MoveItem(container, movingItem, targetItem);
+      }
       break;
     }
   }
@@ -65,7 +74,7 @@ void InventoryUI::TakeItem(Container* container, int index, bool playerInv) {
 }
 
 
-void InventoryUI::DropItem(const Item* item, bool playerInv) {
+void InventoryUI::DropItem(Item* item, bool playerInv) {
   if (playerInv) {
     inventoryFunctions -> DropPlayerItem(item);
     mainUI->ClearConsoleAndPrint("Dropped the " + item -> GetName());
@@ -74,11 +83,26 @@ void InventoryUI::DropItem(const Item* item, bool playerInv) {
   }
 }
 
-void InventoryUI::OpenContainer(Container * parent, int index) {
-  const Item* itm = parent -> GetItem(index);   
+int InventoryUI :: MoveItem(Container* container, Item* item, Item* targetItem)
+{   
+  //Dynamic cast to type check
+  Container* targetContainer = dynamic_cast<Container*> (targetItem);
+  //If incorrectly cast (item), pointer will be NULL
+  // Move into container
+  if (targetContainer != NULL) {
+    targetContainer -> AddItem(item);
+    container -> RemoveItem(item);
+  } else {
+    // Insert at this index
+  }
+    return 1;
+}
+
+void InventoryUI :: OpenContainer(Container * parent, int index) {
+  Item* itm = parent -> GetItem(index);   
 
   //Dynamic cast to type check
-  const Container* c = dynamic_cast<const Container*> (itm);
+  Container* c = dynamic_cast<Container*> (itm);
 
   //If incorrectly cast (item), pointer will be NULL
   if (c != NULL) {
@@ -105,7 +129,8 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     mainUI->ListInv(c,invStartIndex);
     ContainerSelection containerSelection = ContainerSelection(c, INVWIN_FRONT_Y);
     while(InventoryInput(&containerSelection, inputChoice, playerInv)) {
-      PrintAccessContainerHints();
+      Item* movingItem = containerSelection.GetMovingItem();
+      if (movingItem == NULL) PrintAccessContainerHints();
       mainUI->HighlightInvLine(selectionIndex);      
 
       inputChoice = mainUI->ConsoleGetInput();

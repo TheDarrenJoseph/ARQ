@@ -4,8 +4,7 @@
 class InventoryFunctions {
   public:
   virtual int TakeItem(Container* container, int index) = 0;
-  virtual int DropPlayerItem(const Item* thisItem) = 0;
-  virtual int MoveItem(Item* item, Item* targetItem) = 0;
+  virtual int DropPlayerItem(Item* thisItem) = 0;
 
   virtual ~InventoryFunctions() {}
 };

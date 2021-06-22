@@ -20,26 +20,26 @@ struct Container : public Item
     ContainerType containerType;
     int weightLimit = 0;
     Logging* logging = &logging -> getInstance();
-    std::list<const Item*>::iterator indexToIterator(long unsigned int i);
+    std::list<Item*>::iterator indexToIterator(long unsigned int i);
     bool sizeCheck(long unsigned int i);
 
   public:
-  std::list<const Item*> inv = std::list<const Item*>();
+  std::list<Item*> inv = std::list<Item*>();
 
   ContainerType GetContainerType();
 
   Item* GetInv();
   
  
-  void AddItem(const Item* i);
+  void AddItem(Item* i);
  // void AddItem(Item* i);
-  void ReplaceItem(long unsigned int it,const Item* i);
+  void ReplaceItem(long unsigned int it, Item* i);
   
   
   void RemoveItem(long unsigned int i);
-  void  RemoveItem(const Item* item);
+  void  RemoveItem(Item* item);
  
-  const Item* GetItem(long unsigned int i);
+  Item* GetItem(long unsigned int i);
   long unsigned int GetSize();
   long unsigned int GetWeightLimit();
   
@@ -66,7 +66,7 @@ struct Container : public Item
       this -> weightLimit = weightLimit;
     };
 
-  Container(const Container* toCopy)  : Item (toCopy)
+  Container(Container* toCopy)  : Item (toCopy)
     {
       this -> containerType = toCopy -> containerType;
       this -> weightLimit = toCopy -> weightLimit;

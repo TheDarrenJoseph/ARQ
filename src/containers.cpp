@@ -7,10 +7,10 @@
  * @param i
  * @return 
  */
-std::list<const Item*>::iterator Container :: indexToIterator(long unsigned i) {
+std::list<Item*>::iterator Container :: indexToIterator(long unsigned i) {
     
     if (i<inv.size()) { 
-        std::list<const Item*>::iterator it = inv.begin();
+        std::list<Item*>::iterator it = inv.begin();
         
         for (long unsigned int index=0; index<i ; index++){
             it++;
@@ -40,9 +40,7 @@ bool Container :: sizeCheck(long unsigned int i) {
     return ((!inv.empty()) && i<inv.size());
 }
 
-void Container :: AddItem(const Item* i) {
-  //inv.push_front(i);
-  //inv.push_back(i);
+void Container :: AddItem(Item* i) {
   inv.push_back(i);
 }
 
@@ -52,7 +50,7 @@ void Container :: AddItem(const Item* i) {
 //  inv.push_back(i);
 //}
 
-void Container :: ReplaceItem(long unsigned int i, const Item* item) {
+void Container :: ReplaceItem(long unsigned int i, Item* item) {
     if (sizeCheck(i)) {
     *indexToIterator(i) = item;
    }
@@ -65,20 +63,20 @@ void Container :: RemoveItem(long unsigned int i) {
 
 }  
 
-void Container :: RemoveItem(const Item* item) {
-  std::list<const Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
+void Container :: RemoveItem(Item* item) {
+  std::list<Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
   if (iter != inv.end()) {
     inv.erase(iter);
   }
 }
 
 
-const Item* Container :: GetItem(long unsigned int i) {
+Item* Container :: GetItem(long unsigned int i) {
   
    if(sizeCheck(i)) { //Boundary check
       return (*indexToIterator(i)); //&* to deal with how iterators work
    } else { 
-        return (Item*) &item_library[0];
+        return (Item*) &ItemLibrary.item_library[0];
    }
     
 }
@@ -123,7 +121,7 @@ int Container :: HasItems()
 
 int Container :: GetTotalWeight() {
   int totalWeight = 0;
-  for (const Item* itemPtr : inv) {
+  for (Item* itemPtr : inv) {
     int weight = 0;
     itemType type = itemPtr -> getType();
     switch (type) {
@@ -142,7 +140,7 @@ int Container :: GetTotalWeight() {
 
 int Container :: GetTotalLootScore() {
   int totalScore = 0;
-  for (const Item* itemPtr : inv) {
+  for (Item* itemPtr : inv) {
     int value = 0;
     itemType type = itemPtr -> getType();
     switch (type) {

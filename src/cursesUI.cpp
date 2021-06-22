@@ -155,7 +155,7 @@ void CursesUI::DrawItems(Map* m)
 {
     for (int y = 0; y < m -> GetGridY(); y++) {
         for (int x = 0; x < m -> GetGridX(); x++) {
-            const Item* item = m->GetItem(x, y);
+            Item* item = m->GetItem(x, y);
             if ((item != NULL) && (item -> IsLootable())) {
                 int colour = item -> GetColour();
                 char symbol = item -> GetSymbol();
@@ -345,7 +345,7 @@ void CursesUI::ListInv(Container* c, long unsigned int invIndex)
     long unsigned int invSize = c->GetSize();    
     long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
     for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
-                const Item* thisItem = c->GetItem(invIndex+i);
+                Item* thisItem = c->GetItem(invIndex+i);
                 char buffer[20];            
                 sprintf(buffer,"%-20s",thisItem->GetName().c_str());
                 wprint_at(invwin_front, buffer, i, COL_1);

@@ -42,8 +42,8 @@ void PlayerUI::Battle(int npc_id)
             mainUI->ConsolePrintWithWait(enemyHealthText, 0, 1);
 
             //Get both combatants weapons
-            const weapon* p_weps = player->GetWeps();
-            const weapon* npc_weps = npcs[npc_id].GetWeps();
+            weapon* p_weps = player->GetWeps();
+            weapon* npc_weps = npcs[npc_id].GetWeps();
 
             //allow both combatants to make a move
             int p_move = BattleTurn(npc_id);
@@ -139,7 +139,7 @@ int PlayerUI::BattleTurn(int npc_id) {
     mainUI->ClearConsole();
 
     for (int i = 0; i < 3; i++) {
-        const weapon* weps = player->GetWeps();
+        weapon* weps = player->GetWeps();
         std::string wepName = weps[i].GetName();
         mainUI->ConsolePrint(wepName, 0, (9 * i));
     }
@@ -257,7 +257,7 @@ int PlayerUI::DoorProc(int x, int y) {
 void PlayerUI::LockProc(int y, int x) {
     Door door = map -> GetDoor(x, y);
 
-    const Item* inv_tile;
+    Item* inv_tile;
     int keyCount = player->GetKeyCount();
     int requiredCount = door.lockCount;
 
@@ -292,7 +292,7 @@ void PlayerUI::LockProc(int y, int x) {
             for (int i = 0; i < INV_SIZE; i++) {
                 inv_tile = player->GetFromInventory(i);
 
-                if (inv_tile->GetName() == item_library[lockpick].GetName()) {
+                if (inv_tile->GetName() == ItemLibrary.item_library[lockpick].GetName()) {
                     lockpick_count++; //Add to our lockpick count
                 }
 
@@ -304,7 +304,7 @@ void PlayerUI::LockProc(int y, int x) {
                 for (int i = 0; i < INV_SIZE; i++) {
                     inv_tile = player->GetFromInventory(i);
 
-                    if (inv_tile->GetName() == item_library[lockpick].GetName()) {
+                    if (inv_tile->GetName() == ItemLibrary.item_library[lockpick].GetName()) {
                         int lockno = 1;
                         std::ostringstream lockContextStream;
                         mainUI->ClearConsole();
@@ -411,7 +411,7 @@ void PlayerUI::PlayerContainerProc(Player* p, Container* container)
   }
 }
 
-int PlayerUI::PlayerItemProc(Player* p, const Item* itm, Position itemPosition)
+int PlayerUI::PlayerItemProc(Player* p, Item* itm, Position itemPosition)
 {
     std::string answer;
     const char* itm_name_buf = itm->GetName().c_str();
@@ -685,12 +685,12 @@ void PlayerUI::TileProc(tile t) {
 
 int PlayerUI::TakeItem(Container* container, int index)
 {
-  const Item* item = container -> GetItem(index);
+  Item* item = container -> GetItem(index);
   player -> AddToInventory(item);
   container -> RemoveItem(index);
 }
 
-int PlayerUI::DropPlayerItem(const Item* thisItem)
+int PlayerUI::DropPlayerItem(Item* thisItem)
 {
     int x, y;
     player -> GetPos(&x, &y);
@@ -704,17 +704,5 @@ int PlayerUI::DropPlayerItem(const Item* thisItem)
     return 1;
 }
 
-int PlayerUI::MoveItem(Item* item, Item* targetItem)
-{   
-  //Dynamic cast to type check
-  const Container* targetContainer = dynamic_cast<const Container*> (targetItem);
-  //If incorrectly cast (item), pointer will be NULL
-  if (targetContainer != NULL) {
-    // Move into container
-  } else {
-    // Insert at this index
-  }
-    return 1;
-}
 
 

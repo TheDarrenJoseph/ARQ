@@ -36,7 +36,7 @@ public:
     void LockProc(int door_x, int door_y);
     
     void PlayerContainerProc(Player* p, Container* container);
-    int PlayerItemProc(Player* p, const Item* itm, Position itemPosition);
+    int PlayerItemProc(Player* p, Item* itm, Position itemPosition);
     void PlayerMoveTurn (int y, int x, bool* levelEnded, bool* newLevel);
     void Interact();
     bool TextInput();
@@ -52,7 +52,7 @@ public:
 
     // PlayerInventoryFunctions
     int TakeItem(Container* container, int index);
-    int DropPlayerItem(const Item* thisItem);
+    int DropPlayerItem(Item* thisItem);
     int MoveItem(Item* item,  Item* targetItem);
 
     PlayerUI(int maxNPCS, UI* mainUI, Map* map, Player* player, NPC* npcs){

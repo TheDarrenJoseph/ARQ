@@ -290,7 +290,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
                   //generate a random chance out of 100 for each item
                   int chance = rand() %100+1;
                     
-                  Item thisItem = item_library[i];
+                  Item thisItem = ItemLibrary.item_library[i];
                     
                   //if the random chance < the number of items (e.g 10, 10%)
                   if (chance<=thisChance)  
@@ -305,7 +305,7 @@ void GameEngine :: GenerateItems(lootChance thisChance)
                                         
           else
             {
-              map->AddToContainer(x,y,&item_library[no_item]);
+              map->AddToContainer(x,y,&ItemLibrary.item_library[no_item]);
             }
         }
     }

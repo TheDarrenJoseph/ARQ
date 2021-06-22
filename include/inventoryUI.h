@@ -15,7 +15,8 @@ class InventoryUI {
     Item* selectedItem = NULL;
     bool movingItem = false;
     void TakeItem(Container* container, int index, bool playerInv);
-    void DropItem(const Item* item, bool playerInv);
+    void DropItem(Item* item, bool playerInv);
+    int MoveItem(Container* container, Item* item, Item* targetItem);
     void OpenContainer(Container * c, int index);
 
   public:

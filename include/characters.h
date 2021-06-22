@@ -25,7 +25,7 @@ class Character
   
   bool alive = true;
 
-  const weapon* weps [3];
+  weapon* weps [3];
   outfit currentOutfit = outfit();
   
  public:
@@ -53,14 +53,14 @@ class Character
   int GetMaxHealth();
   int GetHealth ();
   
-  void AddToInventory(const Item* i);
-  void SetInventory(int index, const Item* i);
+  void AddToInventory(Item* i);
+  void SetInventory(int index, Item* i);
 
   Container* GetInventory();
-  const Item* GetFromInventory(int index);
+  Item* GetFromInventory(int index);
 
   void SetWeps(weaponIndex one, weaponIndex two, weaponIndex three);
-  const weapon* GetWeps(); //returns a pointer to a 1D array of weapons
+  weapon* GetWeps(); //returns a pointer to a 1D array of weapons
   
   void SetOutfit(outfit o);
   outfit GetOutfit();
@@ -80,10 +80,10 @@ class Character
       SetCharacter(charSymbol,col,name,health);
    	
       for (int i=0; i<3; i++){
-          weps[i] = &weapon_library[no_weapon];
+          weps[i] = &ItemLibrary.weapon_library[no_weapon];
       }
    	 
-      SetOutfit(outfit_library[no_outfit]);
+      SetOutfit(ItemLibrary.outfit_library[no_outfit]);
 
       this->inventory = new Container(0, OBJECT, name + "'s Inventory","X",2,0,100,0,true);
     };
@@ -193,7 +193,7 @@ class Warrior : public Player
   Warrior () : Player('@',6,"Warrior",100)
     {
       SetWeps(no_weapon,fist,sword);
-      SetOutfit(outfit_library[warrior]); 
+      SetOutfit(ItemLibrary.outfit_library[warrior]); 
     };
   
 };
@@ -205,13 +205,13 @@ class Goblin : public NPC
  Goblin() : NPC ('@',2,"Wild Goblin",30)
     {
       SetWeps (no_weapon,claw,sword);
-      SetOutfit(outfit_library[goblin]);
+      SetOutfit(ItemLibrary.outfit_library[goblin]);
     };
 
  Goblin(char c, int col, std::string name, int health) : NPC (c,col,name,health)
     {
       SetWeps (no_weapon,claw,sword);
-      SetOutfit(outfit_library[goblin]);
+      SetOutfit(ItemLibrary.outfit_library[goblin]);
     };
   
 };
