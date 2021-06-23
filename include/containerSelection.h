@@ -10,12 +10,12 @@ class ContainerSelection {
     long unsigned int previousSelectionIndex = 0;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    long unsigned int containerIndex = selectionIndex + invStartIndex;
+    long unsigned int containerIndex = 0;
     bool redrawList = false;
-    Container* playerInventory;
-    Container* container;
-    Item* movingItem;
-    Item* selectedItem;
+    Container* playerInventory = NULL;
+    Container* container = NULL;
+    Item* movingItem = NULL;
+    Item* selectedItem = NULL;
     unsigned int itemViewLineCount;
 
   public:
@@ -51,6 +51,10 @@ class ContainerSelection {
 
     bool IsRedrawList() {
       return this -> redrawList;
+    }
+
+    void SetRedrawList(bool redrawList) {
+      this -> redrawList = redrawList;
     }
 
     ContainerSelection(Container* container, const unsigned int itemViewLineCount) {

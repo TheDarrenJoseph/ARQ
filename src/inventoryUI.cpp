@@ -11,6 +11,7 @@
 bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice, bool playerInv) {
   unsigned int invStartIndex = containerSelection -> GetInvStartIndex();
   unsigned int containerIndex = containerSelection -> GetContainerIndex();;
+  logging -> logline("Container index: " + std::to_string(containerIndex));
 
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
@@ -47,7 +48,17 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
         mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
       } else {
         Item* targetItem = container -> GetItem(containerIndex);
-        this -> MoveItem(container, movingItem, targetItem);
+        if (targetItem == movingItem) {
+          logging -> logline("Cannot move item to itself!");
+        } if (targetItem != NULL && movingItem != NULL) {
+          this -> MoveItem(container, movingItem, targetItem);
+          containerSelection -> SetRedrawList(true);
+          containerSelection -> SetMovingItem(NULL);
+          mainUI->ClearConsoleAndPrint("Moved: " + movingItem -> GetName());
+          //logging -> logline("Moving: " + movingItem -> GetName());
+        } else {
+          logging -> logline("Target or moving item was NULL!");
+        }
       }
       break;
     }
@@ -92,6 +103,7 @@ int InventoryUI :: MoveItem(Container* container, Item* item, Item* targetItem)
   if (targetContainer != NULL) {
     targetContainer -> AddItem(item);
     container -> RemoveItem(item);
+    logging -> logline("Moved item");
   } else {
     // Insert at this index
   }
@@ -127,27 +139,32 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     //Selection loop
     int inputChoice = -1;
     mainUI->ListInv(c,invStartIndex);
-    ContainerSelection containerSelection = ContainerSelection(c, INVWIN_FRONT_Y);
-    while(InventoryInput(&containerSelection, inputChoice, playerInv)) {
-      Item* movingItem = containerSelection.GetMovingItem();
+    ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y);
+    while(InventoryInput(containerSelection, inputChoice, playerInv)) {
+      if (containerSelection -> IsRedrawList()) {
+        logging -> logline("Redrawing container list..");
+        mainUI->ListInv(c,invStartIndex);
+        containerSelection -> SetRedrawList(false);
+      }
+
+      Item* movingItem = containerSelection -> GetMovingItem();
       if (movingItem == NULL) PrintAccessContainerHints();
       mainUI->HighlightInvLine(selectionIndex);      
 
       inputChoice = mainUI->ConsoleGetInput();
       long unsigned int containerSize = c->GetSize(); 
-      containerSelection.HandleSelection(inputChoice);
+      containerSelection -> HandleSelection(inputChoice);
 
-      selectionIndex = containerSelection.GetSelectionIndex();
-      invStartIndex = containerSelection.GetInvStartIndex();
+      selectionIndex = containerSelection ->  GetSelectionIndex();
+      invStartIndex = containerSelection -> GetInvStartIndex();
       logging -> logline("new selectionIndex: " + std::to_string(selectionIndex));
       logging -> logline("new invStartIndex: " + std::to_string(invStartIndex));
 
-      mainUI->UnhighlightInvLine(containerSelection.GetPreviousSelectionIndex());      
-      if (containerSelection.IsRedrawList()) mainUI->ListInv(c,invStartIndex);
+      mainUI->UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());      
 
       //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
     }
-    
+    delete(containerSelection);
 }
 
 /** Allows the user to enter a command to perform operations on things in a list/inventory

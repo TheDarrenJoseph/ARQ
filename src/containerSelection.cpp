@@ -14,32 +14,33 @@ void ContainerSelection :: HandleSelection(int choice) {
     //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
 
     long unsigned int newSelectionIndex = this -> selectionIndex;
-    this -> redrawList = false;
     switch (choice) {
       case KEY_PPAGE:
         // Either page up or jump to top of current page
         if (selectionIndex==0 && invStartIndex >= itemViewLineCount) {
             newSelectionIndex = maxSelectionIndex;
             invStartIndex -= itemViewLineCount; 
+            this -> redrawList = true;
         } else if (selectionIndex == 0) {
             newSelectionIndex = 0;
             invStartIndex = 0; 
+            this -> redrawList = true;
         } else {
           newSelectionIndex = 0;
         }
-        this -> redrawList = true;
         break;
       case KEY_NPAGE:
         // Either page down or jump to bottom of current page
         if (selectionIndex == maxSelectionIndex && invStartIndex+itemViewLineCount <= maxScrollIndex) {
             newSelectionIndex = 0;
             invStartIndex += itemViewLineCount; 
+            this -> redrawList = true;
         } else if (selectionIndex == maxSelectionIndex) {
             invStartIndex = maxScrollIndex; 
+            this -> redrawList = true;
         } else {
           newSelectionIndex = maxSelectionIndex;
         }
-        this -> redrawList = true;
         break;
       case KEY_UP:
         if (selectionIndex>0) {
@@ -62,9 +63,10 @@ void ContainerSelection :: HandleSelection(int choice) {
 
     this -> previousSelectionIndex = selectionIndex;
     this -> selectionIndex = newSelectionIndex;
-    logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
-    logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
-    logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
-    logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
+    this -> containerIndex = selectionIndex + invStartIndex;
+    //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
+    //logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
+    //logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
+    //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
   }
 }
