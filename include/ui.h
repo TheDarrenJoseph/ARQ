@@ -5,12 +5,18 @@
 #include <vector>
 #include "position.h"
 #include "map.h"
+#include "containerSelection.h"
 
 #define PROMPT_TEXT "ARQ: "
 
 
 class UI {
 public:
+    virtual int wprintw_col(WINDOW* winchoice, const char* text, int color_choice) = 0;
+    virtual int wprintw_col_char(WINDOW* winchoice, char symbol, int color_choice) = 0;
+    virtual int wprint_at(WINDOW* winchoice, const char* text, int pos_y, int pos_x) = 0;
+    virtual int wprintNoRefresh(WINDOW* win, std::string text) = 0;
+
     virtual void InitWindows() = 0;
     virtual void DestroyWindows() = 0;
     virtual void DecorateWindows() = 0;
@@ -20,15 +26,6 @@ public:
 
     virtual void DrawPlayerStats (std::string name, int health, unsigned long int loot, unsigned long int levelIndex) = 0;
 
-    virtual void HighlightInv(int xChars, int xIndex, int yIndex)=0;
-    virtual void HighlightInvLine(int index)=0;
-    virtual void UnhighlightInvLine(int yIndex)=0;
-    virtual void ListInv(Container* c,unsigned long int invIndex) = 0;
-    //virtual void ListInv(Inventory* a) = 0;
-    virtual void ClearInvHighlighting() = 0;
-    virtual void ClearInvWindow() = 0;
-    virtual void EraseInvWindow() = 0;
-    
     virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos)=0;
     virtual void DrawCharacter (int x, int y, int colour, char symbol) = 0;
 

@@ -1,5 +1,70 @@
 #include "inventoryUI.h"
 
+
+bool InventoryUI::RootContainerIsPlayerInventory() {
+  return this -> containerSelections.front() -> IsPlayerInventory(); 
+}
+
+/**
+ * 
+ * @param c The container to list
+ * @param invIndex the top index of the list, so that the list can scroll down
+ */
+void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long unsigned int invIndex)
+{   
+    Container* c = containerSelection -> GetContainer();
+    box(invwin_rear, 0, 0);
+    mainUI -> wprint_at(invwin_rear,c -> GetName().c_str(),0,1);
+    
+    // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
+    const int COL_1 = 0;
+    const int COL_2 = 20;
+    const int COL_3 = 33;
+      //For each line of the window
+    mainUI -> wprint_at(invwin_rear,"NAME", 1, COL_1+1); // +1 for border
+    mainUI -> wprint_at(invwin_rear,"WEIGHT (Kg)", 1, COL_2);
+    mainUI -> wprint_at(invwin_rear,"VALUE", 1, COL_3);
+    //box(invwin_rear, 0, 0);
+    //box(invwin_front, 0, 0);
+    //wrefresh(invwin_rear);
+    //wrefresh(invwin_front);
+
+    long unsigned int invSize = c->GetSize();    
+    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
+    for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
+                Item* thisItem = c->GetItem(invIndex+i);
+                char buffer[20];            
+                sprintf(buffer,"%-20s",thisItem->GetName().c_str());
+                mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
+               
+                //Weight
+                sprintf(buffer,"%-04d",thisItem->GetWeight());
+                mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
+               
+                //Value
+                sprintf(buffer,"%-04d",thisItem->GetValue());
+                mainUI -> wprint_at(invwin_front, buffer, i, COL_3);
+    }        
+
+    int maxX, maxY;
+    getmaxyx(invwin_rear, maxY, maxX);
+    // Footer instructions
+    char buffer[30];            
+    sprintf(buffer,"%03d/%03dkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
+    mainUI -> wprint_at(invwin_rear, buffer, maxY-1, maxX-11); // Add commands to the bottom of the window
+
+    if (RootContainerIsPlayerInventory()) {
+      mainUI -> wprint_at(invwin_rear,"(o)pen, (d)rop, (m)ove", maxY-1, 1); // Add commands to the bottom of the window
+    } else {
+      mainUI -> wprint_at(invwin_rear,"(o)pen, (t)ake, (m)ove", maxY-1, 1); // Add commands to the bottom of the window
+    }
+
+    //mainUI -> UpdateUI();
+    //wrefresh(invwin_rear);
+    //wrefresh(invwin_front);
+    return;
+}
+
 /**
  * 
  * @param choice int code for the player input
@@ -8,11 +73,12 @@
  * @param playerInv Whether or not this is the player's inventory or another container
  * @return 
  */
-bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice, bool playerInv) {
+bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
   unsigned int invStartIndex = containerSelection -> GetInvStartIndex();
   unsigned int containerIndex = containerSelection -> GetContainerIndex();;
   logging -> logline("Container index: " + std::to_string(containerIndex));
 
+  bool playerInv = RootContainerIsPlayerInventory();
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
     case ('q') : {
@@ -20,7 +86,7 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
       break;
     }
     case ('c') : {
-      AccessListCommand(container, containerIndex, playerInv);
+      AccessListCommand(container, containerIndex);
       break;
     }
     case ('i') : { //Item info
@@ -28,16 +94,17 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
     }
     case ('o') : {
       OpenContainer(container, containerIndex);
+      containerSelection -> SetRedrawList(true);
       break;
     }
     case ('t') : {
-      TakeItem(container, containerIndex, playerInv);
-      mainUI->ListInv(container, invStartIndex);
+      TakeItem(container, containerIndex);
+      containerSelection -> SetRedrawList(true);
       break;
     }
     case ('d') : {
-      DropItem(container -> GetItem(containerIndex), playerInv);
-      mainUI->ListInv(container, invStartIndex);
+      DropItem(container -> GetItem(containerIndex));
+      containerSelection -> SetRedrawList(true);
       break;
     }
     case ('m') : {
@@ -75,18 +142,17 @@ void InventoryUI::PrintAccessContainerHints() {
     mainUI -> ConsolePrint("q - Close window",0,2);
 }
 
-void InventoryUI::TakeItem(Container* container, int index, bool playerInv) {
-  if (playerInv) {
+void InventoryUI::TakeItem(Container* container, int index) {
+  bool playerInv = RootContainerIsPlayerInventory();
+  if (!playerInv) {
     logging -> logline("Taking item from " + container -> GetName() + " at index: " + std::to_string(index));
     inventoryFunctions -> TakeItem(container, index);
-  } else {
-    mainUI->ClearConsoleAndPrint("You cannot take from your own inventory.");
   }
 }
 
 
-void InventoryUI::DropItem(Item* item, bool playerInv) {
-  if (playerInv) {
+void InventoryUI::DropItem(Item* item) {
+  if (RootContainerIsPlayerInventory()) {
     inventoryFunctions -> DropPlayerItem(item);
     mainUI->ClearConsoleAndPrint("Dropped the " + item -> GetName());
   } else {
@@ -118,7 +184,7 @@ void InventoryUI :: OpenContainer(Container * parent, int index) {
 
   //If incorrectly cast (item), pointer will be NULL
   if (c != NULL) {
-      mainUI-> ClearInvHighlighting();
+      ClearInvHighlighting();
       AccessContainer((Container*)itm, false); //Cast and pass
   }
 }
@@ -131,25 +197,30 @@ void InventoryUI :: OpenContainer(Container * parent, int index) {
  */
 void InventoryUI::AccessContainer(Container * c, bool playerInv)
 {
-    mainUI -> ClearInvWindow();
+    this -> invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
+    this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
+
+    ClearInvWindow();
     bool selection = true;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
 
     //Selection loop
     int inputChoice = -1;
-    mainUI->ListInv(c,invStartIndex);
-    ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y);
-    while(InventoryInput(containerSelection, inputChoice, playerInv)) {
+    ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
+    this -> containerSelections.push_back(containerSelection);
+    currentContainerSelection = this -> containerSelections.back();
+    DrawInventory(containerSelection,invStartIndex);
+    while(InventoryInput(containerSelection, inputChoice)) {
       if (containerSelection -> IsRedrawList()) {
         logging -> logline("Redrawing container list..");
-        mainUI->ListInv(c,invStartIndex);
+        DrawInventory(containerSelection,invStartIndex);
         containerSelection -> SetRedrawList(false);
       }
 
       Item* movingItem = containerSelection -> GetMovingItem();
       if (movingItem == NULL) PrintAccessContainerHints();
-      mainUI->HighlightInvLine(selectionIndex);      
+      HighlightInvLine(selectionIndex);      
 
       inputChoice = mainUI->ConsoleGetInput();
       long unsigned int containerSize = c->GetSize(); 
@@ -157,14 +228,15 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
 
       selectionIndex = containerSelection ->  GetSelectionIndex();
       invStartIndex = containerSelection -> GetInvStartIndex();
-      logging -> logline("new selectionIndex: " + std::to_string(selectionIndex));
-      logging -> logline("new invStartIndex: " + std::to_string(invStartIndex));
+      UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());      
 
-      mainUI->UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());      
 
+      //wrefresh(invwin_rear);
+      wrefresh(invwin_front);
       //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
     }
-    delete(containerSelection);
+    // delete the old selection
+    this -> containerSelections.pop_back();
 }
 
 /** Allows the user to enter a command to perform operations on things in a list/inventory
@@ -174,7 +246,8 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
  * @param playerInv whether or not this is the player's inventory (to disable "take", etc)
  * @return 
  */
-void InventoryUI :: AccessListCommand(Container* c, int index, bool playerInv) {
+void InventoryUI :: AccessListCommand(Container* c, int index) {
+    bool playerInv = RootContainerIsPlayerInventory();
     while (true) {
       echo();
       mainUI->ClearConsole();
@@ -203,6 +276,47 @@ void InventoryUI :: AccessListCommand(Container* c, int index, bool playerInv) {
       }
   }
 }
+
+void InventoryUI :: ClearInvHighlighting() {
+    //Clear other highlighting
+    for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
+        mvwchgat(invwin_front, y, 0, INVWIN_FRONT_X, A_NORMAL, 0, NULL);
+    }
+    wrefresh(invwin_front);
+}
+
+void InventoryUI :: ClearInvWindow() {
+  wclear(invwin_front);
+  wclear(invwin_rear);
+}
+
+void InventoryUI :: EraseInvWindow() {
+  werase(invwin_front);
+  werase(invwin_rear);
+}
+
+
+/** Highlights xChars characters at the specified x,yIndex
+ * 
+ * @param xChars
+ * @param yIndex
+ */
+void InventoryUI :: HighlightInv(int xChars, int xIndex, int yIndex) {    
+    //Index/Selection highlight
+    mvwchgat(invwin_front, yIndex, xIndex, xChars, A_BLINK, 1, NULL); 
+    wrefresh(invwin_front);
+}
+
+void InventoryUI :: HighlightInvLine(int yIndex) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_BLINK, 1, NULL); //add red blink to the current line
+    wrefresh(invwin_front);
+}
+
+void InventoryUI :: UnhighlightInvLine(int yIndex) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1, A_NORMAL, 0, NULL);
+    wrefresh(invwin_front);
+}
+
 
 bool InventoryUI :: IsPlayerInventory() {
   return this -> playerInventory;

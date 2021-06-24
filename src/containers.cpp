@@ -66,6 +66,7 @@ void Container :: RemoveItem(long unsigned int i) {
 void Container :: RemoveItem(Item* item) {
   std::list<Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
   if (iter != inv.end()) {
+    logging -> logline("Removing item: " + item -> GetName());
     inv.erase(iter);
   }
 }

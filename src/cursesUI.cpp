@@ -22,9 +22,6 @@ void CursesUI::InitWindows() {
     consolewin_rear = newwin(CONSOLEWIN_REAR_Y  , CONSOLEWIN_REAR_X, maxY-6, 2); //Creates the console window for deco
     consolewin_front = newwin(CONSOLEWIN_FRONT_Y, CONSOLEWIN_FRONT_X, maxY-5, 3); //Creates the console window for content
 
-    invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
-    invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
-
     std::cout << "Display Initialised\n";
 }
 
@@ -149,7 +146,6 @@ int CursesUI::wprintNoRefresh(WINDOW* win, std::string text)
     wprintw(win, text.c_str());
     return 0;
 }
-
 
 void CursesUI::DrawItems(Map* m)
 {
@@ -278,101 +274,6 @@ void CursesUI::DrawPlayerStats(std::string name, int health, long unsigned int l
     
     return;
 }
-
-void CursesUI :: ClearInvHighlighting() {
-    //Clear other highlighting
-    for (int y=0; y<INVWIN_FRONT_Y-1; y++) {
-        mvwchgat(invwin_front, y, 0, INVWIN_FRONT_X, A_NORMAL, 0, NULL);
-    }
-    wrefresh(invwin_front);
-}
-
-void CursesUI :: ClearInvWindow() {
-  wclear(invwin_front);
-  wclear(invwin_rear);
-}
-
-void CursesUI :: EraseInvWindow() {
-  werase(invwin_front);
-  werase(invwin_rear);
-}
-
-
-/** Highlights xChars characters at the specified x,yIndex
- * 
- * @param xChars
- * @param yIndex
- */
-void CursesUI :: HighlightInv(int xChars, int xIndex, int yIndex) {    
-    //Index/Selection highlight
-    mvwchgat(invwin_front, yIndex, xIndex, xChars, A_BLINK, 1, NULL); 
-    wrefresh(invwin_front);
-}
-
-void CursesUI :: HighlightInvLine(int yIndex) {
-    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_BLINK, 1, NULL); //add red blink to the current line
-    wrefresh(invwin_front);
-}
-
-void CursesUI :: UnhighlightInvLine(int yIndex) {
-    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1, A_NORMAL, 0, NULL);
-    wrefresh(invwin_front);
-}
-
-/**
- * 
- * @param c The container to list
- * @param invIndex the top index of the list, so that the list can scroll down
- */
-void CursesUI::ListInv(Container* c, long unsigned int invIndex)
-{   
-    box(invwin_rear, 0, 0);
-    wprint_at(invwin_rear,c -> GetName().c_str(),0,1);
-    
-    // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
-    const int COL_1 = 0;
-    const int COL_2 = 20;
-    const int COL_3 = 33;
-      //For each line of the window
-    wprint_at(invwin_rear,"NAME", 1, COL_1+1); // +1 for border
-    wprint_at(invwin_rear,"WEIGHT (Kg)", 1, COL_2);
-    wprint_at(invwin_rear,"VALUE", 1, COL_3);
-    //box(invwin_rear, 0, 0);
-    //box(invwin_front, 0, 0);
-    //wrefresh(invwin_rear);
-    //wrefresh(invwin_front);
-
-    long unsigned int invSize = c->GetSize();    
-    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
-    for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
-                Item* thisItem = c->GetItem(invIndex+i);
-                char buffer[20];            
-                sprintf(buffer,"%-20s",thisItem->GetName().c_str());
-                wprint_at(invwin_front, buffer, i, COL_1);
-               
-                //Weight
-                sprintf(buffer,"%-04d",thisItem->GetWeight());
-                wprint_at(invwin_front, buffer, i, COL_2);
-               
-                //Value
-                sprintf(buffer,"%-04d",thisItem->GetValue());
-                wprint_at(invwin_front, buffer, i, COL_3);
-    }        
-
-    int maxX, maxY;
-    getmaxyx(invwin_rear, maxY, maxX);
-    // Footer instructions
-    char buffer[30];            
-    sprintf(buffer,"%03d/%03dkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
-    wprint_at(invwin_rear,"(o)pen, (t)ake, (m)ove", maxY-1, 1); // Add commands to the bottom of the window
-    wprint_at(invwin_rear, buffer, maxY-1, maxX-11); // Add commands to the bottom of the window
-
-    wrefresh(invwin_rear);
-    //wrefresh(invwin_front);
-    return;
-}
-
-
 
 void CursesUI :: ClearConsoleHighlighting() {
     //    for (int x = 0; x < 3; x++) {

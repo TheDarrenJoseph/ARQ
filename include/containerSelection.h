@@ -12,7 +12,7 @@ class ContainerSelection {
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
     long unsigned int containerIndex = 0;
     bool redrawList = false;
-    Container* playerInventory = NULL;
+    bool playerInventory = false;
     Container* container = NULL;
     Item* movingItem = NULL;
     Item* selectedItem = NULL;
@@ -57,9 +57,14 @@ class ContainerSelection {
       this -> redrawList = redrawList;
     }
 
-    ContainerSelection(Container* container, const unsigned int itemViewLineCount) {
+    bool IsPlayerInventory() {
+      return this -> playerInventory;
+    }
+
+    ContainerSelection(Container* container, const unsigned int itemViewLineCount, bool playerInventory) {
       this -> container = container;
       this -> itemViewLineCount = itemViewLineCount;
+      this -> playerInventory = playerInventory;
     }
 };
 

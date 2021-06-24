@@ -64,9 +64,5 @@ void ContainerSelection :: HandleSelection(int choice) {
     this -> previousSelectionIndex = selectionIndex;
     this -> selectionIndex = newSelectionIndex;
     this -> containerIndex = selectionIndex + invStartIndex;
-    //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
-    //logging -> logline("selectionIndex: " + std::to_string(selectionIndex));
-    //logging -> logline("invStartIndex: " + std::to_string(invStartIndex));
-    //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
   }
 }

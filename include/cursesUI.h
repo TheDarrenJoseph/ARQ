@@ -7,6 +7,7 @@
 #include "ui.h"
 #include "tile.h"
 #include "position.h"
+#include "containerSelection.h"
  
 #define MAINWIN_REAR_X     getmaxx(stdscr)-2
 #define MAINWIN_REAR_Y     getmaxy(stdscr)-1
@@ -36,9 +37,6 @@ private:
 
     WINDOW* consolewin_rear=NULL; //Creates the console window for deco
     WINDOW* consolewin_front=NULL; //Creates the console window for content
-
-    WINDOW* invwin_front=NULL;
-    WINDOW* invwin_rear=NULL;
         
 public:
     
@@ -60,15 +58,6 @@ public:
     virtual void DrawContainers(Map* m);
 
     virtual void DrawPlayerStats(std::string name, int health, unsigned long int loot, unsigned long int levelIndex);
-
-    virtual void HighlightInv(int xChars, int xIndex, int yIndex);
-    virtual void HighlightInvLine(int index);
-    virtual void UnhighlightInvLine(int yIndex);
-
-    virtual void ListInv(Container* c,long unsigned int invIndex);
-    virtual void ClearInvHighlighting();
-    virtual void ClearInvWindow();
-    virtual void EraseInvWindow();
 
     virtual void CalculateViewBoundaries(Position playPos, int viewDistance, Position* viewStart, Position* viewEnd);
     virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos);
@@ -96,8 +85,6 @@ public:
     void copyUI(const CursesUI& ui) {
         this->consolewin_front = ui.consolewin_front;
         this->consolewin_rear = ui.consolewin_rear;
-        this->invwin_front = ui.invwin_front;
-        this->invwin_rear = ui.invwin_rear;
         this->mainwin_front = ui.mainwin_front;
         this->mainwin_rear = ui.mainwin_rear;
         this->titlewin = ui.titlewin;

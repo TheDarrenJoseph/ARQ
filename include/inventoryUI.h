@@ -12,18 +12,32 @@
 class InventoryUI {
   private:
     Logging* logging = &logging -> getInstance();
+    WINDOW* invwin_front=NULL;
+    WINDOW* invwin_rear=NULL;
     Item* selectedItem = NULL;
+    ContainerSelection* currentContainerSelection;
+    std::list<ContainerSelection*> containerSelections;
     bool movingItem = false;
-    void TakeItem(Container* container, int index, bool playerInv);
-    void DropItem(Item* item, bool playerInv);
+    bool RootContainerIsPlayerInventory();
+    void TakeItem(Container* container, int index);
+    void DropItem(Item* item);
     int MoveItem(Container* container, Item* item, Item* targetItem);
     void OpenContainer(Container * c, int index);
 
   public:
-    bool InventoryInput(ContainerSelection* containerSelection, int inputChoice, bool playerInv);
+    virtual void DrawInventory(ContainerSelection* containerSelection, long unsigned int invIndex);
+    virtual void HighlightInv(int xChars, int xIndex, int yIndex);
+    virtual void HighlightInvLine(int index);
+    virtual void UnhighlightInvLine(int yIndex);
+
+    virtual void ClearInvHighlighting();
+    virtual void ClearInvWindow();
+    virtual void EraseInvWindow();
+
+    bool InventoryInput(ContainerSelection* containerSelection, int inputChoice);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);
-    void AccessListCommand(Container* c, int index, bool playerInv);
+    void AccessListCommand(Container* c, int index);
 
     UI* mainUI = NULL;
     Container* mainContainer = NULL;
