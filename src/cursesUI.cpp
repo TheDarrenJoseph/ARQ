@@ -166,11 +166,11 @@ void CursesUI::DrawContainers(Map* m)
 {
   for (int y = 0; y < m -> GetGridY(); y++) {
     for (int x = 0; x < m -> GetGridX(); x++) {
-      Container container = m -> GetContainer(x, y);
-      if (container.HasItems())
+      Container* container = m -> GetContainer(x, y);
+      if (container -> HasItems())
       {
-        int colour = container.GetColour();
-        char symbol = container.GetSymbol();
+        int colour = container -> GetColour();
+        char symbol = container -> GetSymbol();
         wmove(mainwin_front, y, x);
         wprintw_col_char(mainwin_front, symbol, colour);
       }

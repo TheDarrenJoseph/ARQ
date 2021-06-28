@@ -512,8 +512,8 @@ void PlayerUI::PlayerMoveTurn(int x, int y, bool* levelEnded, bool* downLevel)
       }
     // Containers 
     case 4: {
-        Container container = map -> GetContainer(x,y);
-        PlayerContainerProc(player, &container);
+        Container* container = map -> GetContainer(x,y);
+        PlayerContainerProc(player, container);
         break;
     }
     case 5: //Entrance
@@ -545,11 +545,11 @@ void PlayerUI::Interact() {
     if (inputPos != playerPos) {
       logging -> logline("Player pos: " + std::to_string(playerPos.x) + ", " + std::to_string(playerPos.y));
       logging -> logline("Player tried to interact at: " + std::to_string(inputPos.x) + ", " + std::to_string(inputPos.y));
-      Container container = map -> GetContainer(inputPos.x, inputPos.y);
+      Container* container = map -> GetContainer(inputPos.x, inputPos.y);
       if (map -> HasDoorAt(inputPos.x, inputPos.y)) {
         DoorProc(inputPos.x, inputPos.y);
-      } else if (container.IsOpenable()){ 
-        this -> inventoryUI -> AccessContainer(&container, false);
+      } else if (container -> IsOpenable()){ 
+        this -> inventoryUI -> AccessContainer(container, false);
       } else {
         mainUI->ClearConsole();
         mainUI->ConsolePrintWithWait("There's nothing to interact with here.", 0, 0); 

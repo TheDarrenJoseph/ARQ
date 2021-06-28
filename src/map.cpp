@@ -434,8 +434,8 @@ int Map::MovePlayer(int x, int y, int* npcID)
     else if (t == ded) return 2;
 
     // TODO refactor to ContainerProc
-    Container container = GetContainer(x,y);
-    if (container.IsImpassable()) {
+    Container* container = GetContainer(x,y);
+    if (container -> IsImpassable()) {
       return 4;
     } else {
       return MoveCharacter(player, x, y);
@@ -471,7 +471,7 @@ void Map::DropCharacterItems(Character* c)
     Container* body = c->DropItems();
     int x, y;
     c->GetPos(&x, &y);
-    SetContainer(x, y, *body);
+    SetContainer(x, y, body);
 }
 
 tile Map::GetTile(int x, int y)
@@ -525,17 +525,17 @@ void Map::AddToContainer(int x, int y, Item* i)
 
 bool Map::HasContainerAt(int x, int y)
 {
-  return GetContainer(x,y).IsLootable();
+  return GetContainer(x,y) -> IsLootable();
 }
 
-Container Map::GetContainer(int x, int y)
+Container* Map::GetContainer(int x, int y)
 {
-    return container_grid[y][x];
+    return &container_grid[y][x];
 }
 
-void Map::SetContainer(int x, int y, Container c)
+void Map::SetContainer(int x, int y, Container* c)
 {
-    container_grid[y][x] = c;
+    container_grid[y][x] = *c;
 }
 
 bool Map::HasDoorAt(int x, int y)
@@ -566,7 +566,7 @@ int Map::GetGridY()
 
 int Map::ContainerProc(int x, int y)
 {
-    return GetContainer(x, y).HasItems();
+    return GetContainer(x, y) -> HasItems();
 }
 
 void Map::UnlockDoorTile(int x, int y) {

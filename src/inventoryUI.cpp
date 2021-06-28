@@ -80,6 +80,12 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
     case ('q') : {
+      bool movingAnItem = NULL != containerSelection -> GetMovingItem();
+      if(movingAnItem) {
+        containerSelection -> SetMovingItem(NULL);
+        containerSelection -> SetRedrawList(true);
+        return true;
+      }
       return false;
       break;
     }

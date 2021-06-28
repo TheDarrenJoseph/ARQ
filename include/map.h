@@ -186,8 +186,8 @@ class Map
     int ContainerProc (int x ,int y); 
 
     bool HasContainerAt(int x, int y);
-    Container GetContainer(int x, int y);
-    void SetContainer(int x, int y, Container a);
+    Container* GetContainer(int x, int y);
+    void SetContainer(int x, int y, Container* a);
 
     bool HasDoorAt(int x, int y);
     Door* GetDoor(int x, int y);
