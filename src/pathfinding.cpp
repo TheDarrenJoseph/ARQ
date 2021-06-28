@@ -163,7 +163,6 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
 
         //logging -> logline("Evaluating path neightbor node at: " + std::to_string(neighbor.x) + "," + std::to_string(neighbor.y));
         int tentativeGScore = gScores.at(currentPos);
-        int distanceFromCurrentToNeighbor =  ManhattanPathCostEstimate(currentPos, neighbor);
         int currentNeighborGScore = gScores.at(neighbor);
         //logging -> logline("Tentative gScore: " + std::to_string(tentativeGScore));
         //logging -> logline("Curent neighbor gScore: " + std::to_string(currentNeighborGScore));

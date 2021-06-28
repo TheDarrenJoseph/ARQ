@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -Weffc++ -pedantic
+CFLAGS=-Wall -Wextra
 LIBS=-l curses
 INCLUDES=-I ../include -std=gnu++11
 SOURCES=main.cpp game.cpp characters.cpp map.cpp items.cpp containers.cpp doors.cpp room.cpp stringUtils.cpp pathfinding.cpp cursesUI.cpp inventoryUI.cpp containerSelection.cpp playerUI.cpp  

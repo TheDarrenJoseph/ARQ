@@ -33,16 +33,16 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long uns
     long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
     for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
                 Item* thisItem = c->GetItem(invIndex+i);
-                char buffer[20];            
+                char buffer[120];            
                 sprintf(buffer,"%-20s",thisItem->GetName().c_str());
                 mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
                
                 //Weight
-                sprintf(buffer,"%-04d",thisItem->GetWeight());
+                sprintf(buffer,"%-4d",thisItem->GetWeight());
                 mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
                
                 //Value
-                sprintf(buffer,"%-04d",thisItem->GetValue());
+                sprintf(buffer,"%-4d",thisItem->GetValue());
                 mainUI -> wprint_at(invwin_front, buffer, i, COL_3);
     }        
 
@@ -74,11 +74,9 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long uns
  * @return 
  */
 bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
-  unsigned int invStartIndex = containerSelection -> GetInvStartIndex();
   unsigned int containerIndex = containerSelection -> GetContainerIndex();;
   logging -> logline("Container index: " + std::to_string(containerIndex));
 
-  bool playerInv = RootContainerIsPlayerInventory();
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
     case ('q') : {
@@ -201,7 +199,6 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
 
     ClearInvWindow();
-    bool selection = true;
     long unsigned int selectionIndex = 0;
     long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
 
@@ -223,7 +220,6 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
       HighlightInvLine(selectionIndex);      
 
       inputChoice = mainUI->ConsoleGetInput();
-      long unsigned int containerSize = c->GetSize(); 
       containerSelection -> HandleSelection(inputChoice);
 
       selectionIndex = containerSelection ->  GetSelectionIndex();

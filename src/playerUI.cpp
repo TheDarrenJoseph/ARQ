@@ -384,15 +384,15 @@ void PlayerUI::PlayerContainerProc(Player* p, Container* container)
     logging -> logline("Processing encountered container: " + containerName);
     
     std::string prompt;
-    char promptbuffer[30];
+    char promptbuffer[120];
     ContainerType containerType = container -> GetContainerType();
     int answerChoice = 0;
     if (containerType == OBJECT) {
-      sprintf(&promptbuffer[0], "There's a %s here..", containerName);
+      sprintf(&promptbuffer[0], "There's a %s here..", containerName.c_str());
       std::string prompt = promptbuffer;
       mainUI->ConsolePrintWithWait(prompt, 0, 0);
 
-      sprintf(&promptbuffer[0], "Would you like to open the %s?", containerName);
+      sprintf(&promptbuffer[0], "Would you like to open the %s\?", containerName.c_str());
       prompt = promptbuffer;
       mainUI->ConsolePrintWithWait(prompt, 0, 0);
       answer = mainUI->ConsoleGetString();
@@ -401,7 +401,7 @@ void PlayerUI::PlayerContainerProc(Player* p, Container* container)
     if (answerChoice == 0) {
        inventoryUI -> AccessContainer(container, false); 
     } else if (answerChoice == 1) {
-        sprintf(&promptbuffer[0], "You leave the %s untouched..", containerName);
+        sprintf(&promptbuffer[0], "You leave the %s untouched..", containerName.c_str());
         prompt = promptbuffer;
         mainUI->ConsolePrintWithWait(prompt, 0, 0);
     } else {
@@ -417,13 +417,13 @@ int PlayerUI::PlayerItemProc(Player* p, Item* itm, Position itemPosition)
     const char* itm_name_buf = itm->GetName().c_str();
     std::string itm_name = itm_name_buf;
     logging -> logline("Processing encountered item: " + itm_name);
-    char promptbuffer[30];
+    char promptbuffer[120];
     sprintf(&promptbuffer[0], "There's a %s on the floor..", itm_name_buf);
     std::string prompt = promptbuffer;
     mainUI->ConsolePrintWithWait(prompt, 0, 0);
 
 
-    sprintf(&promptbuffer[0], "Would you like to pick up the %s?", itm_name_buf);
+    sprintf(&promptbuffer[0], "Would you like to pick up the %s\?", itm_name_buf);
     prompt = promptbuffer;
     mainUI->ConsolePrintWithWait(prompt, 0, 0);
     answer = mainUI->ConsoleGetString();
@@ -688,6 +688,7 @@ int PlayerUI::TakeItem(Container* container, int index)
   Item* item = container -> GetItem(index);
   player -> AddToInventory(item);
   container -> RemoveItem(index);
+  return 0;
 }
 
 int PlayerUI::DropPlayerItem(Item* thisItem)

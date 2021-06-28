@@ -327,7 +327,7 @@ bool Map::IsTraversable(int x, int y) {
         tile t = game_grid[y][x];
         ContainerType containerType = container_grid[y][x].GetContainerType();
         // We can walk over any traversible tile and any AREA even if it containins items
-        return tile_library[t].traversible && !OBJECT == containerType;
+        return tile_library[t].traversible && !(OBJECT == containerType);
     }
 }
 
