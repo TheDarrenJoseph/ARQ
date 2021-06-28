@@ -15,6 +15,15 @@ void ContainerSelection :: HandleSelection(int choice) {
 
     long unsigned int newSelectionIndex = this -> selectionIndex;
     switch (choice) {
+      case('\n'): {
+        this -> selectingItems = !selectingItems;
+        if (this -> selectingItems) {
+          logging -> logline("Selecting items");
+        } else {
+          logging -> logline("Closing selection");
+        }
+        break;
+      }
       case KEY_PPAGE:
         // Either page up or jump to top of current page
         if (selectionIndex==0 && invStartIndex >= itemViewLineCount) {
@@ -64,5 +73,8 @@ void ContainerSelection :: HandleSelection(int choice) {
     this -> previousSelectionIndex = selectionIndex;
     this -> selectionIndex = newSelectionIndex;
     this -> containerIndex = selectionIndex + invStartIndex;
+    if (this -> selectingItems) {
+      this -> selectedIndices.push_back(containerIndex);
+    }
   }
 }

@@ -13,8 +13,10 @@ class ContainerSelection {
     long unsigned int containerIndex = 0;
     bool redrawList = false;
     bool playerInventory = false;
+    bool selectingItems = false;
     Container* container = NULL;
     Item* movingItem = NULL;
+    std::list<int> selectedIndices;
     Item* selectedItem = NULL;
     unsigned int itemViewLineCount;
 
@@ -59,6 +61,14 @@ class ContainerSelection {
 
     bool IsPlayerInventory() {
       return this -> playerInventory;
+    }
+
+    std::list<int> GetSelectedIndices() {
+      return this -> selectedIndices;
+    }
+
+    void ClearSelectedIndices() {
+      return this -> selectedIndices.clear();
     }
 
     ContainerSelection(Container* container, const unsigned int itemViewLineCount, bool playerInventory) {

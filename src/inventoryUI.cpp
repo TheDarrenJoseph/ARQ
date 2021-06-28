@@ -86,6 +86,12 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
         containerSelection -> SetRedrawList(true);
         return true;
       }
+
+      if (containerSelection -> GetSelectedIndices().size() > 0) {
+        containerSelection -> ClearSelectedIndices();
+        containerSelection -> SetRedrawList(true);
+        return true;
+      }
       return false;
       break;
     }
@@ -141,9 +147,9 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
 void InventoryUI::PrintAccessContainerHints() {
 
     mainUI -> ClearConsole();
-    mainUI -> ConsolePrint("Up/Down - Select an item ", 0, 0);
-    mainUI -> ConsolePrint("c - Enter Command",0,1);
-    mainUI -> ConsolePrint("q - Close window",0,2);
+    mainUI -> ConsolePrint("Up/Down - Select an item. Enter to select multiple. q to clear a selection", 0, 0);
+    mainUI -> ConsolePrint("c - Enter a Command",0,1);
+    mainUI -> ConsolePrint("q - Close this window",0,2);
 }
 
 void InventoryUI::TakeItem(Container* container, int index) {
@@ -223,8 +229,13 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
 
       Item* movingItem = containerSelection -> GetMovingItem();
       if (movingItem == NULL) PrintAccessContainerHints();
-      HighlightInvLine(selectionIndex);      
 
+      std::list<int> selectionIndices = containerSelection -> GetSelectedIndices();
+      for (std::list<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
+        HighlightInvLine(*i, 2);      
+      }
+      HighlightInvLine(selectionIndex, 1);      
+      
       inputChoice = mainUI->ConsoleGetInput();
       containerSelection -> HandleSelection(inputChoice);
 
@@ -309,8 +320,8 @@ void InventoryUI :: HighlightInv(int xChars, int xIndex, int yIndex) {
     wrefresh(invwin_front);
 }
 
-void InventoryUI :: HighlightInvLine(int yIndex) {
-    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_BLINK, 1, NULL); //add red blink to the current line
+void InventoryUI :: HighlightInvLine(int yIndex, int colourCode) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_NORMAL, colourCode, NULL); //add red blink to the current line
     wrefresh(invwin_front);
 }
 

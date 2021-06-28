@@ -14,9 +14,9 @@ class InventoryUI {
     Logging* logging = &logging -> getInstance();
     WINDOW* invwin_front=NULL;
     WINDOW* invwin_rear=NULL;
-    Item* selectedItem = NULL;
     ContainerSelection* currentContainerSelection;
     std::list<ContainerSelection*> containerSelections;
+    bool selectingItems = false;
     bool movingItem = false;
     bool RootContainerIsPlayerInventory();
     void TakeItem(Container* container, int index);
@@ -27,7 +27,7 @@ class InventoryUI {
   public:
     virtual void DrawInventory(ContainerSelection* containerSelection, long unsigned int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
-    virtual void HighlightInvLine(int index);
+    virtual void HighlightInvLine(int index, int colourCode);
     virtual void UnhighlightInvLine(int yIndex);
 
     virtual void ClearInvHighlighting();
