@@ -57,7 +57,7 @@ public:
     virtual void DrawItems(Map* m);
     virtual void DrawContainers(Map* m);
 
-    virtual void DrawPlayerStats(std::string name, int health, unsigned long int loot, unsigned long int levelIndex);
+    virtual void DrawPlayerStats(std::string name, int health,  long int loot,  long int levelIndex);
 
     virtual void CalculateViewBoundaries(Position playPos, int viewDistance, Position* viewStart, Position* viewEnd);
     virtual int DrawMap(Map* m, bool fogOfWar, Position playerPos);

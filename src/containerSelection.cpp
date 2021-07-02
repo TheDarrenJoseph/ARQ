@@ -1,7 +1,13 @@
 #include "containerSelection.h"
 
+void ContainerSelection :: SelectRange(int startIndex, int endIndex) {
+  for (int i=startIndex; i<endIndex; i++) {
+    this -> selectedIndices.push_back(i);
+  }
+}
+
 void ContainerSelection :: HandleSelection(int choice) {
-  unsigned int containerSize = this -> container -> GetSize();
+   int containerSize = this -> container -> GetSize();
   if (containerSize > 0) {
     //logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
     //logging -> logline("Container SIZE: " + std::to_string(containerSize));
@@ -13,7 +19,7 @@ void ContainerSelection :: HandleSelection(int choice) {
     if (containerSize < this -> itemViewLineCount) maxSelectionIndex = this -> itemViewLineCount - (this -> itemViewLineCount - containerSize) - 1;
     //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
 
-    long unsigned int newSelectionIndex = this -> selectionIndex;
+    long int newSelectionIndex = this -> selectionIndex;
     switch (choice) {
       case('\n'): {
         this -> selectingItems = !selectingItems;
@@ -29,6 +35,7 @@ void ContainerSelection :: HandleSelection(int choice) {
         if (selectionIndex==0 && invStartIndex >= itemViewLineCount) {
             newSelectionIndex = maxSelectionIndex;
             invStartIndex -= itemViewLineCount; 
+            if (this -> selectingItems) SelectRange(newSelectionIndex, selectionIndex);
             this -> redrawList = true;
         } else if (selectionIndex == 0) {
             newSelectionIndex = 0;
@@ -72,9 +79,17 @@ void ContainerSelection :: HandleSelection(int choice) {
 
     this -> previousSelectionIndex = selectionIndex;
     this -> selectionIndex = newSelectionIndex;
-    this -> containerIndex = selectionIndex + invStartIndex;
+    int newContainerIndex = newSelectionIndex + invStartIndex;
     if (this -> selectingItems) {
-      this -> selectedIndices.push_back(containerIndex);
+      if (containerIndex < newContainerIndex) {
+        SelectRange(this -> containerIndex, newContainerIndex);  
+      } else if (containerIndex > newContainerIndex) {
+        SelectRange(newContainerIndex, this -> containerIndex);  
+      } else {
+        SelectRange(newContainerIndex, newContainerIndex);  
+      }
     }
+    
+    this -> containerIndex = selectionIndex + invStartIndex;
   }
 }

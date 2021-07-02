@@ -27,7 +27,7 @@ class GameEngine
         Map* map=NULL;
         std::list<Map*> levels = {};
         
-        unsigned long int levelIndex=0;
+         long int levelIndex=0;
         
         Player* player=NULL;
         NPC* npcs=NULL;
@@ -52,7 +52,7 @@ class GameEngine
         
         bool GameLoop(bool* levelEnded, bool* newLevel);
         void InitialiseMap(spawn_position spawnPosition);
-        void GenerateLevel();
+        Map* GenerateLevel();
         void LoadLevel(int levelIdx);
         void ChangeLevel(bool* levelEnded, bool* downLevel);
                 
@@ -60,7 +60,7 @@ class GameEngine
         NPC* GetNPCS(int* size);
         
         Map* GetMap();
-        unsigned long int GetLevelIndex(); //Get the current level number
+        long int GetLevelIndex(); //Get the current level number
                 
         void GenerateItems(lootChance thisChance);
         
@@ -109,33 +109,33 @@ class GameEngine
         copyGameEngine(engine);
     }
         
-    
-        GameEngine(Player* p, NPC* n, const int maxNPCS, Map* m, UI* ui, PlayerUI* playerUI) {
-            
-            player = p;
-            npcs = &n[0];
-            
-            MAX_NPCS = maxNPCS; 
-            
-            srand(time(NULL)); //set time for randomiser
-            
-            SetMap(m);
-            
-            this->displayUI = ui;
-            this->playerUI = playerUI;
-        }
-        
-        ~GameEngine() {
-            delete(playerUI);
-            
-           if(levels.size()==0) delete(map); //Current map, not in level list.
-            
-            for(Map* m : levels) {
-                delete(m);
-            }
 
+    GameEngine(Player* player, NPC* npcs, const int maxNPCS, UI* ui, PlayerUI* playerUI) {
+        
+        this -> player = player;
+        this -> npcs = &npcs[0];
+        
+        this -> MAX_NPCS = maxNPCS; 
+        
+        this -> map = new Map(MAX_NPCS, &npcs[0], player);
+
+        srand(time(NULL)); //set time for randomiser
+                
+        this->displayUI = ui;
+        this->playerUI = playerUI;
+    }
+    
+    ~GameEngine() {
+        delete(playerUI);
+        
+       if(levels.size()==0) delete(map); //Current map, not in level list.
+        
+        for(Map* m : levels) {
+            delete(m);
         }
-     
+
+    }
+ 
   
 };
 

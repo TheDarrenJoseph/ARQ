@@ -52,12 +52,12 @@ bool Map::CanPlaceRoom(Room* room)
 
 void Map::CreateWalls(Room* room)
 {
-  for(unsigned int x = room->GetStartPos().x; x < room->GetEndPos().x; x++) {
+  for( int x = room->GetStartPos().x; x < room->GetEndPos().x; x++) {
     game_grid[room->GetStartPos().y][x] = wa1;
     game_grid[room->GetEndPos().y-1][x] = wa1;
   }
   
-  for(unsigned int y = room->GetStartPos().y + 1; y < room->GetEndPos().y - 1; y++) {
+  for( int y = room->GetStartPos().y + 1; y < room->GetEndPos().y - 1; y++) {
     game_grid[y][room->GetStartPos().x] = wa1;
     game_grid[y][room->GetEndPos().x-1] = wa1;
   }
@@ -264,8 +264,8 @@ void Map :: PaveRoom(Room r) {
     
     if(IsInBoundaries(startPos) && IsInBoundaries(endPos)) {
         //Paves the inside of a room    
-        for (unsigned int y=startPos.y+1; y<endPos.y-1; y++) {
-            for (unsigned int x=startPos.x+1; x<endPos.x-1; x++) {
+        for ( int y=startPos.y+1; y<endPos.y-1; y++) {
+            for ( int x=startPos.x+1; x<endPos.x-1; x++) {
                 if (game_grid[y][x] == ntl) {
                     game_grid[y][x] = rom;
                     possibleSpawns.push_back(Position(x,y));
@@ -278,7 +278,7 @@ void Map :: PaveRoom(Room r) {
 }
 
 void Map :: PaveRooms() {
-      for (unsigned short int i=0; i<roomCount; i++) {
+      for ( short int i=0; i<roomCount; i++) {
         PaveRoom(rooms[i]);
       }
 }
@@ -511,7 +511,7 @@ Item* Map::GetItem(int x, int y)
 
 }    
 
-Item* Map::GetContainerItem(int containerX, int containerY, unsigned long int index)
+Item* Map::GetContainerItem(int containerX, int containerY,  long int index)
 {
     return container_grid[containerY][containerX].GetItem(index);
 }

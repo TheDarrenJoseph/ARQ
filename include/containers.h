@@ -20,8 +20,8 @@ struct Container : public Item
     ContainerType containerType;
     int weightLimit = 0;
     Logging* logging = &logging -> getInstance();
-    std::list<Item*>::iterator indexToIterator(long unsigned int i);
-    bool sizeCheck(long unsigned int i);
+    std::list<Item*>::iterator indexToIterator(long int i);
+    bool sizeCheck(long int i);
 
   public:
   std::list<Item*> inv = std::list<Item*>();
@@ -33,15 +33,15 @@ struct Container : public Item
  
   void AddItem(Item* i);
  // void AddItem(Item* i);
-  void ReplaceItem(long unsigned int it, Item* i);
+  void ReplaceItem(long int it, Item* i);
   
   
-  void RemoveItem(long unsigned int i);
+  void RemoveItem(long int i);
   void  RemoveItem(Item* item);
  
-  Item* GetItem(long unsigned int i);
-  long unsigned int GetSize();
-  long unsigned int GetWeightLimit();
+  Item* GetItem(long int i);
+  long int GetSize();
+  long int GetWeightLimit();
   
   bool IsOpenable();
   bool IsImpassable();

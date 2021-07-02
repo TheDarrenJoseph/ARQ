@@ -7,28 +7,17 @@ struct Position {
     
 private:
 public:
-    unsigned int x=0;
-    unsigned int y=0;
+     int x=0;
+     int y=0;
     
     Position() {
         x=0;
         y=0;
     }
     
-    Position(int x,int y) {
-         if (x>0 && y>0) {  
-             this->x = x;
-             this->y = y;
-         } else {
-             this->x =0;
-             this->y =0;
-         }
-    }
-    
-    Position(unsigned int x, unsigned int y) {
+    Position(int x,  int y) {
         this->x = x;
         this->y = y;
-        
     }
 
     //Overriding equality operator

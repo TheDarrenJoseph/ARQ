@@ -194,13 +194,13 @@ Container* Character :: GetInventory()
 
 /////////////////////////////////////////////////
 
-void Player :: SetLoot(unsigned long int i)
+void Player :: SetLoot( long int i)
 {
   this->lootScore = i;
   return;
 }
 
-unsigned long int Player :: GetLootScore ()
+ long int Player :: GetLootScore ()
 {
   // TODO recalculate this upon item pickup / inventory management, or flag for inv change?
   return this -> inventory -> GetTotalLootScore();

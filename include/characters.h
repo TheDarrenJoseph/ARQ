@@ -140,11 +140,11 @@ class Player : public Character
 {
  private:
  // NPC* npcs;
-  unsigned long int lootScore=0;
+   long int lootScore=0;
   
   public :
-    void SetLoot(unsigned long int x);
-    unsigned long int GetLootScore();
+    void SetLoot( long int x);
+     long int GetLootScore();
 
     int GetLootCount ();
     int GetKeyCount();
@@ -157,7 +157,7 @@ class Player : public Character
         //initialise the item inventory
         inventory = new Container(0, OBJECT, "Player's Inventory","X",2,0,100,0,true);
     
-      for (long unsigned int i=0; i<INV_SIZE; i++)
+      for (long int i=0; i<INV_SIZE; i++)
         {
           //inventory->AddItem(new Item(item_library[2]));
               //  inventory->AddItem ((Item*) &item_library[2]);

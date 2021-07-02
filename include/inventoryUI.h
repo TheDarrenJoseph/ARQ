@@ -25,7 +25,7 @@ class InventoryUI {
     void OpenContainer(Container * c, int index);
 
   public:
-    virtual void DrawInventory(ContainerSelection* containerSelection, long unsigned int invIndex);
+    virtual void DrawInventory(ContainerSelection* containerSelection, long int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
     virtual void HighlightInvLine(int index, int colourCode);
     virtual void UnhighlightInvLine(int yIndex);

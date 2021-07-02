@@ -208,8 +208,8 @@ int CursesUI::DrawMap(Map* m, bool fogOfWar, Position playerPos)
     } 
 
     //Drawing everything visible
-    for (unsigned int y = mapViewStart.y; y < mapViewEnd.y; y++) {
-      for (unsigned int x = mapViewStart.x; x < mapViewEnd.x; x++) {
+    for ( int y = mapViewStart.y; y < mapViewEnd.y; y++) {
+      for ( int x = mapViewStart.x; x < mapViewEnd.x; x++) {
         if (!fogOfWar || m -> TileIsVisible(x,y)) {
           maptile = m->GetTile(x, y);
           tileDetails = &tile_library[maptile];        
@@ -249,7 +249,7 @@ void CursesUI::DrawCharacter(int x, int y, int colour, char symbol)
     return;
 }
 
-void CursesUI::DrawPlayerStats(std::string name, int health, long unsigned int loot, long unsigned int currentLevel)
+void CursesUI::DrawPlayerStats(std::string name, int health, long int loot, long int currentLevel)
 {
     WINDOW* winchoice = mainwin_rear;
 
@@ -392,8 +392,8 @@ void CursesUI::UpdateVisibleTiles(Map* map, Position playerPos) {
   Position localViewEnd = Position(GRID_X, GRID_Y);
   CalculateViewBoundaries(playerPos, 6, &localViewStart, &localViewEnd);
 
-  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
-    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+  for ( int y = viewStart.y; y < viewEnd.y; y++) {
+    for ( int x = viewStart.x; x < viewEnd.x; x++) {
       if ( y >= localViewStart.y && y <= localViewEnd.y && x >= localViewStart.x && x <= localViewEnd.x) {
         map -> SetTileVisible(x,y, true);
       }
@@ -409,8 +409,8 @@ void CursesUI::EnableFogOfWar(Map* map, Position playerPos) {
   Position localViewEnd = Position(GRID_X, GRID_Y);
   CalculateViewBoundaries(playerPos, 6, &localViewStart, &localViewEnd);
 
-  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
-    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+  for ( int y = viewStart.y; y < viewEnd.y; y++) {
+    for ( int x = viewStart.x; x < viewEnd.x; x++) {
       if ( y >= localViewStart.y && y <= localViewEnd.y && x >= localViewStart.x && x <= localViewEnd.x) {
         map -> SetTileVisible(x,y, true);
       } else {
@@ -425,8 +425,8 @@ void CursesUI::DisableFogOfWar(Map* map) {
   Position viewStart = Position(0, 0);
   Position viewEnd = Position(GRID_X, GRID_Y);
 
-  for (unsigned int y = viewStart.y; y < viewEnd.y; y++) {
-    for (unsigned int x = viewStart.x; x < viewEnd.x; x++) {
+  for ( int y = viewStart.y; y < viewEnd.y; y++) {
+    for ( int x = viewStart.x; x < viewEnd.x; x++) {
       map -> SetTileVisible(x,y, true);
     }
   }

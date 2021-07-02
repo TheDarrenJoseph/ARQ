@@ -7,10 +7,10 @@
 class ContainerSelection {
   private:
     Logging* logging = &logging -> getInstance();
-    long unsigned int previousSelectionIndex = 0;
-    long unsigned int selectionIndex = 0;
-    long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-    long unsigned int containerIndex = 0;
+    long int previousSelectionIndex = 0;
+    long int selectionIndex = 0;
+    long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    long int containerIndex = 0;
     bool redrawList = false;
     bool playerInventory = false;
     bool selectingItems = false;
@@ -18,24 +18,26 @@ class ContainerSelection {
     Item* movingItem = NULL;
     std::list<int> selectedIndices;
     Item* selectedItem = NULL;
-    unsigned int itemViewLineCount;
+     int itemViewLineCount;
+    
+    void SelectRange(int startIndex, int endIndex);
 
   public:
     void HandleSelection(int choice);
 
-    long unsigned int GetPreviousSelectionIndex() {
+    long int GetPreviousSelectionIndex() {
       return this -> previousSelectionIndex;
     }
 
-    long unsigned int GetSelectionIndex() {
+    long int GetSelectionIndex() {
       return this -> selectionIndex;
     }
 
-    long unsigned int GetInvStartIndex() {
+    long int GetInvStartIndex() {
       return this -> invStartIndex;
     }
 
-    long unsigned int GetContainerIndex() {
+    long int GetContainerIndex() {
       return this -> containerIndex;
     }
 
@@ -71,7 +73,7 @@ class ContainerSelection {
       return this -> selectedIndices.clear();
     }
 
-    ContainerSelection(Container* container, const unsigned int itemViewLineCount, bool playerInventory) {
+    ContainerSelection(Container* container, const  int itemViewLineCount, bool playerInventory) {
       this -> container = container;
       this -> itemViewLineCount = itemViewLineCount;
       this -> playerInventory = playerInventory;

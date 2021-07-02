@@ -151,21 +151,22 @@ void GameEngine :: InitialiseMap(spawn_position spawnPosition) {
   }
 }
 
-void GameEngine :: GenerateLevel() {
+Map* GameEngine :: GenerateLevel() {
   logging -> logline("Generating Map...");
   Map* newMap = new Map(MAX_NPCS, &npcs[0], player);
   levels.push_back(newMap);
   //SetMap(newMap); //Rebuild the map
   logging -> logline("Created map of size: " + std::to_string(newMap -> GetGridX()+1) + ", " + std::to_string(newMap -> GetGridY()+1)); 
+  return newMap;
 }
 
 void GameEngine :: LoadLevel(int levelIdx) {
-  if (levelIndex == (std::numeric_limits<unsigned long int>::max()) ) {
+  if (levelIndex == (std::numeric_limits< long int>::max()) ) {
       displayUI->ShowNotification("The door is useless! (You have gone too deep!)");
       return; //Return without changing level or resetting the levelEnded flag, ends the main loop
   }
 
-  if (levelIdx < levels.size()) {
+  if (levelIdx >= 0 && (long unsigned int) levelIdx < levels.size()) {
       
       std::list<Map*>::iterator levelIterator = levels.begin();
       for (int i=0; i < levelIdx; i++) {
@@ -186,7 +187,7 @@ void GameEngine :: LoadLevel(int levelIdx) {
  * @param downLevel whether or not to go down a level
  */
 void GameEngine :: ChangeLevel(bool* levelEnded, bool* downLevel) {
-    if (levelIndex == (std::numeric_limits<unsigned long int>::max()) ) {
+    if (levelIndex == (std::numeric_limits< long int>::max()) ) {
         displayUI->ShowNotification("The door is useless! (You have gone too deep!)");
         return; //Return without changing level or resetting the levelEnded flag, ends the main loop
     }
@@ -270,7 +271,7 @@ bool GameEngine :: GameLoop(bool* levelEnded, bool* downLevel){
      return map;
  }
  
- long unsigned int GameEngine :: GetLevelIndex() {
+ long int GameEngine :: GetLevelIndex() {
      return levelIndex;
  }
  

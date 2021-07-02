@@ -24,7 +24,7 @@ struct Item
     bool lootable=false;
   
   public:
-    static unsigned long long int latestId;
+    static  long long int latestId;
     virtual itemType getType() const { return ITEM; } 
     virtual long long int GetId() const { return id; } 
     virtual std::string GetName() const { return name; } 

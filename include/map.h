@@ -178,7 +178,7 @@ class Map
     void SetTile(int x, int y,tile t);
 
     Item* GetItem(int x, int y);
-    Item* GetContainerItem(int containerX, int containerY,unsigned long int index);
+    Item* GetContainerItem(int containerX, int containerY, long int index);
     
     void AddToContainer(int x, int y, Item* i);
     

@@ -4,15 +4,13 @@
 /** Creates an iterator for this container's inv, and moves it to the needed position.
  * DO NOT CALL THIS FUNCTION UNLESS THE INV CONTAINS SOMETHING!!
  * 
- * @param i
- * @return 
  */
-std::list<Item*>::iterator Container :: indexToIterator(long unsigned i) {
+std::list<Item*>::iterator Container :: indexToIterator(long  i) {
     
     if (i<inv.size()) { 
         std::list<Item*>::iterator it = inv.begin();
         
-        for (long unsigned int index=0; index<i ; index++){
+        for (long int index=0; index<i ; index++){
             it++;
         } //Iterate
         return it;
@@ -27,16 +25,16 @@ ContainerType Container :: GetContainerType() {
 }
 
 
-long unsigned int Container :: GetSize() {
+long int Container :: GetSize() {
     return inv.size();
 }
 
 
-long unsigned int Container :: GetWeightLimit() {
+long int Container :: GetWeightLimit() {
     return this -> weightLimit;
 }
 
-bool Container :: sizeCheck(long unsigned int i) {
+bool Container :: sizeCheck(long int i) {
     return ((!inv.empty()) && i<inv.size());
 }
 
@@ -50,13 +48,13 @@ void Container :: AddItem(Item* i) {
 //  inv.push_back(i);
 //}
 
-void Container :: ReplaceItem(long unsigned int i, Item* item) {
+void Container :: ReplaceItem(long int i, Item* item) {
     if (sizeCheck(i)) {
     *indexToIterator(i) = item;
    }
 }
 
-void Container :: RemoveItem(long unsigned int i) {
+void Container :: RemoveItem(long int i) {
     if (sizeCheck(i)) {
        inv.erase(indexToIterator(i));
    }
@@ -72,7 +70,7 @@ void Container :: RemoveItem(Item* item) {
 }
 
 
-Item* Container :: GetItem(long unsigned int i) {
+Item* Container :: GetItem(long int i) {
   
    if(sizeCheck(i)) { //Boundary check
       return (*indexToIterator(i)); //&* to deal with how iterators work
@@ -99,7 +97,7 @@ bool Container :: IsImpassable() {
 //Returns 1 for multiple items, and 2 for one
 int Container :: HasItems()
 {
-  long unsigned int count = inv.size();
+  long int count = inv.size();
  
   switch (count)
     {

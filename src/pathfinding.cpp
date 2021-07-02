@@ -58,8 +58,8 @@ bool Pathfinding :: EvaluateNodes(Position startPos, Position endPos) {
 }
 
 void Pathfinding :: InitialiseMaps(Position startPos, Position endPos) {
-  for (unsigned int x=0; x < map -> GetGridX(); x++) {
-    for (unsigned int y=0; y < map -> GetGridY(); y++) {
+  for ( int x=0; x < map -> GetGridX(); x++) {
+    for ( int y=0; y < map -> GetGridY(); y++) {
       //logging -> logline("Initialising scores for pos " + std::to_string(x) + "," + std::to_string(y));
       if (startPos.x == x && startPos.y == y) {
         gScores[startPos] = 0;
@@ -120,7 +120,7 @@ std::list<Path> Pathfinding :: BuildPathsBetweenRooms() {
   Room* rooms = map -> GetRooms();
   int roomCount = map -> GetRoomCount();
   std::list<Path> paths;
-  for (unsigned short int a=0; a < roomCount - 1; a++) {
+  for ( short int a=0; a < roomCount - 1; a++) {
       Room* roomA = &rooms[a];
       Room* roomB = &rooms[a+1];
       logging -> logline("Pathfinding for room [" + std::to_string(a) + " / " + std::to_string(roomCount) + "]");
@@ -170,8 +170,8 @@ void Pathfinding :: EvaluatePathNeighborNode(Position neighbor, Position endPos,
           //logging -> logline("SAVING Tentative gScore for neighbor: " + std::to_string(tentativeGScore));
           navigatedNodes[neighbor] = currentPos; //sets the neighbors path to backtrace to the start pos
           gScores[neighbor] = tentativeGScore;
-          unsigned int heuristicNeighborCostEstimate = ManhattanPathCostEstimate(neighbor, endPos);
-          unsigned int heuristicCost = gScores[neighbor] + heuristicNeighborCostEstimate; 
+           int heuristicNeighborCostEstimate = ManhattanPathCostEstimate(neighbor, endPos);
+           int heuristicCost = gScores[neighbor] + heuristicNeighborCostEstimate; 
           fScores[neighbor] = heuristicCost; //add the cost value to this spot on the heuristic cost map
           //logging -> logline("SAVING Heuristic fScore for neighbor: " + std::to_string(heuristicCost));
           //If neighbor isn't in the unvisited list, add it, allows this function to evaluate the node later

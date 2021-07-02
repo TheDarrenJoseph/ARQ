@@ -10,7 +10,7 @@ bool InventoryUI::RootContainerIsPlayerInventory() {
  * @param c The container to list
  * @param invIndex the top index of the list, so that the list can scroll down
  */
-void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long unsigned int invIndex)
+void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int invIndex)
 {   
     Container* c = containerSelection -> GetContainer();
     box(invwin_rear, 0, 0);
@@ -29,9 +29,9 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long uns
     //wrefresh(invwin_rear);
     //wrefresh(invwin_front);
 
-    long unsigned int invSize = c->GetSize();    
-    long unsigned int lowestDisplayIndex = (long unsigned int)INVWIN_FRONT_Y;
-    for (long unsigned int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
+    long int invSize = c->GetSize();    
+    long int lowestDisplayIndex = (long int)INVWIN_FRONT_Y;
+    for (long int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
                 Item* thisItem = c->GetItem(invIndex+i);
                 char buffer[120];            
                 sprintf(buffer,"%-20s",thisItem->GetName().c_str());
@@ -74,7 +74,7 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long uns
  * @return 
  */
 bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
-  unsigned int containerIndex = containerSelection -> GetContainerIndex();;
+   int containerIndex = containerSelection -> GetContainerIndex();;
   logging -> logline("Container index: " + std::to_string(containerIndex));
 
   Container* container = containerSelection -> GetContainer();
@@ -211,8 +211,8 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
 
     ClearInvWindow();
-    long unsigned int selectionIndex = 0;
-    long unsigned int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    long int selectionIndex = 0;
+    long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
 
     //Selection loop
     int inputChoice = -1;
