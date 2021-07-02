@@ -46,7 +46,7 @@ void PlayerUI::Battle(int npc_id)
             weapon* npc_weps = npcs[npc_id].GetWeps();
 
             //allow both combatants to make a move
-            int p_move = BattleTurn(npc_id);
+            int p_move = BattleTurn();
             int npc_move = npcs[npc_id].BattleTurn();
 
             if ((p_move <= 2) && (npc_move <= 2) && (npcs[npc_id].IsAlive()) && (player->IsAlive())) {
@@ -135,7 +135,7 @@ void PlayerUI::DrawPlayerEquipment() {
 //    mainUI->DrawPlayerEquipmentSlot(INV_SIZE, player->GetOutfit().name);
 }
 
-int PlayerUI::BattleTurn(int npc_id) {
+int PlayerUI::BattleTurn() {
     mainUI->ClearConsole();
 
     for (int i = 0; i < 3; i++) {

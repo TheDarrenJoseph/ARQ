@@ -54,8 +54,7 @@ class Map
         
         roomCount = 0;
         
-        int roomChance = rand()%100-50; //Between 0-49% chance of rooms
-        CreateMap(roomChance);
+        CreateMap();
     }
 
     
@@ -211,8 +210,7 @@ class Map
      */
     bool CreateRoom(int x, int y, int size, Room* room);
     
-    //creates a new level for the dungeon, seed influences certain random attributes
-    void CreateMap(int seed);
+    void CreateMap();
     
     void InitAreas();
 

@@ -38,7 +38,6 @@ bool Pathfinding :: EvaluateNodes(Position startPos, Position endPos) {
     while(!unvisitedNodes.empty()) {
         Position currentPos = findLowestCostPosition();
         if (map -> IsPaveable(currentPos)) {
-          tile currentTile = map -> GetTile(currentPos);
           //Check for reaching our goal
           if (currentPos == endPos) { 
              logging -> logline("Reached target position: " + std::to_string(endPos.x) + "," + std::to_string(endPos.y));

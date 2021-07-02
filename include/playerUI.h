@@ -29,7 +29,7 @@ public:
     int MAX_NPCS=0;
     
     void Battle (int npc_id);
-    int BattleTurn (int npc_id);
+    int BattleTurn ();
     
     int processYesOrNoChoice(std::string choice);
     int DoorProc (int y, int x);

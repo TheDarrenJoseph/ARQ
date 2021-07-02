@@ -50,7 +50,7 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int
     getmaxyx(invwin_rear, maxY, maxX);
     // Footer instructions
     char buffer[30];            
-    sprintf(buffer,"%03d/%03dkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
+    sprintf(buffer,"%03d/%03ldkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
     mainUI -> wprint_at(invwin_rear, buffer, maxY-1, maxX-11); // Add commands to the bottom of the window
 
     if (RootContainerIsPlayerInventory()) {

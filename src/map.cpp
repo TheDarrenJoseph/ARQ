@@ -168,7 +168,7 @@ bool Map::CreateRoom(int x, int y, int size, Room* room)
 
 
 /** Generates a layer of the dungeon, creating rooms and corridors procedurally.*/
-void Map::CreateMap(int roomChance) {
+void Map::CreateMap() {
     const int MAX_ROOM_SIZE = 10;
     const int MIN_ROOM_SIZE = 3;
 

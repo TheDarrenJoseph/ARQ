@@ -7,7 +7,7 @@
  */
 std::list<Item*>::iterator Container :: indexToIterator(long  i) {
     
-    if (i<inv.size()) { 
+    if (i >=0 && ((long unsigned int) i) < inv.size()) { 
         std::list<Item*>::iterator it = inv.begin();
         
         for (long int index=0; index<i ; index++){
@@ -35,7 +35,7 @@ long int Container :: GetWeightLimit() {
 }
 
 bool Container :: sizeCheck(long int i) {
-    return ((!inv.empty()) && i<inv.size());
+    return ((!inv.empty()) && i >= 0 && ((long unsigned int) i) < inv.size());
 }
 
 void Container :: AddItem(Item* i) {
