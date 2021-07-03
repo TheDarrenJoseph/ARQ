@@ -20,6 +20,23 @@ class ContainerSelection {
     std::vector<Item*> selectedItems;
     int itemViewLineCount;
 
+    void AddSelectedItem(int index, Item* selectedItem) {
+      this -> selectedIndices.push_back(index);
+      this -> selectedItems.push_back(selectedItem);
+    }
+
+    void RemoveSelectedItem(int index, Item* selectedItem) {
+	  std::vector<int>::iterator indexIter = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index);
+	  if (indexIter != this -> selectedIndices.end()) {
+		  this -> selectedIndices.erase(indexIter);
+	  }
+
+	  std::vector<Item*>::iterator selectionIter = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem);
+	  if (selectionIter != this -> selectedItems.end()) {
+		  this -> selectedItems.erase(selectionIter);
+	  }
+    }
+
   public:
     void HandleSelection(int choice);
 
@@ -47,27 +64,41 @@ class ContainerSelection {
       return this -> selectedItems;
     }
 
+    bool IsSelected(long int index) {
+        bool foundIndex = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index) != selectedIndices.end();
+        if (foundIndex) {
+        	Item* selectedItem = this -> container -> GetItem(index);
+        	bool foundItem = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem) != selectedItems.end();
+        	return foundItem;
+        }
+        return false;
+    }
+
     void Deselect(long int index) {
-      Item* selectedItem = this -> container -> GetItem(index);
-      std::vector<int>::iterator indexIter = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index);
-      std::vector<Item*>::iterator selectionIter = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem);
-      if (selectedItem != NULL) {
-        this -> selectedIndices.erase(indexIter);
-        this -> selectedItems.erase(selectionIter);
-        logging -> logline("Deselected item idx: " + std::to_string(index));
+      if (IsSelected(index)) {
+		  Item* selectedItem = this -> container -> GetItem(index);
+		  if (selectedItem != NULL) {
+			this -> RemoveSelectedItem(index, selectedItem);
+			logging -> logline("Deselected item idx: " + std::to_string(index));
+		  } else {
+			logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+		  }
       } else {
-        logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+		logging -> logline("Index: " + std::to_string(index) + " not selected. Ignoring..");
       }
     }
 
     void Select(long int index) {
-      Item* selectedItem = this -> container -> GetItem(index);
-      if (selectedItem != NULL) {
-        this -> selectedIndices.push_back(index);
-        this -> selectedItems.push_back(selectedItem);
-        logging -> logline("Selected item idx: " + std::to_string(index));
+      if (!IsSelected(index)) {
+		  Item* selectedItem = this -> container -> GetItem(index);
+		  if (selectedItem != NULL) {
+			this -> AddSelectedItem(index, selectedItem);
+			logging -> logline("Selected item idx: " + std::to_string(index));
+		  } else {
+			logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+		  }
       } else {
-        logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+		logging -> logline("Index: " + std::to_string(index) + " already selected. Ignoring..");
       }
     } 
 
@@ -81,10 +112,6 @@ class ContainerSelection {
       this -> containerSelectionStart = -1;
     } 
 
-    void AddSelectedItem(int index, Item* selectedItem) {
-      this -> selectedIndices.push_back(index);
-      this -> selectedItems.push_back(selectedItem);
-    }
 
     bool IsRedrawList() {
       return this -> redrawList;

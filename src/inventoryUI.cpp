@@ -127,8 +127,7 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
         	  logging -> logline("Cannot move item to itself!");
         	  break;
 		  } else {
-			std::vector<Item*>::iterator movingIter = movingItems.begin();
-			for (unsigned long int i=0; i < movingItems.size(); i++) {
+			for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
 				Item* item = *movingIter;
 			  	if (item != NULL) {
 				  this -> MoveItem(container, item, targetItem);
@@ -136,7 +135,6 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
 				} else {
 				  logging -> logline("moving item was NULL!");
 				}
-			  	movingIter++;
 			}
 		    containerSelection -> SetRedrawList(true);
 			containerSelection -> ClearSelection();
