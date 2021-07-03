@@ -28,13 +28,16 @@ class InventoryUI {
   public:
     virtual void DrawInventory(ContainerSelection* containerSelection, long int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
-    virtual void HighlightInvLine(int index, int colourCode);
+    virtual void HighlightInvLine(int yIndex, int colourCode);
+    virtual void ColourInvLine(int index, int colourCode);
     virtual void UnhighlightInvLine(int yIndex);
 
     virtual void ClearInvHighlighting();
     virtual void ClearInvWindow();
     virtual void EraseInvWindow();
 
+    int AttemptMoveItems(ContainerSelection* containerSelection);
+    int AttemptDropItems(ContainerSelection* containerSelection);
     int InventoryInput(ContainerSelection* containerSelection, int inputChoice);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);

@@ -37,6 +37,8 @@ class ContainerSelection {
 	  }
     }
 
+    void UpdateSelection(long int newSelectionIndex);
+
   public:
     void HandleSelection(int choice);
 
@@ -70,6 +72,8 @@ class ContainerSelection {
         	Item* selectedItem = this -> container -> GetItem(index);
         	bool foundItem = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem) != selectedItems.end();
         	return foundItem;
+        } else {
+			logging -> logline("index not in selection: " + std::to_string(index));
         }
         return false;
     }
@@ -102,6 +106,10 @@ class ContainerSelection {
       }
     } 
 
+    void DeselectRange(int startIndex, int endIndex) {
+      for (int i=startIndex; i<endIndex; i++) this -> Deselect(i);
+    }
+
     void SelectRange(int startIndex, int endIndex) {
       for (int i=startIndex; i<endIndex; i++) this -> Select(i);
     }
@@ -110,6 +118,7 @@ class ContainerSelection {
       this -> selectedIndices.clear();
       this -> selectedItems.clear();
       this -> containerSelectionStart = -1;
+      this -> selectingItems = false;
     } 
 
 

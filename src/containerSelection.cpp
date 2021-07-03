@@ -1,5 +1,54 @@
 #include "containerSelection.h"
 
+
+void ContainerSelection :: UpdateSelection(long int newSelectionIndex) {
+    this -> previousSelectionIndex = this -> selectionIndex;
+    long int previousContainerIndex = this -> containerIndex;
+    this -> selectionIndex = newSelectionIndex;
+    this -> containerIndex = newSelectionIndex + this -> invStartIndex;
+
+    if (this -> selectingItems && this -> containerSelectionStart == -1) {
+    	// Set the selection pivot point
+		this -> containerSelectionStart = newSelectionIndex + invStartIndex;
+    }
+
+    bool selectionChanged = this -> containerIndex != previousContainerIndex;
+    if (selectionChanged && this -> selectingItems) {
+        logging -> logline("Selection starts at: " + std::to_string(containerSelectionStart));
+
+        bool selectingItemsAbove = this -> containerIndex < previousContainerIndex && this -> containerIndex < containerSelectionStart;
+    	if (selectingItemsAbove) {
+    		for (long int i=this -> containerIndex; i <= containerSelectionStart; i++) {
+    			Select(i);
+    		}
+    	}
+
+    	// Deselect anything we were previously selecting
+    	bool reducingSelectionAbove = this -> containerIndex > previousContainerIndex && this -> containerIndex < containerSelectionStart;
+    	if (reducingSelectionAbove) {
+    		for (long int i=previousContainerIndex-1; i < containerIndex; i++) {
+    			Deselect(i);
+    		}
+    	}
+
+        bool selectingItemsBelow = this -> containerIndex > previousContainerIndex && this -> containerIndex > containerSelectionStart;
+    	if (selectingItemsBelow) {
+    		for (long int i=this -> containerSelectionStart; i <= containerIndex; i++) {
+    			Select(i);
+    		}
+    	}
+
+    	// Deselect anything we were previously selecting
+    	bool reducingSelectionBelow = this -> containerIndex < previousContainerIndex && this -> containerIndex > containerSelectionStart;
+    	if (reducingSelectionBelow) {
+    		for (long int i= this -> containerIndex+1; i <= previousContainerIndex; i++) {
+    			Deselect(i);
+    		}
+    	}
+
+	}
+}
+
 void ContainerSelection :: HandleSelection(int choice) {
    int containerSize = this -> container -> GetSize();
   if (containerSize > 0) {
@@ -16,16 +65,21 @@ void ContainerSelection :: HandleSelection(int choice) {
     long int newSelectionIndex = this -> selectionIndex;
     switch (choice) {
       case('\n'): {
-        this -> selectingItems = !selectingItems;
-        if (this -> selectingItems) {
-          // Set the selection pivot point
-          if (this -> containerSelectionStart == -1) {
-        	  this -> containerSelectionStart = newSelectionIndex + invStartIndex;
-          }
-          logging -> logline("Selecting items");
-        } else {
-          logging -> logline("Closing selection");
-        }
+
+    	if (!this -> selectingItems) {
+    		// If we're hitting select on a selected item, but not in select mode, deselect it
+    		if (this -> IsSelected(containerIndex)) {
+    			this -> Deselect(containerIndex);
+    			return;
+    		}
+
+    		this -> selectingItems = true;
+    		this -> containerSelectionStart = -1;
+            logging -> logline("Selecting items");
+    	} else {
+    		this -> selectingItems = false;
+            logging -> logline("Closing selection");
+    	}
         break;
       }
       case KEY_PPAGE:
@@ -65,7 +119,6 @@ void ContainerSelection :: HandleSelection(int choice) {
         }
         break;
       case KEY_DOWN:
-        //Checking against the window boundary. containerSize allows
         if (selectionIndex < maxSelectionIndex) {
           newSelectionIndex++; 
         } else if (selectionIndex == itemViewLineCount-1 && invStartIndex < maxScrollIndex) {
@@ -75,19 +128,6 @@ void ContainerSelection :: HandleSelection(int choice) {
         break;
     }
 
-    this -> previousSelectionIndex = selectionIndex;
-    this -> selectionIndex = newSelectionIndex;
-    this -> containerIndex = newSelectionIndex + invStartIndex;
-
-    if (this -> selectingItems) {
-        logging -> logline("Selection starts at: " + std::to_string(containerSelectionStart));
-    	if (this -> containerSelectionStart < containerIndex) {
-    		SelectRange(this -> containerSelectionStart, containerIndex);
-    	} else if (this -> containerSelectionStart > containerIndex) {
-    		SelectRange(containerIndex, this -> containerSelectionStart);
-    	} else {
-            Select(containerIndex);
-    	}
-    }
+    this -> UpdateSelection(newSelectionIndex);
   }
 }

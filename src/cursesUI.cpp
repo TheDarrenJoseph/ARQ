@@ -69,6 +69,7 @@ int CursesUI::Menu(std::vector<std::pair<std::string,std::string>> items) {
     WINDOW* nWinRear = newwin(MAINWIN_REAR_Y, MAINWIN_REAR_X, 1, 1);
     WINDOW* nWin = newwin(MAINWIN_FRONT_Y, MAINWIN_FRONT_X, 2, 2);
 
+    curs_set(0); // Hide the cursor
     keypad(nWin, TRUE);
     noecho(); //stops input printing on screen
 

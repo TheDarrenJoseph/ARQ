@@ -65,6 +65,59 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int
     return;
 }
 
+int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
+	std::vector<Item*> movingItems = containerSelection -> GetSelectedItems();
+	std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
+	int containerIndex = containerSelection -> GetContainerIndex();;
+	Container* container = containerSelection -> GetContainer();
+	if (movingItems.empty()) {
+		Item* movingItem = container -> GetItem(containerIndex);
+		containerSelection -> Select(containerIndex);
+		mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
+	} else {
+		Item* targetItem = container -> GetItem(containerIndex);
+		std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
+		bool targetIsInSelection = targetFindIter != movingItems.end();
+		if (targetIsInSelection) {
+		  logging -> logline("Cannot move item to itself!");
+		} else {
+		for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
+			Item* item = *movingIter;
+			if (item != NULL) {
+			  this -> MoveItem(container, item, targetItem);
+			  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
+			} else {
+			  logging -> logline("moving item was NULL!");
+			}
+		}
+		containerSelection -> SetRedrawList(true);
+		containerSelection -> ClearSelection();
+		return 0;
+		}
+	}
+	return 1;
+}
+
+int InventoryUI::AttemptDropItems(ContainerSelection* containerSelection) {
+	std::vector<Item*> droppingItems = containerSelection -> GetSelectedItems();
+	std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
+	if (!droppingItems.empty()) {
+		for (std::vector<Item*>::iterator dropItemsIter = droppingItems.begin(); dropItemsIter != droppingItems.end(); dropItemsIter++) {
+			Item* item = *dropItemsIter;
+			if (item != NULL) {
+			  this -> DropItem(item);
+			  mainUI -> ClearConsoleAndPrint("Dropped: " + item -> GetName());
+			} else {
+			  logging -> logline("Dropping item was NULL!");
+			}
+		}
+		containerSelection -> SetRedrawList(true);
+		containerSelection -> ClearSelection();
+		return 0;
+	}
+	return 1;
+}
+
 /**
  * 
  * @param choice int code for the player input
@@ -108,38 +161,12 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       break;
     }
     case ('d') : {
-      DropItem(container -> GetItem(containerIndex));
+      this -> AttemptDropItems(containerSelection);
       containerSelection -> SetRedrawList(true);
       break;
     }
     case ('m') : {
-      std::vector<Item*> movingItems = containerSelection -> GetSelectedItems();
-      std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
-      if (movingItems.empty()) {
-        Item* movingItem = container -> GetItem(containerIndex);
-        containerSelection -> Select(containerIndex);
-        mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
-      } else {
-          Item* targetItem = container -> GetItem(containerIndex);
-          std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
-          bool targetIsInSelection = targetFindIter != movingItems.end();
-          if (targetIsInSelection) {
-        	  logging -> logline("Cannot move item to itself!");
-        	  break;
-		  } else {
-			for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
-				Item* item = *movingIter;
-			  	if (item != NULL) {
-				  this -> MoveItem(container, item, targetItem);
-				  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
-				} else {
-				  logging -> logline("moving item was NULL!");
-				}
-			}
-		    containerSelection -> SetRedrawList(true);
-			containerSelection -> ClearSelection();
-		  }
-      }
+      this -> AttemptMoveItems(containerSelection);
       break;
     }
   }
@@ -246,6 +273,8 @@ void InventoryUI :: OpenContainer(Container * parent, int index) {
  */
 void InventoryUI::AccessContainer(Container * c, bool playerInv)
 {
+	// Hide the cursor
+    curs_set(0);
     this -> invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
     this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
 
@@ -271,10 +300,14 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
       if (!selectedItems.empty()) PrintAccessContainerHints();
       std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
       for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
-        HighlightInvLine(*i, 2);      
+        ColourInvLine(*i, 2);
       }
-      HighlightInvLine(selectionIndex, 1);      
-      
+      if (containerSelection -> IsSelected(selectionIndex)) {
+    	  HighlightInvLine(selectionIndex,2);
+      } else {
+    	  HighlightInvLine(selectionIndex,0);
+      }
+
       inputChoice = mainUI->ConsoleGetInput();
       containerSelection -> HandleSelection(inputChoice);
 
@@ -359,8 +392,13 @@ void InventoryUI :: HighlightInv(int xChars, int xIndex, int yIndex) {
     wrefresh(invwin_front);
 }
 
-void InventoryUI :: HighlightInvLine(int yIndex, int colourCode) {
-    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_NORMAL, colourCode, NULL); //add red blink to the current line
+void InventoryUI :: HighlightInvLine(int yIndex,  int colourCode) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_REVERSE, colourCode, NULL);
+    wrefresh(invwin_front);
+}
+
+void InventoryUI :: ColourInvLine(int yIndex, int colourCode) {
+    mvwchgat(invwin_front, yIndex, 0, INVWIN_FRONT_X-1 , A_NORMAL, colourCode, NULL);
     wrefresh(invwin_front);
 }
 
