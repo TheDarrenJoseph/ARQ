@@ -71,28 +71,23 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int
  * @param index The current selected item index in this list
  * @param c A pointer to this container
  * @param playerInv Whether or not this is the player's inventory or another container
- * @return 
+ * @return whether to 
  */
-bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
+int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
    int containerIndex = containerSelection -> GetContainerIndex();;
   logging -> logline("Container index: " + std::to_string(containerIndex));
 
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
     case ('q') : {
-      bool movingAnItem = NULL != containerSelection -> GetMovingItem();
-      if(movingAnItem) {
-        containerSelection -> SetMovingItem(NULL);
+      // Selection clearing
+      if (!containerSelection -> GetSelectedIndices().empty()) {
+        containerSelection -> ClearSelection();  
         containerSelection -> SetRedrawList(true);
-        return true;
+        return 0;
       }
 
-      if (containerSelection -> GetSelectedIndices().size() > 0) {
-        containerSelection -> ClearSelectedIndices();
-        containerSelection -> SetRedrawList(true);
-        return true;
-      }
-      return false;
+      return 1;
       break;
     }
     case ('c') : {
@@ -118,38 +113,49 @@ bool InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inp
       break;
     }
     case ('m') : {
-      Item* movingItem = containerSelection -> GetMovingItem();
-      if (movingItem == NULL) {
+      std::vector<Item*> movingItems = containerSelection -> GetSelectedItems();
+      std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
+      if (movingItems.empty()) {
         Item* movingItem = container -> GetItem(containerIndex);
-        containerSelection -> SetMovingItem(movingItem);
+        containerSelection -> Select(containerIndex);
         mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
       } else {
-        Item* targetItem = container -> GetItem(containerIndex);
-        if (targetItem == movingItem) {
-          logging -> logline("Cannot move item to itself!");
-        } if (targetItem != NULL && movingItem != NULL) {
-          this -> MoveItem(container, movingItem, targetItem);
-          containerSelection -> SetRedrawList(true);
-          containerSelection -> SetMovingItem(NULL);
-          mainUI->ClearConsoleAndPrint("Moved: " + movingItem -> GetName());
-          //logging -> logline("Moving: " + movingItem -> GetName());
-        } else {
-          logging -> logline("Target or moving item was NULL!");
-        }
+          Item* targetItem = container -> GetItem(containerIndex);
+          std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
+          bool targetIsInSelection = targetFindIter != movingItems.end();
+          if (targetIsInSelection) {
+        	  logging -> logline("Cannot move item to itself!");
+        	  break;
+		  } else {
+			std::vector<Item*>::iterator movingIter = movingItems.begin();
+			for (unsigned long int i=0; i < movingItems.size(); i++) {
+				Item* item = *movingIter;
+			  	if (item != NULL) {
+				  this -> MoveItem(container, item, targetItem);
+				  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
+				} else {
+				  logging -> logline("moving item was NULL!");
+				}
+			  	movingIter++;
+			}
+		    containerSelection -> SetRedrawList(true);
+			containerSelection -> ClearSelection();
+		  }
       }
       break;
     }
   }
-  return true;
+  return 0;
 }
 
 
 void InventoryUI::PrintAccessContainerHints() {
 
     mainUI -> ClearConsole();
-    mainUI -> ConsolePrint("Up/Down - Select an item. Enter to select multiple. q to clear a selection", 0, 0);
+    mainUI -> ConsolePrint("Up/Down - Select an item. Enter - select multiple. q clear selection", 0, 0);
     mainUI -> ConsolePrint("c - Enter a Command",0,1);
-    mainUI -> ConsolePrint("q - Close this window",0,2);
+    mainUI -> ConsolePrint("h - Help/Command list",0,1);
+    mainUI -> ConsolePrint("q - Close this window",0,3);
 }
 
 void InventoryUI::TakeItem(Container* container, int index) {
@@ -172,19 +178,54 @@ void InventoryUI::DropItem(Item* item) {
 
 int InventoryUI :: MoveItem(Container* container, Item* item, Item* targetItem)
 {   
+	if (item == targetItem) {
+		logging -> logline("item matches targetItem! Cannot move item to it's own location!");
+		return 1;
+	}
+
+	//Dynamic cast to type check
+	Container* targetContainer = dynamic_cast<Container*> (targetItem);
+	//If incorrectly cast (item), pointer will be NULL
+	// Move into container
+	if (targetContainer != NULL) {
+		targetContainer -> AddItem(item);
+		container -> RemoveItem(item);
+		logging -> logline("Moved item: " + item -> GetName() + " into " + targetContainer -> GetName());
+	} else {
+		// Insert at this index
+		long int fromIndex = container -> IndexOf(item);
+		long int targetIndex = container -> IndexOf(targetItem);
+		container -> RemoveItem(item);
+		container -> AddItem(item, targetIndex);
+		logging -> logline("Moved item: " + item -> GetName() + " from " + std::to_string(fromIndex) + " to " + std::to_string(targetIndex));
+
+	}
+	return 1;
+}
+
+int InventoryUI :: MoveItems(Container* container, std::vector<Item*> items, Item* targetItem)
+{
+
+  int targetIndex = container -> IndexOf(targetItem);
   //Dynamic cast to type check
   Container* targetContainer = dynamic_cast<Container*> (targetItem);
   //If incorrectly cast (item), pointer will be NULL
   // Move into container
   if (targetContainer != NULL) {
-    targetContainer -> AddItem(item);
-    container -> RemoveItem(item);
-    logging -> logline("Moved item");
+    targetContainer -> AddItems(items, targetIndex);
+    container -> RemoveItems(items);
+    logging -> logline("Moved " + std::to_string(items.size()) + " items into: " + targetContainer -> GetName());
+    return 0;
   } else {
     // Insert at this index
+    container -> RemoveItems(items);
+	container -> AddItems(items, targetIndex);
+    logging -> logline("Moved " + std::to_string(items.size()) + " items to index: " + std::to_string(targetIndex));
+	return 0;
   }
-    return 1;
+  return 1;
 }
+
 
 void InventoryUI :: OpenContainer(Container * parent, int index) {
   Item* itm = parent -> GetItem(index);   
@@ -220,18 +261,18 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     this -> containerSelections.push_back(containerSelection);
     currentContainerSelection = this -> containerSelections.back();
     DrawInventory(containerSelection,invStartIndex);
-    while(InventoryInput(containerSelection, inputChoice)) {
+    while(InventoryInput(containerSelection, inputChoice) == 0) {
       if (containerSelection -> IsRedrawList()) {
         logging -> logline("Redrawing container list..");
         DrawInventory(containerSelection,invStartIndex);
         containerSelection -> SetRedrawList(false);
       }
 
-      Item* movingItem = containerSelection -> GetMovingItem();
-      if (movingItem == NULL) PrintAccessContainerHints();
 
-      std::list<int> selectionIndices = containerSelection -> GetSelectedIndices();
-      for (std::list<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
+      std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
+      if (!selectedItems.empty()) PrintAccessContainerHints();
+      std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
+      for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
         HighlightInvLine(*i, 2);      
       }
       HighlightInvLine(selectionIndex, 1);      

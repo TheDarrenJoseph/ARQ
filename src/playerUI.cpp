@@ -327,7 +327,7 @@ void PlayerUI::LockProc(int y, int x) {
                             mainUI->ConsolePrintWithWait("Your lockpick breaks as you attempt to open the lock.. ", 0, 0);
                         }
                         
-                        player->GetInventory()->RemoveItem(i);
+                        player->GetInventory()->RemoveItem(inv_tile);
                         chance = rand() % 100 + 1;
                     }
 
@@ -687,7 +687,7 @@ int PlayerUI::TakeItem(Container* container, int index)
 {
   Item* item = container -> GetItem(index);
   player -> AddToInventory(item);
-  container -> RemoveItem(index);
+  container -> RemoveItem(item);
   return 0;
 }
 

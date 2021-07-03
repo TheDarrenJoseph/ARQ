@@ -244,7 +244,7 @@ void Player :: RemoveKeyCount(int keyCount) {
             if (removedCount == keyCount) {
                 return;
             } else  if (invTile -> GetId() == key) {
-               inventory->RemoveItem(i);
+               inventory->RemoveItem(invTile);
             };
             
         };

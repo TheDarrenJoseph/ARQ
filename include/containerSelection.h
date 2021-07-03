@@ -10,17 +10,15 @@ class ContainerSelection {
     long int previousSelectionIndex = 0;
     long int selectionIndex = 0;
     long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    long int containerSelectionStart = -1;
     long int containerIndex = 0;
     bool redrawList = false;
     bool playerInventory = false;
     bool selectingItems = false;
     Container* container = NULL;
-    Item* movingItem = NULL;
-    std::list<int> selectedIndices;
-    Item* selectedItem = NULL;
-     int itemViewLineCount;
-    
-    void SelectRange(int startIndex, int endIndex);
+    std::vector<int> selectedIndices;
+    std::vector<Item*> selectedItems;
+    int itemViewLineCount;
 
   public:
     void HandleSelection(int choice);
@@ -45,12 +43,47 @@ class ContainerSelection {
       return this -> container;
     }
 
-    Item* GetMovingItem() {
-      return this -> movingItem;
+    std::vector<Item*> GetSelectedItems() {
+      return this -> selectedItems;
     }
 
-    void SetMovingItem(Item* movingItem) {
-      this -> movingItem = movingItem;
+    void Deselect(long int index) {
+      Item* selectedItem = this -> container -> GetItem(index);
+      std::vector<int>::iterator indexIter = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index);
+      std::vector<Item*>::iterator selectionIter = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem);
+      if (selectedItem != NULL) {
+        this -> selectedIndices.erase(indexIter);
+        this -> selectedItems.erase(selectionIter);
+        logging -> logline("Deselected item idx: " + std::to_string(index));
+      } else {
+        logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+      }
+    }
+
+    void Select(long int index) {
+      Item* selectedItem = this -> container -> GetItem(index);
+      if (selectedItem != NULL) {
+        this -> selectedIndices.push_back(index);
+        this -> selectedItems.push_back(selectedItem);
+        logging -> logline("Selected item idx: " + std::to_string(index));
+      } else {
+        logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+      }
+    } 
+
+    void SelectRange(int startIndex, int endIndex) {
+      for (int i=startIndex; i<endIndex; i++) this -> Select(i);
+    }
+
+    void ClearSelection() {
+      this -> selectedIndices.clear();
+      this -> selectedItems.clear();
+      this -> containerSelectionStart = -1;
+    } 
+
+    void AddSelectedItem(int index, Item* selectedItem) {
+      this -> selectedIndices.push_back(index);
+      this -> selectedItems.push_back(selectedItem);
     }
 
     bool IsRedrawList() {
@@ -65,7 +98,7 @@ class ContainerSelection {
       return this -> playerInventory;
     }
 
-    std::list<int> GetSelectedIndices() {
+    std::vector<int> GetSelectedIndices() {
       return this -> selectedIndices;
     }
 

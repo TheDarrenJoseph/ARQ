@@ -15,13 +15,14 @@ class InventoryUI {
     WINDOW* invwin_front=NULL;
     WINDOW* invwin_rear=NULL;
     ContainerSelection* currentContainerSelection;
-    std::list<ContainerSelection*> containerSelections;
+    std::vector<ContainerSelection*> containerSelections;
     bool selectingItems = false;
     bool movingItem = false;
     bool RootContainerIsPlayerInventory();
     void TakeItem(Container* container, int index);
     void DropItem(Item* item);
     int MoveItem(Container* container, Item* item, Item* targetItem);
+    int MoveItems(Container* container, std::vector<Item*> items, Item* targetItem);
     void OpenContainer(Container * c, int index);
 
   public:
@@ -34,7 +35,7 @@ class InventoryUI {
     virtual void ClearInvWindow();
     virtual void EraseInvWindow();
 
-    bool InventoryInput(ContainerSelection* containerSelection, int inputChoice);
+    int InventoryInput(ContainerSelection* containerSelection, int inputChoice);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);
     void AccessListCommand(Container* c, int index);

@@ -1,11 +1,5 @@
 #include "containerSelection.h"
 
-void ContainerSelection :: SelectRange(int startIndex, int endIndex) {
-  for (int i=startIndex; i<endIndex; i++) {
-    this -> selectedIndices.push_back(i);
-  }
-}
-
 void ContainerSelection :: HandleSelection(int choice) {
    int containerSize = this -> container -> GetSize();
   if (containerSize > 0) {
@@ -24,6 +18,10 @@ void ContainerSelection :: HandleSelection(int choice) {
       case('\n'): {
         this -> selectingItems = !selectingItems;
         if (this -> selectingItems) {
+          // Set the selection pivot point
+          if (this -> containerSelectionStart == -1) {
+        	  this -> containerSelectionStart = newSelectionIndex + invStartIndex;
+          }
           logging -> logline("Selecting items");
         } else {
           logging -> logline("Closing selection");
@@ -79,17 +77,17 @@ void ContainerSelection :: HandleSelection(int choice) {
 
     this -> previousSelectionIndex = selectionIndex;
     this -> selectionIndex = newSelectionIndex;
-    int newContainerIndex = newSelectionIndex + invStartIndex;
+    this -> containerIndex = newSelectionIndex + invStartIndex;
+
     if (this -> selectingItems) {
-      if (containerIndex < newContainerIndex) {
-        SelectRange(this -> containerIndex, newContainerIndex);  
-      } else if (containerIndex > newContainerIndex) {
-        SelectRange(newContainerIndex, this -> containerIndex);  
-      } else {
-        SelectRange(newContainerIndex, newContainerIndex);  
-      }
+        logging -> logline("Selection starts at: " + std::to_string(containerSelectionStart));
+    	if (this -> containerSelectionStart < containerIndex) {
+    		SelectRange(this -> containerSelectionStart, containerIndex);
+    	} else if (this -> containerSelectionStart > containerIndex) {
+    		SelectRange(containerIndex, this -> containerSelectionStart);
+    	} else {
+            Select(containerIndex);
+    	}
     }
-    
-    this -> containerIndex = selectionIndex + invStartIndex;
   }
 }

@@ -1,14 +1,26 @@
 #include "containers.h"
 #include <iostream>
 
+
+long int Container :: IndexOf(Item* item) {
+  std::vector<Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
+  if (iter != inv.end()) {
+	int index = std::distance(inv.begin(), iter);
+    logging -> logline("Found item: " + item -> GetName() + ". Index: " + std::to_string(index));
+    return index;
+  }
+  logging -> logline("Failed to find item: " + item -> GetName());
+  return -1;
+}
+
 /** Creates an iterator for this container's inv, and moves it to the needed position.
  * DO NOT CALL THIS FUNCTION UNLESS THE INV CONTAINS SOMETHING!!
  * 
  */
-std::list<Item*>::iterator Container :: indexToIterator(long  i) {
+std::vector<Item*>::iterator Container :: indexToIterator(long  i) {
     
     if (i >=0 && ((long unsigned int) i) < inv.size()) { 
-        std::list<Item*>::iterator it = inv.begin();
+        std::vector<Item*>::iterator it = inv.begin();
         
         for (long int index=0; index<i ; index++){
             it++;
@@ -16,7 +28,8 @@ std::list<Item*>::iterator Container :: indexToIterator(long  i) {
         return it;
         
     } else {
-        return inv.begin();
+    	logging -> logline("Invalid index: " + std::to_string(i) + " Returning end of container.");
+        return inv.end();
     }
 }
 
@@ -42,6 +55,20 @@ void Container :: AddItem(Item* i) {
   inv.push_back(i);
 }
 
+void Container :: AddItem(Item* item, long int index) {
+  std::vector<Item*>::iterator indexIt = indexToIterator(index);
+  if (indexIt != inv.end()) {
+	  inv.insert(indexIt, item);
+  }
+}
+
+void Container :: AddItems(std::vector<Item*> items, long int index) {
+  std::vector<Item*>::iterator indexIt = indexToIterator(index);
+  if (indexIt != inv.end()) {
+	  inv.insert(indexIt, items.begin(), items.end());
+  }
+}
+
 //void Container :: AddItem(Item* i) {
 //  //inv.push_front(i);
 //  //inv.push_back(i);
@@ -62,10 +89,19 @@ void Container :: RemoveItem(long int i) {
 }  
 
 void Container :: RemoveItem(Item* item) {
-  std::list<Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
+  std::vector<Item*>::iterator iter = std::find(inv.begin(), inv.end(), item);
   if (iter != inv.end()) {
     logging -> logline("Removing item: " + item -> GetName());
     inv.erase(iter);
+  }
+}
+
+void Container :: RemoveItems(std::vector<Item*> items) {
+  std::vector<Item*>::iterator it = items.begin();
+  for (long unsigned int i=0; i < items.size(); i++) {
+	  if (it != items.end() && it != inv.end()) {
+		  RemoveItem(*it);
+	  }
   }
 }
 

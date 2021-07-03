@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 #include <list>
 #include "items.h"
 #include "logging.h"
@@ -20,24 +21,26 @@ struct Container : public Item
     ContainerType containerType;
     int weightLimit = 0;
     Logging* logging = &logging -> getInstance();
-    std::list<Item*>::iterator indexToIterator(long int i);
+    std::vector<Item*>::iterator indexToIterator(long int i);
     bool sizeCheck(long int i);
 
   public:
-  std::list<Item*> inv = std::list<Item*>();
+  std::vector<Item*> inv = std::vector<Item*>();
 
   ContainerType GetContainerType();
 
   Item* GetInv();
   
- 
+  long int IndexOf(Item* item);
   void AddItem(Item* i);
- // void AddItem(Item* i);
+  void AddItem(Item* i, long int index);
+  void AddItems(std::vector<Item*> items, long int index);
+
   void ReplaceItem(long int it, Item* i);
-  
-  
+
   void RemoveItem(long int i);
-  void  RemoveItem(Item* item);
+  void RemoveItem(Item* item);
+  void RemoveItems(std::vector<Item*> items);
  
   Item* GetItem(long int i);
   long int GetSize();
