@@ -39,6 +39,7 @@ struct Item
     return this -> lootable;
   }
 
+  /**
   Item()
   {
     id = latestId++;
@@ -48,7 +49,7 @@ struct Item
     weight = 0;
     value = 0;
     lootable = false;
-  }
+  }**/
 
   Item(Item* toCopy)
   {

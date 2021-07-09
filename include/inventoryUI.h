@@ -18,6 +18,12 @@ class InventoryUI {
     std::vector<ContainerSelection*> containerSelections;
     bool selectingItems = false;
     bool movingItem = false;
+
+    // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
+    const int COL_1 = 0;
+    const int COL_2 = 20;
+    const int COL_3 = 33;
+
     bool RootContainerIsPlayerInventory();
     void TakeItem(Container* container, int index);
     void DropItem(Item* item);
@@ -26,6 +32,8 @@ class InventoryUI {
     void OpenContainer(Container * c, int index);
 
   public:
+    virtual void DrawRearWindow(ContainerSelection* containerSelection);
+    virtual void DrawItem(Item* item, int inventoryLineIndex);
     virtual void DrawInventory(ContainerSelection* containerSelection, long int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
     virtual void HighlightInvLine(int yIndex, int colourCode);

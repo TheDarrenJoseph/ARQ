@@ -50,7 +50,7 @@ void ContainerSelection :: UpdateSelection(long int newSelectionIndex) {
 }
 
 void ContainerSelection :: HandleSelection(int choice) {
-   int containerSize = this -> container -> GetSize();
+  int containerSize = this -> container -> GetSize();
   if (containerSize > 0) {
     //logging -> logline("WINDOW SIZE: " + std::to_string(ITEM_LINE_COUNT));
     //logging -> logline("Container SIZE: " + std::to_string(containerSize));

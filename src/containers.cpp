@@ -76,8 +76,8 @@ void Container :: AddItems(std::vector<Item*> items, long int index) {
 //}
 
 void Container :: ReplaceItem(long int i, Item* item) {
-    if (sizeCheck(i)) {
-    *indexToIterator(i) = item;
+   if (sizeCheck(i)) {
+	   *indexToIterator(i) = item;
    }
 }
 
@@ -111,7 +111,8 @@ Item* Container :: GetItem(long int i) {
    if(sizeCheck(i)) { //Boundary check
       return (*indexToIterator(i)); //&* to deal with how iterators work
    } else { 
-        return (Item*) &ItemLibrary.item_library[0];
+	  return NULL;
+      //return (Item*) &ItemLibrary.item_library[0];
    }
     
 }
@@ -157,37 +158,42 @@ int Container :: HasItems()
 int Container :: GetTotalWeight() {
   int totalWeight = 0;
   for (Item* itemPtr : inv) {
-    int weight = 0;
-    itemType type = itemPtr -> getType();
-    switch (type) {
-      case ITEM:
-        weight = itemPtr -> GetWeight();
-        break;
-      case CONTAINER:
-        Container* container = (Container*) itemPtr;
-        weight = container -> GetTotalWeight();
-        break;
-    }
-    totalWeight += weight;
+	if (itemPtr != NULL) {
+		int weight = 0;
+		itemType type = itemPtr -> getType();
+		switch (type) {
+		  case ITEM:
+			weight = itemPtr -> GetWeight();
+			break;
+		  case CONTAINER:
+			Container* container = (Container*) itemPtr;
+			weight = container -> GetTotalWeight();
+			break;
+		}
+		totalWeight += weight;
+	}
   }
   return totalWeight;
 }
 
 int Container :: GetTotalLootScore() {
   int totalScore = 0;
+  if (inv.empty()) return totalScore;
   for (Item* itemPtr : inv) {
-    int value = 0;
-    itemType type = itemPtr -> getType();
-    switch (type) {
-      case ITEM:
-        value = itemPtr -> GetValue();
-        break;
-      case CONTAINER:
-        Container* container = (Container*) itemPtr;
-        value = container -> GetTotalLootScore();
-        break;
-    }
-    totalScore += value;
+	if (itemPtr != NULL) {
+		int value = 0;
+		itemType type = itemPtr -> getType();
+		switch (type) {
+		  case ITEM:
+			value = itemPtr -> GetValue();
+			break;
+		  case CONTAINER:
+			Container* container = (Container*) itemPtr;
+			value = container -> GetTotalLootScore();
+			break;
+		}
+		totalScore += value;
+	}
     //logging -> logline("Tallying item value for a " + itemPtr -> GetName() + " : " + std::to_string(value));
   }
   return totalScore;

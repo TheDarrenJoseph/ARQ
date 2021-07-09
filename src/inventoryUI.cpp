@@ -5,51 +5,23 @@ bool InventoryUI::RootContainerIsPlayerInventory() {
   return this -> containerSelections.front() -> IsPlayerInventory(); 
 }
 
-/**
- * 
- * @param c The container to list
- * @param invIndex the top index of the list, so that the list can scroll down
- */
-void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int invIndex)
-{   
+
+// Redraws the rear / outside inventory window (title, decoration, etc)
+void InventoryUI::DrawRearWindow(ContainerSelection* containerSelection) {
+	wclear(invwin_rear);
     Container* c = containerSelection -> GetContainer();
     box(invwin_rear, 0, 0);
     mainUI -> wprint_at(invwin_rear,c -> GetName().c_str(),0,1);
     
-    // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
-    const int COL_1 = 0;
-    const int COL_2 = 20;
-    const int COL_3 = 33;
-      //For each line of the window
+    //For each line of the window
     mainUI -> wprint_at(invwin_rear,"NAME", 1, COL_1+1); // +1 for border
     mainUI -> wprint_at(invwin_rear,"WEIGHT (Kg)", 1, COL_2);
     mainUI -> wprint_at(invwin_rear,"VALUE", 1, COL_3);
-    //box(invwin_rear, 0, 0);
-    //box(invwin_front, 0, 0);
-    //wrefresh(invwin_rear);
-    //wrefresh(invwin_front);
-
-    long int invSize = c->GetSize();    
-    long int lowestDisplayIndex = (long int)INVWIN_FRONT_Y;
-    for (long int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
-                Item* thisItem = c->GetItem(invIndex+i);
-                char buffer[120];            
-                sprintf(buffer,"%-20s",thisItem->GetName().c_str());
-                mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
-               
-                //Weight
-                sprintf(buffer,"%-4d",thisItem->GetWeight());
-                mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
-               
-                //Value
-                sprintf(buffer,"%-4d",thisItem->GetValue());
-                mainUI -> wprint_at(invwin_front, buffer, i, COL_3);
-    }        
 
     int maxX, maxY;
     getmaxyx(invwin_rear, maxY, maxX);
     // Footer instructions
-    char buffer[30];            
+    char buffer[30];
     sprintf(buffer,"%03d/%03ldkgs", c -> GetTotalWeight(), c -> GetWeightLimit());
     mainUI -> wprint_at(invwin_rear, buffer, maxY-1, maxX-11); // Add commands to the bottom of the window
 
@@ -58,11 +30,35 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int
     } else {
       mainUI -> wprint_at(invwin_rear,"(o)pen, (t)ake, (m)ove", maxY-1, 1); // Add commands to the bottom of the window
     }
+    wrefresh(invwin_rear);
+}
 
-    //mainUI -> UpdateUI();
-    //wrefresh(invwin_rear);
-    //wrefresh(invwin_front);
-    return;
+void InventoryUI::DrawItem(Item* item, int inventoryLineIndex) {
+	char buffer[120];
+	sprintf(buffer,"%-20s",item->GetName().c_str());
+	mainUI -> wprint_at(invwin_front, buffer, inventoryLineIndex, COL_1);
+	sprintf(buffer,"%-4d",item->GetWeight());
+	mainUI -> wprint_at(invwin_front, buffer, inventoryLineIndex, COL_2);
+	sprintf(buffer,"%-4d",item->GetValue());
+	mainUI -> wprint_at(invwin_front, buffer, inventoryLineIndex, COL_3);
+}
+
+/**
+ * Draws the ContainerSelection to the front (inner) inventory window
+ * @param c The container to list
+ * @param invIndex the top index of the list, so that the list can scroll down
+ */
+void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int invIndex)
+{
+	wclear(invwin_front);
+    Container* c = containerSelection -> GetContainer();
+    long int invSize = c->GetSize();    
+    long int lowestDisplayIndex = (long int)INVWIN_FRONT_Y;
+    for (long int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
+		Item* item = c->GetItem(invIndex+i);
+		if (item != NULL) this -> DrawItem(item, i);
+    }        
+    wrefresh(invwin_front);
 }
 
 int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
@@ -70,6 +66,7 @@ int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
 	std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
 	int containerIndex = containerSelection -> GetContainerIndex();;
 	Container* container = containerSelection -> GetContainer();
+	if (container->GetSize() == 0) return 1;
 	if (movingItems.empty()) {
 		Item* movingItem = container -> GetItem(containerIndex);
 		containerSelection -> Select(containerIndex);
@@ -81,18 +78,18 @@ int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
 		if (targetIsInSelection) {
 		  logging -> logline("Cannot move item to itself!");
 		} else {
-		for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
-			Item* item = *movingIter;
-			if (item != NULL) {
-			  this -> MoveItem(container, item, targetItem);
-			  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
-			} else {
-			  logging -> logline("moving item was NULL!");
+			for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
+				Item* item = *movingIter;
+				if (item != NULL) {
+				  this -> MoveItem(container, item, targetItem);
+				  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
+				} else {
+				  logging -> logline("moving item was NULL!");
+				}
 			}
-		}
-		containerSelection -> SetRedrawList(true);
-		containerSelection -> ClearSelection();
-		return 0;
+			containerSelection -> SetRedrawList(true);
+			containerSelection -> ClearSelection();
+			return 0;
 		}
 	}
 	return 1;
@@ -156,13 +153,22 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       break;
     }
     case ('t') : {
-      TakeItem(container, containerIndex);
-      containerSelection -> SetRedrawList(true);
-      break;
+      if(!RootContainerIsPlayerInventory()) {
+		  TakeItem(container, containerIndex);
+		  containerSelection -> SetRedrawList(true);
+      }
+	  break;
     }
     case ('d') : {
-      this -> AttemptDropItems(containerSelection);
-      containerSelection -> SetRedrawList(true);
+      if(RootContainerIsPlayerInventory()) {
+		  std::vector<Item*> droppingItems = containerSelection -> GetSelectedItems();
+		  // If we've not selected anything, select the currently chosen item
+		  if (droppingItems.empty()) {
+			 containerSelection -> Select(containerIndex);
+		  }
+		  this -> AttemptDropItems(containerSelection);
+		  containerSelection -> SetRedrawList(true);
+      }
       break;
     }
     case ('m') : {
@@ -287,38 +293,43 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
     this -> containerSelections.push_back(containerSelection);
     currentContainerSelection = this -> containerSelections.back();
+    DrawRearWindow(containerSelection);
     DrawInventory(containerSelection,invStartIndex);
     while(InventoryInput(containerSelection, inputChoice) == 0) {
-      if (containerSelection -> IsRedrawList()) {
-        logging -> logline("Redrawing container list..");
-        DrawInventory(containerSelection,invStartIndex);
-        containerSelection -> SetRedrawList(false);
-      }
+      int containerSize = c -> GetSize();
+      if (containerSize > 0) {
+          if (containerSelection -> IsRedrawList()) {
+            logging -> logline("Redrawing container list..");
+            DrawInventory(containerSelection,invStartIndex);
+            containerSelection -> SetRedrawList(false);
+          }
 
-
-      std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
-      if (!selectedItems.empty()) PrintAccessContainerHints();
-      std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
-      for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
-        ColourInvLine(*i, 2);
-      }
-      if (containerSelection -> IsSelected(selectionIndex)) {
-    	  HighlightInvLine(selectionIndex,2);
+		  std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
+		  if (selectedItems.empty()) PrintAccessContainerHints();
+		  std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
+		  for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
+			ColourInvLine(*i, 2);
+		  }
+		  if (containerSelection -> IsSelected(selectionIndex)) {
+			  HighlightInvLine(selectionIndex,2);
+		  } else {
+			  HighlightInvLine(selectionIndex,0);
+		  }
       } else {
-    	  HighlightInvLine(selectionIndex,0);
+    	wclear(invwin_front);
+    	wrefresh(invwin_front);
       }
 
-      inputChoice = mainUI->ConsoleGetInput();
-      containerSelection -> HandleSelection(inputChoice);
+	  inputChoice = mainUI->ConsoleGetInput();
+	  containerSelection -> HandleSelection(inputChoice);
+	  selectionIndex = containerSelection ->  GetSelectionIndex();
+	  invStartIndex = containerSelection -> GetInvStartIndex();
+      int previousSelectionIndex = containerSelection -> GetPreviousSelectionIndex();
+      if (selectionIndex != previousSelectionIndex) {
+    	  UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());
+      }
 
-      selectionIndex = containerSelection ->  GetSelectionIndex();
-      invStartIndex = containerSelection -> GetInvStartIndex();
-      UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());      
-
-
-      //wrefresh(invwin_rear);
       wrefresh(invwin_front);
-      //logging -> logline("maxScrollIndex: " + std::to_string(maxScrollIndex));
     }
     // delete the old selection
     this -> containerSelections.pop_back();
