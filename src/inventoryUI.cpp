@@ -81,36 +81,44 @@ void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int
 }
 
 int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
+
+  SelectionMode selectionMode = containerSelection -> GetSelectionMode();
 	std::vector<Item*> movingItems = containerSelection -> GetSelectedItems();
-	std::vector<int> selectedIndices = containerSelection -> GetSelectedIndices();
-	int containerIndex = containerSelection -> GetContainerIndex();;
+	int containerIndex = containerSelection -> GetContainerIndex();
+
 	Container* container = containerSelection -> GetContainer();
+
 	if (container->GetSize() == 0) return 1;
 	if (movingItems.empty()) {
 		Item* movingItem = container -> GetItem(containerIndex);
 		containerSelection -> Select(containerIndex);
 		mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. c to choose another container. q to cancel");
 	} else {
-		Item* targetItem = container -> GetItem(containerIndex);
-		std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
-		bool targetIsInSelection = targetFindIter != movingItems.end();
-		if (targetIsInSelection) {
-		  logging -> logline("Cannot move item to itself!");
-		} else {
-			for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
-				Item* item = *movingIter;
-				if (item != NULL) {
-				  this -> MoveItem(container, item, targetItem);
-				  mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
-				} else {
-				  logging -> logline("moving item was NULL!");
-				}
-			}
-			containerSelection -> SetRedrawList(true);
-			containerSelection -> ClearSelection();
-			return 0;
-		}
-	}
+	  Item* targetItem;
+	  if (SELECTING_CONTAINER == selectionMode) {
+	    targetItem = containerSelection -> GetSelectedOtherContainer();
+	  } else {
+	    targetItem = container -> GetItem(containerIndex);
+	  }
+    std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
+    bool targetIsInSelection = targetFindIter != movingItems.end();
+    if (targetIsInSelection) {
+      logging -> logline("Cannot move item to itself!");
+    } else {
+      for (std::vector<Item*>::iterator movingIter = movingItems.begin(); movingIter != movingItems.end(); movingIter++) {
+        Item* item = *movingIter;
+        if (item != NULL) {
+          this -> MoveItem(container, item, targetItem);
+          mainUI -> ClearConsoleAndPrint("Moved: " + item -> GetName());
+        } else {
+          logging -> logline("moving item was NULL!");
+        }
+      }
+      containerSelection -> SetRedrawList(true);
+      containerSelection -> ClearSelection();
+      return 0;
+    }
+  }
 	return 1;
 }
 
@@ -134,37 +142,39 @@ int InventoryUI::AttemptDropItems(ContainerSelection* containerSelection) {
 	return 1;
 }
 
-/**
- * 
- * @param choice int code for the player input
- * @param index The current selected item index in this list
- * @param c A pointer to this container
- * @param playerInv Whether or not this is the player's inventory or another container
- * @return whether to 
- */
+// TODO Refactor into singular command / function mappings
 int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inputChoice) {
    int containerIndex = containerSelection -> GetContainerIndex();;
   logging -> logline("Container index: " + std::to_string(containerIndex));
 
+  SelectionMode selectionMode = containerSelection -> GetSelectionMode();
   Container* container = containerSelection -> GetContainer();
   switch(inputChoice) {
     case ('q') : {
-      // Selection clearing
-      if (!containerSelection -> GetSelectedIndices().empty()) {
-        containerSelection -> ClearSelection();  
+      if (SELECTING_CONTAINER != selectionMode) {
+        // Selection clearing
+        if (!containerSelection -> GetSelectedIndices().empty()) {
+          containerSelection -> ClearSelection();
+          containerSelection -> SetRedrawList(true);
+          return 0;
+        }
+      } else {
+        // Escape the container selection mode
+        containerSelection -> SetSelectionMode(MOVING_ITEMS);
         containerSelection -> SetRedrawList(true);
         return 0;
       }
-
       return 1;
       break;
     }
     case ('c') : {
-      if (containerSelection -> HasSelectedItems()) {
-        containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
-        this -> DrawAvailableContainers(containerSelection);
-      } else {
-        AccessListCommand(container, containerIndex);
+      if (SELECTING_CONTAINER != selectionMode) {
+        if (containerSelection -> HasSelectedItems()) {
+          containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
+          this -> DrawAvailableContainers(containerSelection);
+        } else {
+          InventoryCommandInput(containerSelection);
+        }
       }
       break;
     }
@@ -172,25 +182,31 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       break;
     }
     case ('o') : {
-      OpenContainer(container, containerIndex);
-      containerSelection -> SetRedrawList(true);
+      if (SELECTING_CONTAINER != selectionMode) {
+        OpenContainer(container, containerIndex);
+        containerSelection -> SetRedrawList(true);
+      }
       break;
     }
     case ('t') : {
-      if(!RootContainerIsPlayerInventory()) {
-		  TakeItem(container, containerIndex);
-		  containerSelection -> SetRedrawList(true);
+      if (SELECTING_ITEMS == selectionMode) {
+        if(!RootContainerIsPlayerInventory()) {
+          TakeItem(container, containerIndex);
+          containerSelection -> SetRedrawList(true);
+        }
       }
 	  break;
     }
     case ('d') : {
-      if(RootContainerIsPlayerInventory()) {
-		  // If we've not selected anything, select the currently chosen item
-		  if (!containerSelection -> HasSelectedItems()) {
-			 containerSelection -> Select(containerIndex);
-		  }
-		  this -> AttemptDropItems(containerSelection);
-		  containerSelection -> SetRedrawList(true);
+      if (SELECTING_ITEMS == selectionMode) {
+        if(RootContainerIsPlayerInventory()) {
+        // If we've not selected anything, select the currently chosen item
+        if (!containerSelection -> HasSelectedItems()) {
+         containerSelection -> Select(containerIndex);
+        }
+        this -> AttemptDropItems(containerSelection);
+        containerSelection -> SetRedrawList(true);
+        }
       }
       break;
     }
@@ -316,13 +332,16 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
 
     // Find all known containers
     ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
+    logging -> logline("Starting container selection for: " + c -> GetName());
     std::vector<Container*> otherContainers;
-    std::vector<Container*> selectedContainers = currentContainerSelection -> GetSelectedContainers();
     if (currentContainerSelection != NULL) {
+      std::vector<Container*> selectedContainers = currentContainerSelection -> GetSelectedContainers();
       otherContainers = currentContainerSelection -> GetOtherContainers();
       if (otherContainers.empty()) {
         Container* previousContainer = currentContainerSelection -> GetContainer();
         std::vector<Container*> otherContainers = previousContainer -> GetContainers();
+        Container* openingContainer = containerSelection -> GetContainer();
+
         // Remove any containers that we've selected
         for (std::vector<Container*>::iterator selectedIt=selectedContainers.begin(); selectedIt != selectedContainers.end(); selectedIt++) {
           std::vector<Container*>::iterator otherContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), *selectedIt);
@@ -330,8 +349,10 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
             otherContainers.erase(otherContainerFindIt);
           }
         }
-
-        currentContainerSelection -> SetOtherContainers(otherContainers);
+        std::vector<Container*>::iterator openingContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), openingContainer);
+        if (openingContainerFindIt != otherContainers.end()) {
+          otherContainers.erase(openingContainerFindIt);
+        }
       }
     } else {
       Container* container = containerSelection -> GetContainer();
@@ -344,80 +365,89 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     DrawRearWindow(containerSelection);
     DrawInventory(containerSelection,invStartIndex);
     while(InventoryInput(containerSelection, inputChoice) == 0) {
-      int containerSize = c -> GetSize();
-      if (containerSize > 0) {
-          if (containerSelection -> IsRedrawList()) {
-            logging -> logline("Redrawing container list..");
-            DrawInventory(containerSelection,invStartIndex);
-            containerSelection -> SetRedrawList(false);
+      SelectionMode selectionMode = containerSelection -> GetSelectionMode();
+      if (SELECTING_ITEMS == selectionMode || MOVING_ITEMS == selectionMode) {
+        int containerSize = c -> GetSize();
+        if (containerSize > 0) {
+            if (containerSelection -> IsRedrawList()) {
+              logging -> logline("Redrawing container list..");
+              DrawInventory(containerSelection,invStartIndex);
+              containerSelection -> SetRedrawList(false);
+            }
+
+        std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
+        if (selectedItems.empty()) PrintAccessContainerHints();
+          std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
+          for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
+            ColourInvLine(*i, 2);
           }
+          if (containerSelection -> IsSelected(selectionIndex)) {
+            HighlightInvLine(selectionIndex,2);
+          } else {
+            HighlightInvLine(selectionIndex,0);
+          }
+        } else {
+          wclear(invwin_front);
+          wrefresh(invwin_front);
+        }
 
-		  std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
-		  if (selectedItems.empty()) PrintAccessContainerHints();
-		  std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
-		  for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
-			ColourInvLine(*i, 2);
-		  }
-		  if (containerSelection -> IsSelected(selectionIndex)) {
-			  HighlightInvLine(selectionIndex,2);
-		  } else {
-			  HighlightInvLine(selectionIndex,0);
-		  }
-      } else {
-    	wclear(invwin_front);
-    	wrefresh(invwin_front);
+        inputChoice = mainUI->ConsoleGetInput();
+        containerSelection -> HandleSelection(inputChoice);
+        selectionIndex = containerSelection ->  GetSelectionIndex();
+        invStartIndex = containerSelection -> GetInvStartIndex();
+        int previousSelectionIndex = containerSelection -> GetPreviousSelectionIndex();
+        if (selectionIndex != previousSelectionIndex) {
+          UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());
+        }
+
+        wrefresh(invwin_front);
       }
 
-	  inputChoice = mainUI->ConsoleGetInput();
-	  containerSelection -> HandleSelection(inputChoice);
-	  selectionIndex = containerSelection ->  GetSelectionIndex();
-	  invStartIndex = containerSelection -> GetInvStartIndex();
-      int previousSelectionIndex = containerSelection -> GetPreviousSelectionIndex();
-      if (selectionIndex != previousSelectionIndex) {
-    	  UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());
+      if (SELECTING_CONTAINER == selectionMode) {
+       int selectionIndex = containerSelection -> GetOtherContainerSelectionIndex();
+       HighlightInvLine(selectionIndex,0);
+       inputChoice = mainUI->ConsoleGetInput();
+       containerSelection -> HandleOtherContainerSelection(inputChoice);
+       wrefresh(invwin_front);
       }
-
-      wrefresh(invwin_front);
-    }
     // delete the old selection
     this -> containerSelections.pop_back();
+    }
 }
 
-/** Allows the user to enter a command to perform operations on things in a list/inventory
- *  This allows dropping/moving items, etc
- * @param index The currently selected item index
- * @param mainUI The UI to call to
- * @param playerInv whether or not this is the player's inventory (to disable "take", etc)
- * @return 
- */
-void InventoryUI :: AccessListCommand(Container* c, int index) {
-    bool playerInv = RootContainerIsPlayerInventory();
-    while (true) {
-      echo();
-      mainUI->ClearConsole();
-      mainUI->ConsolePrint(PROMPT_TEXT, 0, 0);
-      std::string lowerCasedAnswer = StringUtils::toLowerCase(mainUI->ConsoleGetString());
-      std::string itemName = c-> GetItem(index) -> GetName();
-      logging -> logline("Player inputted: '" + lowerCasedAnswer + "'");
-      if (lowerCasedAnswer == "drop") {
-          
-          if (playerInv) {
-            inventoryFunctions -> DropPlayerItem(c->GetItem(index));
-            mainUI->ClearConsoleAndPrint("Dropped the " + itemName);
-          } else {
-            mainUI->ClearConsoleAndPrint("Cannot drop a container. Perhaps move it? ");
-          }
-          return;
-      } else if (lowerCasedAnswer == "move") {
-          mainUI->ClearConsoleAndPrint("Moving the " + itemName);
-          // TODO
-          //1. Player Inv
-          //2.. Location Inv
-          return;
-      } else if (lowerCasedAnswer == "open") {
-          OpenContainer(c, index);
-          return;
+// TODO Refactor into singular command / function mappings
+void InventoryUI::InventoryCommandInput(
+    ContainerSelection *containerSelection) {
+  std::vector<Item*> movingItems = containerSelection->GetSelectedItems();
+  std::vector<int> selectedIndices = containerSelection->GetSelectedIndices();
+  int containerIndex = containerSelection->GetContainerIndex();
+  while (true) {
+    echo();
+    mainUI->ClearConsole();
+    mainUI->ConsolePrint(PROMPT_TEXT, 0, 0);
+    std::string lowerCasedAnswer = StringUtils::toLowerCase(
+    mainUI->ConsoleGetString());
+    std::vector<Item*> selectedItems = containerSelection->GetSelectedItems();
+    if (lowerCasedAnswer == "drop") {
+      if (RootContainerIsPlayerInventory()) {
+        // If we've not selected anything, select the currently chosen item
+        if (!containerSelection->HasSelectedItems()) {
+          containerSelection->Select(containerIndex);
+        }
+        this->AttemptDropItems(containerSelection);
+        containerSelection->SetRedrawList(true);
       }
+    } else if (lowerCasedAnswer == "move") {
+      this->AttemptMoveItems(containerSelection);
+    } else if (lowerCasedAnswer == "open") {
+      Container *container = containerSelection->GetContainer();
+      this->OpenContainer(container, containerIndex);
+      containerSelection->SetRedrawList(true);
+    } else if (lowerCasedAnswer == "open" || lowerCasedAnswer == "q"
+        || lowerCasedAnswer == "quit" || lowerCasedAnswer == "exit") {
+      return;
+    }
+
   }
 }
 

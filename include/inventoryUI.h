@@ -50,7 +50,7 @@ class InventoryUI {
     int InventoryInput(ContainerSelection* containerSelection, int inputChoice);
     void PrintAccessContainerHints();
     void AccessContainer(Container * c, bool playerInv);
-    void AccessListCommand(Container* c, int index);
+    void InventoryCommandInput(ContainerSelection* containerSelection);
 
     UI* mainUI = NULL;
     Container* mainContainer = NULL;

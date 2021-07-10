@@ -19,10 +19,14 @@ class ContainerSelection {
     bool playerInventory = false;
     bool selectingItems = false;
     Container* container = NULL;
-    std::vector<Container*> otherContainers;
     std::vector<int> selectedIndices;
     std::vector<Item*> selectedItems;
     int itemViewLineCount;
+    // For selecting another container
+    std::vector<Container*> otherContainers;
+    int otherContainerSelectionStartIndex = 0;
+    int otherContainerSelectionIndex = 0;
+    Container* selectedOtherContainer;
 
     void AddSelectedItem(int index, Item* selectedItem) {
       this -> selectedIndices.push_back(index);
@@ -53,6 +57,7 @@ class ContainerSelection {
     }
 
     void HandleSelection(int choice);
+    void HandleOtherContainerSelection(int choice);
 
     long int GetPreviousSelectionIndex() {
       return this -> previousSelectionIndex;
@@ -81,8 +86,8 @@ class ContainerSelection {
     std::vector<Container*> GetSelectedContainers();
 
     bool HasSelectedItems() {
-        return !this -> selectedItems.empty();
-      }
+      return !this -> selectedItems.empty();
+    }
 
 
     bool IsSelected(long int index) {
@@ -169,11 +174,25 @@ class ContainerSelection {
       this -> otherContainers = containers;
     }
 
+    int GetOtherContainerSelectionIndex() const {
+      return otherContainerSelectionIndex;
+    }
+
+    int GetOtherContainerSelectionStartIndex() const {
+      return otherContainerSelectionStartIndex;
+    }
+
+    Container* GetSelectedOtherContainer() const {
+      return selectedOtherContainer;
+    }
+
     ContainerSelection(Container* container, const  int itemViewLineCount, bool playerInventory) {
       this -> container = container;
       this -> itemViewLineCount = itemViewLineCount;
       this -> playerInventory = playerInventory;
     }
+
+
 };
 
 #endif

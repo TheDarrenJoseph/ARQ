@@ -3,11 +3,8 @@
 
 std::vector<Container*> ContainerSelection :: GetSelectedContainers() {
   std::vector<Container*> containers;
-  return containers;
-  /** TODO
   if (!this -> selectedItems.empty()) {
-    //if (selectedItems.empty()) return containers;
-    for (std::vector<Item*>::iterator it = this -> selectedItems.begin(); it !=  this ->  selectedItems.end(); it++) {
+    for(std::vector<Item*>::iterator it = selectedItems.begin(); it != selectedItems.end(); it++) {
        Item* item = *it;
        Container* container = dynamic_cast<Container*> (item);
        if (container != NULL) {
@@ -15,7 +12,7 @@ std::vector<Container*> ContainerSelection :: GetSelectedContainers() {
        }
     }
   }
-  return containers;**/
+  return containers;
 }
 
 
@@ -27,7 +24,7 @@ void ContainerSelection :: UpdateSelection(long int newSelectionIndex) {
 
     if (this -> selectingItems && this -> containerSelectionStart == -1) {
     	// Set the selection pivot point
-		this -> containerSelectionStart = newSelectionIndex + invStartIndex;
+      this -> containerSelectionStart = newSelectionIndex + invStartIndex;
     }
 
     bool selectionChanged = this -> containerIndex != previousContainerIndex;
@@ -93,10 +90,10 @@ void ContainerSelection :: HandleSelection(int choice) {
 
     		this -> selectingItems = true;
     		this -> containerSelectionStart = -1;
-            logging -> logline("Selecting items");
+        logging -> logline("Selecting items");
     	} else {
     		this -> selectingItems = false;
-            logging -> logline("Closing selection");
+        logging -> logline("Closing selection");
     	}
         break;
       }
@@ -147,5 +144,70 @@ void ContainerSelection :: HandleSelection(int choice) {
     }
 
     this -> UpdateSelection(newSelectionIndex);
+  }
+}
+
+void ContainerSelection :: HandleOtherContainerSelection(int choice) {
+  int size = this -> otherContainers.size();
+  if (size > 0) {
+    int maxScrollIndex = 0;
+    if (size > itemViewLineCount) maxScrollIndex = (size - this -> itemViewLineCount);
+
+    int maxSelectionIndex = this -> itemViewLineCount-1;
+    if (size < this -> itemViewLineCount) maxSelectionIndex = this -> itemViewLineCount - (this -> itemViewLineCount - size) - 1;
+    //logging -> logline("maxSelectionIndex: " + std::to_string(maxSelectionIndex));
+
+    long int newSelectionIndex = this -> otherContainerSelectionIndex;
+    switch (choice) {
+      case ('\n'): {
+        Container* chosenContainer = this -> otherContainers.at(newSelectionIndex);
+        if (chosenContainer != NULL) {
+          this -> selectedOtherContainer = chosenContainer;
+        }
+        break;
+      } case KEY_PPAGE:
+        // Either page up or jump to top of current page
+        if (otherContainerSelectionIndex==0 && otherContainerSelectionStartIndex >= itemViewLineCount) {
+            newSelectionIndex = maxSelectionIndex;
+            otherContainerSelectionStartIndex -= itemViewLineCount;
+            this -> redrawList = true;
+        } else if (selectionIndex == 0) {
+            newSelectionIndex = 0;
+            otherContainerSelectionStartIndex = 0;
+            this -> redrawList = true;
+        } else {
+          newSelectionIndex = 0;
+        }
+        break;
+      case KEY_NPAGE:
+        // Either page down or jump to bottom of current page
+        if (otherContainerSelectionIndex == maxSelectionIndex && otherContainerSelectionStartIndex+itemViewLineCount <= maxScrollIndex) {
+            newSelectionIndex = 0;
+            otherContainerSelectionStartIndex += itemViewLineCount;
+            this -> redrawList = true;
+        } else if (otherContainerSelectionIndex == maxSelectionIndex) {
+            otherContainerSelectionStartIndex = maxScrollIndex;
+            this -> redrawList = true;
+        } else {
+          newSelectionIndex = maxSelectionIndex;
+        }
+        break;
+      case KEY_UP:
+        if (otherContainerSelectionIndex>0) {
+            newSelectionIndex--;
+        } else if (otherContainerSelectionIndex==0 && otherContainerSelectionStartIndex>0) {
+            this -> otherContainerSelectionStartIndex--;
+            this -> redrawList = true;
+        }
+        break;
+      case KEY_DOWN:
+        if (otherContainerSelectionIndex < maxSelectionIndex) {
+          newSelectionIndex++;
+        } else if (otherContainerSelectionIndex == itemViewLineCount-1 && otherContainerSelectionStartIndex < maxScrollIndex) {
+          this -> otherContainerSelectionStartIndex++;
+          this -> redrawList = true;
+        }
+        break;
+    }
   }
 }

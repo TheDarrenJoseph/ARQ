@@ -40,8 +40,10 @@ int main()
     //WARNING - if using a container*, watch for losing the pointer when the player drops/moves it!
     Container* bag = new Container(OBJECT, "Bag","X",2,2,100, 5,true); //inventory testing
     Container* box = new Container(OBJECT,"Box","X",2,2,100, 5,true); //inventory testing
+    Container* carton = new Container(OBJECT, "Carton","X",2,2,100, 5,true); //inventory testing
+    box -> AddItem(carton);
     thisPlayer->AddToInventory(bag);
-    //thisPlayer->AddToInventory(box);
+    thisPlayer->AddToInventory(box);
     
 
     std::list<Item*> testItems;
