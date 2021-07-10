@@ -16,7 +16,7 @@ enum ContainerType{OBJECT,AREA};
 //Container inventory, only allows items
 struct Container : public Item
 {  
-    
+
   private:
     ContainerType containerType;
     int weightLimit = 0;
@@ -42,6 +42,18 @@ struct Container : public Item
   void RemoveItem(Item* item);
   void RemoveItems(std::vector<Item*> items);
  
+  std::vector<Container*> GetContainers() {
+    std::vector<Container*> containers = std::vector<Container*>();
+    for (std::vector<Item*>::iterator it = inv.begin(); it < inv.end(); it++) {
+       Item* item = *it;
+       Container* container = dynamic_cast<Container*> (item);
+       if (container != NULL) {
+         containers.push_back(container);
+       }
+    }
+    return containers;
+  }
+
   Item* GetItem(long int i);
   long int GetSize();
   long int GetWeightLimit();
@@ -58,12 +70,16 @@ struct Container : public Item
       return CONTAINER;
   }
   
-  Container() : Container (latestId++, AREA, "Floor","$",0,0,100,0,true)
+  bool operator==(const Container& other) {
+    return this -> GetId() == other.GetId();
+  }
+
+  Container() : Container (AREA, "Floor","$",0,0,100,0,true)
     {
       
     };
   
-  Container(int id, ContainerType containerType, std::string name, const char* symbol, int colour, int weight, int weightLimit, int value, bool lootable) : Item(id, name, symbol, colour, weight, value, lootable)
+  Container(ContainerType containerType, std::string name, const char* symbol, int colour, int weight, int weightLimit, int value, bool lootable) : Item(name, symbol, colour, weight, value, lootable)
     {
       this -> containerType = containerType;
       this -> weightLimit = weightLimit;

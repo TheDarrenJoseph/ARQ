@@ -1,6 +1,24 @@
 #include "containerSelection.h"
 
 
+std::vector<Container*> ContainerSelection :: GetSelectedContainers() {
+  std::vector<Container*> containers;
+  return containers;
+  /** TODO
+  if (!this -> selectedItems.empty()) {
+    //if (selectedItems.empty()) return containers;
+    for (std::vector<Item*>::iterator it = this -> selectedItems.begin(); it !=  this ->  selectedItems.end(); it++) {
+       Item* item = *it;
+       Container* container = dynamic_cast<Container*> (item);
+       if (container != NULL) {
+         containers.push_back(container);
+       }
+    }
+  }
+  return containers;**/
+}
+
+
 void ContainerSelection :: UpdateSelection(long int newSelectionIndex) {
     this -> previousSelectionIndex = this -> selectionIndex;
     long int previousContainerIndex = this -> containerIndex;

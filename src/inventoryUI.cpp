@@ -33,6 +33,25 @@ void InventoryUI::DrawRearWindow(ContainerSelection* containerSelection) {
     wrefresh(invwin_rear);
 }
 
+void InventoryUI::DrawAvailableContainers(ContainerSelection* containerSelection) {
+  wclear(invwin_front);
+  std::vector<Container*> otherContainers = containerSelection -> GetOtherContainers();
+
+  int i=0;
+  std::vector<Container*>::iterator it;
+  for(it = otherContainers.begin(); it != otherContainers.end(); it++) {
+    Container* container = *it;
+    char buffer[120];
+    sprintf(buffer,"%-20s", container -> GetName().c_str());
+    mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
+    sprintf(buffer,"%-4d", container -> GetWeight());
+    mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
+    i++;
+  }
+  wrefresh(invwin_front);
+}
+
+
 void InventoryUI::DrawItem(Item* item, int inventoryLineIndex) {
 	char buffer[120];
 	sprintf(buffer,"%-20s",item->GetName().c_str());
@@ -50,13 +69,13 @@ void InventoryUI::DrawItem(Item* item, int inventoryLineIndex) {
  */
 void InventoryUI::DrawInventory(ContainerSelection* containerSelection, long int invIndex)
 {
-	wclear(invwin_front);
+	  wclear(invwin_front);
     Container* c = containerSelection -> GetContainer();
     long int invSize = c->GetSize();    
     long int lowestDisplayIndex = (long int)INVWIN_FRONT_Y;
     for (long int i=0;  i < lowestDisplayIndex && (invIndex+i) < invSize; i++) {
-		Item* item = c->GetItem(invIndex+i);
-		if (item != NULL) this -> DrawItem(item, i);
+      Item* item = c->GetItem(invIndex+i);
+      if (item != NULL) this -> DrawItem(item, i);
     }        
     wrefresh(invwin_front);
 }
@@ -70,7 +89,7 @@ int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
 	if (movingItems.empty()) {
 		Item* movingItem = container -> GetItem(containerIndex);
 		containerSelection -> Select(containerIndex);
-		mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. q to cancel");
+		mainUI->ClearConsoleAndPrint("Moving: " + movingItem -> GetName() + ". Please choose the new location and hit m again. c to choose another container. q to cancel");
 	} else {
 		Item* targetItem = container -> GetItem(containerIndex);
 		std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
@@ -141,7 +160,12 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       break;
     }
     case ('c') : {
-      AccessListCommand(container, containerIndex);
+      if (containerSelection -> HasSelectedItems()) {
+        containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
+        this -> DrawAvailableContainers(containerSelection);
+      } else {
+        AccessListCommand(container, containerIndex);
+      }
       break;
     }
     case ('i') : { //Item info
@@ -161,9 +185,8 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
     }
     case ('d') : {
       if(RootContainerIsPlayerInventory()) {
-		  std::vector<Item*> droppingItems = containerSelection -> GetSelectedItems();
 		  // If we've not selected anything, select the currently chosen item
-		  if (droppingItems.empty()) {
+		  if (!containerSelection -> HasSelectedItems()) {
 			 containerSelection -> Select(containerIndex);
 		  }
 		  this -> AttemptDropItems(containerSelection);
@@ -290,7 +313,32 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
 
     //Selection loop
     int inputChoice = -1;
+
+    // Find all known containers
     ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
+    std::vector<Container*> otherContainers;
+    std::vector<Container*> selectedContainers = currentContainerSelection -> GetSelectedContainers();
+    if (currentContainerSelection != NULL) {
+      otherContainers = currentContainerSelection -> GetOtherContainers();
+      if (otherContainers.empty()) {
+        Container* previousContainer = currentContainerSelection -> GetContainer();
+        std::vector<Container*> otherContainers = previousContainer -> GetContainers();
+        // Remove any containers that we've selected
+        for (std::vector<Container*>::iterator selectedIt=selectedContainers.begin(); selectedIt != selectedContainers.end(); selectedIt++) {
+          std::vector<Container*>::iterator otherContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), *selectedIt);
+          if (otherContainerFindIt != otherContainers.end()) {
+            otherContainers.erase(otherContainerFindIt);
+          }
+        }
+
+        currentContainerSelection -> SetOtherContainers(otherContainers);
+      }
+    } else {
+      Container* container = containerSelection -> GetContainer();
+      otherContainers = container -> GetContainers();
+    }
+    containerSelection -> SetOtherContainers(otherContainers);
+
     this -> containerSelections.push_back(containerSelection);
     currentContainerSelection = this -> containerSelections.back();
     DrawRearWindow(containerSelection);

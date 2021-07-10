@@ -4,9 +4,12 @@
 #include <curses.h>  
 #include "containers.h"
 
+enum SelectionMode { SELECTING_ITEMS, MOVING_ITEMS, SELECTING_CONTAINER };
+
 class ContainerSelection {
   private:
     Logging* logging = &logging -> getInstance();
+    SelectionMode selectionMode = SELECTING_ITEMS;
     long int previousSelectionIndex = 0;
     long int selectionIndex = 0;
     long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
@@ -16,6 +19,7 @@ class ContainerSelection {
     bool playerInventory = false;
     bool selectingItems = false;
     Container* container = NULL;
+    std::vector<Container*> otherContainers;
     std::vector<int> selectedIndices;
     std::vector<Item*> selectedItems;
     int itemViewLineCount;
@@ -40,6 +44,14 @@ class ContainerSelection {
     void UpdateSelection(long int newSelectionIndex);
 
   public:
+    SelectionMode GetSelectionMode() {
+      return this -> selectionMode;
+    }
+
+    void SetSelectionMode(SelectionMode selectionMode) {
+      this -> selectionMode = selectionMode;
+    }
+
     void HandleSelection(int choice);
 
     long int GetPreviousSelectionIndex() {
@@ -65,6 +77,13 @@ class ContainerSelection {
     std::vector<Item*> GetSelectedItems() {
       return this -> selectedItems;
     }
+
+    std::vector<Container*> GetSelectedContainers();
+
+    bool HasSelectedItems() {
+        return !this -> selectedItems.empty();
+      }
+
 
     bool IsSelected(long int index) {
         bool foundIndex = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index) != selectedIndices.end();
@@ -140,6 +159,14 @@ class ContainerSelection {
 
     void ClearSelectedIndices() {
       return this -> selectedIndices.clear();
+    }
+
+    std::vector<Container*> GetOtherContainers() {
+      return this -> otherContainers;
+    }
+
+    void SetOtherContainers(std::vector<Container*> containers) {
+      this -> otherContainers = containers;
     }
 
     ContainerSelection(Container* container, const  int itemViewLineCount, bool playerInventory) {

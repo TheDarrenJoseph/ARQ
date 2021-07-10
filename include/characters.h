@@ -26,7 +26,7 @@ class Character
   bool alive = true;
 
   weapon* weps [3];
-  outfit currentOutfit = outfit();
+  outfit* currentOutfit;
   
  public:
   
@@ -63,7 +63,7 @@ class Character
   weapon* GetWeps(); //returns a pointer to a 1D array of weapons
   
   void SetOutfit(outfit o);
-  outfit GetOutfit();
+  outfit* GetOutfit();
   
   void SetHealth(int);
 
@@ -85,7 +85,7 @@ class Character
    	 
       SetOutfit(ItemLibrary.outfit_library[no_outfit]);
 
-      this->inventory = new Container(0, OBJECT, name + "'s Inventory","X",2,0,100,0,true);
+      this->inventory = new Container(OBJECT, name + "'s Inventory","X",2,0,100,0,true);
     };
     
   void copyCharacter(const Character& c) {  
@@ -155,7 +155,7 @@ class Player : public Character
     Player (char c, int col, std::string name, int health) : Character(c,col,name,health)
       {
         //initialise the item inventory
-        inventory = new Container(0, OBJECT, "Player's Inventory","X",2,0,100,0,true);
+        inventory = new Container(OBJECT, "Player's Inventory","X",2,0,100,0,true);
     
       for (long int i=0; i<INV_SIZE; i++)
         {

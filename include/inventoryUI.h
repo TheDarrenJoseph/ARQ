@@ -34,6 +34,7 @@ class InventoryUI {
   public:
     virtual void DrawRearWindow(ContainerSelection* containerSelection);
     virtual void DrawItem(Item* item, int inventoryLineIndex);
+    virtual void DrawAvailableContainers(ContainerSelection* containerSelection);
     virtual void DrawInventory(ContainerSelection* containerSelection, long int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
     virtual void HighlightInvLine(int yIndex, int colourCode);

@@ -146,28 +146,24 @@ weapon* Character :: GetWeps()
  
 void Character :: SetOutfit(outfit o)
 {
+  int currentArmourPoints = currentOutfit == NULL? 0 :  currentOutfit -> armourPoints;
   //remove the current AP buff
-  this->max_health -= currentOutfit.armourPoints;
- 
-  
+  this->max_health -= currentArmourPoints;
   //remove any extra health gained from the armour if it exceeds the buff
   if (GetHealth()>max_health)
     {
-      SetHealth(health-currentOutfit.armourPoints);
+      SetHealth(health-currentArmourPoints);
  
     }
-   
-  this->currentOutfit = o;
-  
+  this->currentOutfit = &o;
   //increase max health to suit the outfit
   this->max_health += o.armourPoints;
- 
   //add the AP to the current health
   SetHealth(health+o.armourPoints);
   return;
 }
  
-outfit Character :: GetOutfit()
+outfit* Character :: GetOutfit()
 {
   return currentOutfit;
 }
