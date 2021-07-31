@@ -12,7 +12,7 @@ class ContainerSelection {
     SelectionMode selectionMode = SELECTING_ITEMS;
     long int previousSelectionIndex = 0;
     long int selectionIndex = 0;
-    long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
+    long int invStartIndex = 0; //The index of the topmost item on the screen, allows scrolling
     long int containerSelectionStart = -1;
     long int containerIndex = 0;
     bool redrawList = false;
@@ -121,12 +121,12 @@ class ContainerSelection {
 		  Item* selectedItem = this -> container -> GetItem(index);
 		  if (selectedItem != NULL) {
 			this -> AddSelectedItem(index, selectedItem);
-			logging -> logline("Selected item idx: " + std::to_string(index));
+			  logging -> logline("Selected item idx: " + std::to_string(index));
 		  } else {
-			logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
+		    logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
 		  }
       } else {
-		logging -> logline("Index: " + std::to_string(index) + " already selected. Ignoring..");
+        logging -> logline("Index: " + std::to_string(index) + " already selected. Ignoring..");
       }
     } 
 

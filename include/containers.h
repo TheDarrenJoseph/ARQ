@@ -42,13 +42,23 @@ struct Container : public Item
   void RemoveItem(Item* item);
   void RemoveItems(std::vector<Item*> items);
  
-  std::vector<Container*> GetContainers() {
+  std::vector<Container*> GetAllContainers() {
+    std::vector<Container*> allContainers = this -> GetChildContainers();
+    allContainers.push_back(this);
+    return allContainers;
+  }
+
+  std::vector<Container*> GetChildContainers() {
     std::vector<Container*> containers = std::vector<Container*>();
     for (std::vector<Item*>::iterator it = inv.begin(); it < inv.end(); it++) {
        Item* item = *it;
        Container* container = dynamic_cast<Container*> (item);
        if (container != NULL) {
          containers.push_back(container);
+         std::vector<Container*> childContainers = container -> GetChildContainers();
+         for (std::vector<Container*>::iterator childContainerIt = childContainers.begin(); childContainerIt < childContainers.end(); childContainerIt++) {
+           containers.push_back(*childContainerIt);
+         }
        }
     }
     return containers;

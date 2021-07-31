@@ -310,6 +310,39 @@ void InventoryUI :: OpenContainer(Container * parent, int index) {
   }
 }
 
+std::vector<Container*> InventoryUI::FindOtherContainers(ContainerSelection* containerSelection) {
+  std::vector<Container*> otherContainers;
+  Container* openingContainer = containerSelection -> GetContainer();
+  // Parent container / first opened
+  if (currentContainerSelection == NULL) {
+    otherContainers = openingContainer -> GetAllContainers();
+
+  } else {
+    // Pass down previous other containers
+    otherContainers = currentContainerSelection -> GetOtherContainers();
+    // Add the previous container
+    otherContainers.push_back(currentContainerSelection -> GetContainer());
+
+    // Remove any containers that we've selected previously
+    std::vector<Container*> selectedContainers = currentContainerSelection -> GetSelectedContainers();
+    for (std::vector<Container*>::iterator selectedIt=selectedContainers.begin(); selectedIt != selectedContainers.end(); selectedIt++) {
+      std::vector<Container*>::iterator otherContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), *selectedIt);
+      if (otherContainerFindIt != otherContainers.end()) {
+        logging -> logline("Removing selected container from others list: " + (*otherContainerFindIt) -> GetName());
+        otherContainers.erase(otherContainerFindIt);
+      }
+    }
+  }
+
+  // Remove the container we're opening
+  std::vector<Container*>::iterator openingContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), openingContainer);
+  if (openingContainerFindIt != otherContainers.end()) {
+    logging -> logline("Removing opening container from others: " + openingContainer -> GetName());
+    otherContainers.erase(openingContainerFindIt);
+  }
+  return otherContainers;
+}
+
 /**
  * 
  * @param c         
@@ -318,7 +351,7 @@ void InventoryUI :: OpenContainer(Container * parent, int index) {
  */
 void InventoryUI::AccessContainer(Container * c, bool playerInv)
 {
-	// Hide the cursor
+	  // Hide the cursor
     curs_set(0);
     this -> invwin_rear = newwin(INVWIN_REAR_Y, INVWIN_REAR_X, 2, 2);
     this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
@@ -330,38 +363,19 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     //Selection loop
     int inputChoice = -1;
 
-    // Find all known containers
+    // Find all known containersFindOtherContainers
     ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
     logging -> logline("Starting container selection for: " + c -> GetName());
-    std::vector<Container*> otherContainers;
-    if (currentContainerSelection != NULL) {
-      std::vector<Container*> selectedContainers = currentContainerSelection -> GetSelectedContainers();
-      otherContainers = currentContainerSelection -> GetOtherContainers();
-      if (otherContainers.empty()) {
-        Container* previousContainer = currentContainerSelection -> GetContainer();
-        std::vector<Container*> otherContainers = previousContainer -> GetContainers();
-        Container* openingContainer = containerSelection -> GetContainer();
-
-        // Remove any containers that we've selected
-        for (std::vector<Container*>::iterator selectedIt=selectedContainers.begin(); selectedIt != selectedContainers.end(); selectedIt++) {
-          std::vector<Container*>::iterator otherContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), *selectedIt);
-          if (otherContainerFindIt != otherContainers.end()) {
-            otherContainers.erase(otherContainerFindIt);
-          }
-        }
-        std::vector<Container*>::iterator openingContainerFindIt = std::find(otherContainers.begin(), otherContainers.end(), openingContainer);
-        if (openingContainerFindIt != otherContainers.end()) {
-          otherContainers.erase(openingContainerFindIt);
-        }
-      }
-    } else {
-      Container* container = containerSelection -> GetContainer();
-      otherContainers = container -> GetContainers();
+    std::vector<Container*> otherContainers = FindOtherContainers(containerSelection);
+    logging -> logline("--- Found other containers for: " + c -> GetName());
+    for (std::vector<Container*>::iterator otherContainerIt = otherContainers.begin(); otherContainerIt != otherContainers.end(); otherContainerIt++) {
+      logging -> logline((*otherContainerIt) -> GetName());
     }
     containerSelection -> SetOtherContainers(otherContainers);
 
     this -> containerSelections.push_back(containerSelection);
     currentContainerSelection = this -> containerSelections.back();
+
     DrawRearWindow(containerSelection);
     DrawInventory(containerSelection,invStartIndex);
     while(InventoryInput(containerSelection, inputChoice) == 0) {

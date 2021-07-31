@@ -1,6 +1,8 @@
 #ifndef INVENTORY_UI_H
 #define INVENTORY_UI_H
 
+#include <algorithm>
+
 #include "logging.h"
 #include "ui.h"
 #include "playerInventoryFunctions.h"
@@ -30,6 +32,7 @@ class InventoryUI {
     int MoveItem(Container* container, Item* item, Item* targetItem);
     int MoveItems(Container* container, std::vector<Item*> items, Item* targetItem);
     void OpenContainer(Container * c, int index);
+    std::vector<Container*> FindOtherContainers(ContainerSelection* containerSelection);
 
   public:
     virtual void DrawRearWindow(ContainerSelection* containerSelection);
