@@ -33,22 +33,22 @@ void InventoryUI::DrawRearWindow(ContainerSelection* containerSelection) {
     wrefresh(invwin_rear);
 }
 
-void InventoryUI::DrawAvailableContainers(ContainerSelection* containerSelection) {
-  wclear(invwin_front);
-  std::vector<Container*> otherContainers = containerSelection -> GetOtherContainersNotSelected();
-
-  int i=0;
-  std::vector<Container*>::iterator it;
-  for(it = otherContainers.begin(); it != otherContainers.end(); it++) {
-    Container* container = *it;
-    char buffer[120];
-    sprintf(buffer,"%-20s", container -> GetName().c_str());
-    mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
-    sprintf(buffer,"%-4d", container -> GetWeight());
-    mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
-    i++;
+void InventoryUI::DrawOtherContainers(std::vector<Container*> otherContainers) {
+  if (!otherContainers.empty()) {
+    wclear(invwin_front);
+    int i=0;
+    std::vector<Container*>::iterator it;
+    for(it = otherContainers.begin(); it != otherContainers.end(); it++) {
+      Container* container = *it;
+      char buffer[120];
+      sprintf(buffer,"%-20s", container -> GetName().c_str());
+      mainUI -> wprint_at(invwin_front, buffer, i, COL_1);
+      sprintf(buffer,"%-4d", container -> GetWeight());
+      mainUI -> wprint_at(invwin_front, buffer, i, COL_2);
+      i++;
+    }
+    wrefresh(invwin_front);
   }
-  wrefresh(invwin_front);
 }
 
 
@@ -171,7 +171,14 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       if (SELECTING_CONTAINER != selectionMode) {
         if (containerSelection -> HasSelectedItems()) {
           containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
-          this -> DrawAvailableContainers(containerSelection);
+          std::vector<Container*> otherContainers = containerSelection -> GetOtherContainersNotSelected();
+          if (!otherContainers.empty()) {
+            this -> DrawOtherContainers(otherContainers);
+          } else {
+            containerSelection -> SetSelectionMode(SELECTING_ITEMS);
+            mainUI -> ClearConsole();
+            mainUI -> ConsolePrint("No other containers available to move these items to.", 0, 0);
+          }
         } else {
           InventoryCommandInput(containerSelection);
         }
@@ -195,7 +202,7 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
           containerSelection -> SetRedrawList(true);
         }
       }
-	  break;
+      break;
     }
     case ('d') : {
       if (SELECTING_ITEMS == selectionMode) {
@@ -316,7 +323,6 @@ std::vector<Container*> InventoryUI::FindOtherContainers(ContainerSelection* con
   // Parent container / first opened
   if (currentContainerSelection == NULL) {
     otherContainers = openingContainer -> GetAllContainers();
-
   } else {
     // Pass down previous other containers
     otherContainers = currentContainerSelection -> GetOtherContainers();
@@ -343,6 +349,59 @@ std::vector<Container*> InventoryUI::FindOtherContainers(ContainerSelection* con
   return otherContainers;
 }
 
+void InventoryUI::HandleSelection(ContainerSelection* containerSelection) {
+  long int selectionIndex = containerSelection ->  GetSelectionIndex();
+  long int invStartIndex = containerSelection -> GetInvStartIndex();
+  Container* c = containerSelection -> GetContainer();
+  SelectionMode selectionMode = containerSelection -> GetSelectionMode();
+  if (SELECTING_ITEMS == selectionMode || MOVING_ITEMS == selectionMode) {
+    int containerSize = c -> GetSize();
+    if (containerSize > 0) {
+        if (containerSelection -> IsRedrawList()) {
+          logging -> logline("Redrawing container list..");
+          DrawInventory(containerSelection, invStartIndex);
+          containerSelection -> SetRedrawList(false);
+        }
+
+    std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
+    if (selectedItems.empty()) PrintAccessContainerHints();
+      std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
+      for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
+        ColourInvLine(*i, 2);
+      }
+      if (containerSelection -> IsSelected(selectionIndex)) {
+        HighlightInvLine(selectionIndex,2);
+      } else {
+        HighlightInvLine(selectionIndex,0);
+      }
+    } else {
+      wclear(invwin_front);
+      wrefresh(invwin_front);
+    }
+
+    inputChoice = mainUI->ConsoleGetInput();
+    containerSelection -> HandleSelection(inputChoice);
+    selectionIndex = containerSelection ->  GetSelectionIndex();
+    invStartIndex = containerSelection -> GetInvStartIndex();
+    long int previousSelectionIndex = containerSelection -> GetPreviousSelectionIndex();
+    if (selectionIndex != previousSelectionIndex) {
+      UnhighlightInvLine(previousSelectionIndex);
+    }
+
+    wrefresh(invwin_front);
+  }
+
+  if (SELECTING_CONTAINER == selectionMode) {
+   long int otherContainerSelectionIndex = containerSelection -> GetOtherContainerSelectionIndex();
+   HighlightInvLine(otherContainerSelectionIndex,0);
+   inputChoice = mainUI->ConsoleGetInput();
+   containerSelection -> HandleOtherContainerSelection(inputChoice);
+   wrefresh(invwin_front);
+  }
+  // delete the old selection
+  this -> containerSelections.pop_back();
+}
+
 /**
  * 
  * @param c         
@@ -357,11 +416,7 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     this -> invwin_front = newwin(INVWIN_FRONT_Y, INVWIN_FRONT_X, 4, 4);
 
     ClearInvWindow();
-    long int selectionIndex = 0;
-    long int invStartIndex = 0; //The index of the topmost item on the screen, alows scrolling
-
-    //Selection loop
-    int inputChoice = -1;
+    inputChoice = -1;
 
     // Find all known containersFindOtherContainers
     ContainerSelection* containerSelection = new ContainerSelection(c, INVWIN_FRONT_Y, playerInv);
@@ -377,55 +432,9 @@ void InventoryUI::AccessContainer(Container * c, bool playerInv)
     currentContainerSelection = this -> containerSelections.back();
 
     DrawRearWindow(containerSelection);
-    DrawInventory(containerSelection,invStartIndex);
+    DrawInventory(containerSelection, 0);
     while(InventoryInput(containerSelection, inputChoice) == 0) {
-      SelectionMode selectionMode = containerSelection -> GetSelectionMode();
-      if (SELECTING_ITEMS == selectionMode || MOVING_ITEMS == selectionMode) {
-        int containerSize = c -> GetSize();
-        if (containerSize > 0) {
-            if (containerSelection -> IsRedrawList()) {
-              logging -> logline("Redrawing container list..");
-              DrawInventory(containerSelection,invStartIndex);
-              containerSelection -> SetRedrawList(false);
-            }
-
-        std::vector<Item*> selectedItems = containerSelection -> GetSelectedItems();
-        if (selectedItems.empty()) PrintAccessContainerHints();
-          std::vector<int> selectionIndices = containerSelection -> GetSelectedIndices();
-          for (std::vector<int>::iterator i = selectionIndices.begin(); i != selectionIndices.end(); i++) {
-            ColourInvLine(*i, 2);
-          }
-          if (containerSelection -> IsSelected(selectionIndex)) {
-            HighlightInvLine(selectionIndex,2);
-          } else {
-            HighlightInvLine(selectionIndex,0);
-          }
-        } else {
-          wclear(invwin_front);
-          wrefresh(invwin_front);
-        }
-
-        inputChoice = mainUI->ConsoleGetInput();
-        containerSelection -> HandleSelection(inputChoice);
-        selectionIndex = containerSelection ->  GetSelectionIndex();
-        invStartIndex = containerSelection -> GetInvStartIndex();
-        int previousSelectionIndex = containerSelection -> GetPreviousSelectionIndex();
-        if (selectionIndex != previousSelectionIndex) {
-          UnhighlightInvLine(containerSelection -> GetPreviousSelectionIndex());
-        }
-
-        wrefresh(invwin_front);
-      }
-
-      if (SELECTING_CONTAINER == selectionMode) {
-       int selectionIndex = containerSelection -> GetOtherContainerSelectionIndex();
-       HighlightInvLine(selectionIndex,0);
-       inputChoice = mainUI->ConsoleGetInput();
-       containerSelection -> HandleOtherContainerSelection(inputChoice);
-       wrefresh(invwin_front);
-      }
-    // delete the old selection
-    this -> containerSelections.pop_back();
+      this -> HandleSelection(containerSelection);
     }
 }
 

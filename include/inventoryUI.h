@@ -16,10 +16,13 @@ class InventoryUI {
     Logging* logging = &logging -> getInstance();
     WINDOW* invwin_front=NULL;
     WINDOW* invwin_rear=NULL;
-    ContainerSelection* currentContainerSelection;
+    ContainerSelection* currentContainerSelection = NULL;
     std::vector<ContainerSelection*> containerSelections;
     bool selectingItems = false;
     bool movingItem = false;
+
+    //Selection loop
+    int inputChoice = -1;
 
     // Each column has a +2 margin and the offset of the previous label length (or any other needed padding for contents)
     const int COL_1 = 0;
@@ -37,7 +40,7 @@ class InventoryUI {
   public:
     virtual void DrawRearWindow(ContainerSelection* containerSelection);
     virtual void DrawItem(Item* item, int inventoryLineIndex);
-    virtual void DrawAvailableContainers(ContainerSelection* containerSelection);
+    virtual void DrawOtherContainers(std::vector<Container*> otherContainers);
     virtual void DrawInventory(ContainerSelection* containerSelection, long int invIndex);
     virtual void HighlightInv(int xChars, int xIndex, int yIndex);
     virtual void HighlightInvLine(int yIndex, int colourCode);
@@ -52,6 +55,7 @@ class InventoryUI {
     int AttemptDropItems(ContainerSelection* containerSelection);
     int InventoryInput(ContainerSelection* containerSelection, int inputChoice);
     void PrintAccessContainerHints();
+    void HandleSelection(ContainerSelection* containerSelection);
     void AccessContainer(Container * c, bool playerInv);
     void InventoryCommandInput(ContainerSelection* containerSelection);
 

@@ -26,7 +26,7 @@ class ContainerSelection {
     std::vector<Container*> otherContainers;
     int otherContainerSelectionStartIndex = 0;
     int otherContainerSelectionIndex = 0;
-    Container* selectedOtherContainer;
+    Container* selectedOtherContainer=NULL;
 
     void AddSelectedItem(int index, Item* selectedItem) {
       this -> selectedIndices.push_back(index);
