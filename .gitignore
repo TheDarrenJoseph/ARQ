@@ -4,3 +4,7 @@
 *.log
 #Ignore emacs backups
 *\~
+#Eclipse
+.cproject
+.project
+.settings
