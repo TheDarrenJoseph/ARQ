@@ -35,7 +35,7 @@ void InventoryUI::DrawRearWindow(ContainerSelection* containerSelection) {
 
 void InventoryUI::DrawAvailableContainers(ContainerSelection* containerSelection) {
   wclear(invwin_front);
-  std::vector<Container*> otherContainers = containerSelection -> GetOtherContainers();
+  std::vector<Container*> otherContainers = containerSelection -> GetOtherContainersNotSelected();
 
   int i=0;
   std::vector<Container*>::iterator it;

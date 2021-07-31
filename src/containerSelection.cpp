@@ -15,6 +15,42 @@ std::vector<Container*> ContainerSelection :: GetSelectedContainers() {
   return containers;
 }
 
+std::vector<Container*> ContainerSelection :: GetOtherContainersNotSelected() {
+  std::vector<Container*> results = std::vector<Container*>();
+  std::vector<Container*> selectedContainers = this -> GetSelectedContainers();
+  for (std::vector<Container*>::iterator otherContainerIt=otherContainers.begin(); otherContainerIt != otherContainers.end(); otherContainerIt++) {
+    results.push_back(*otherContainerIt);
+  }
+
+  std::vector<std::vector<Container*>::iterator> toRemove = std::vector<std::vector<Container*>::iterator>();
+  for (std::vector<Container*>::iterator resultIt=results.begin(); resultIt != results.end(); resultIt++) {
+    // Remove any containers that we've selected
+    std::vector<Container*>::iterator selectionFindIt = std::find(selectedContainers.begin(), selectedContainers.end(), *resultIt);
+    if (selectionFindIt != selectedContainers.end()) {
+      logging -> logline("Removing selected other container from results: " + (*selectionFindIt) -> GetName());
+      toRemove.push_back(resultIt);
+
+      // Also remove any child containers that are selected
+      Container* foundContainer = *selectionFindIt;
+      std::vector<Container*> childContaienrs = foundContainer -> GetChildContainers();
+      for (std::vector<Container*>::iterator childContainerIt=childContaienrs.begin(); childContainerIt != childContaienrs.end(); childContainerIt++) {
+        std::vector<Container*>::iterator childFindIt = std::find(results.begin(), results.end(), *childContainerIt);
+        if (childFindIt != results.end()) {
+         logging -> logline("Removing selected other child container from results: " + (*childFindIt) -> GetName());
+         toRemove.push_back(resultIt);
+        }
+      }
+    }
+  }
+
+  for (std::vector<std::vector<Container*>::iterator>::iterator toRemoveIt=toRemove.begin(); toRemoveIt != toRemove.end(); toRemoveIt++) {
+    std::vector<Container*>::iterator toRemoveNestedIt = *toRemoveIt;
+    Container* toRemoveContainer = *toRemoveNestedIt;
+    logging -> logline("Removing other container from results: " + toRemoveContainer -> GetName());
+    results.erase(toRemoveNestedIt);
+  }
+  return results;
+}
 
 void ContainerSelection :: UpdateSelection(long int newSelectionIndex) {
     this -> previousSelectionIndex = this -> selectionIndex;

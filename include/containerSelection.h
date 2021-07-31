@@ -84,6 +84,7 @@ class ContainerSelection {
     }
 
     std::vector<Container*> GetSelectedContainers();
+    std::vector<Container*> GetOtherContainersNotSelected();
 
     bool HasSelectedItems() {
       return !this -> selectedItems.empty();
