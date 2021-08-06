@@ -12,8 +12,20 @@
 #include "containerSelection.h"
 #include "itemListSelection.h"
 
+enum Command { NONE, QUIT, CONTAINER_OR_CONSOLE, INFO, OPEN, TAKE, DROP, MOVE };
+
 class InventoryUI {
   private:
+    std::map<char, Command> commandMappings {
+      { 'q', QUIT },
+      { 'c', CONTAINER_OR_CONSOLE },
+      { 'i', INFO },
+      { 'o', OPEN },
+      { 't', TAKE },
+      { 'd', DROP },
+      { 'm', MOVE }
+    };
+
     Logging* logging = &logging -> getInstance();
     WINDOW* invwin_front=NULL;
     WINDOW* invwin_rear=NULL;
@@ -31,6 +43,7 @@ class InventoryUI {
     const int COL_2 = 20;
     const int COL_3 = 33;
 
+    Command MapInputToCommand(int characterCode);
     bool RootContainerIsPlayerInventory();
     void TakeItem(Container* container, int index);
     void DropItem(Item* item);

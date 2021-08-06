@@ -1,5 +1,15 @@
 #include "inventoryUI.h"
 
+Command InventoryUI :: MapInputToCommand(int characterCode) {
+  try {
+    return commandMappings.at(characterCode);
+   }
+   catch (const std::out_of_range& ex) {
+     logging -> logline("Unkown command code " + std::to_string(characterCode));
+     return NONE;
+   }
+}
+
 
 bool InventoryUI::RootContainerIsPlayerInventory() {
   return this -> containerSelections.front() -> IsPlayerInventory(); 
@@ -149,8 +159,11 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
 
   SelectionMode selectionMode = containerSelection -> GetSelectionMode();
   Container* container = containerSelection -> GetContainer();
-  switch(inputChoice) {
-    case ('q') : {
+
+  Command command = this -> MapInputToCommand(inputChoice);
+
+  switch(command) {
+    case (QUIT) : {
       if (SELECTING_CONTAINER != selectionMode) {
         // Selection clearing
         if (!containerSelection -> GetSelectedIndices().empty()) {
@@ -167,7 +180,7 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       return 1;
       break;
     }
-    case ('c') : {
+    case (CONTAINER_OR_CONSOLE) : {
       if (SELECTING_CONTAINER != selectionMode) {
         if (containerSelection -> HasSelectedItems()) {
           containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
@@ -187,17 +200,17 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       }
       break;
     }
-    case ('i') : { //Item info
+    case (INFO) : { //Item info
       break;
     }
-    case ('o') : {
+    case (OPEN) : {
       if (SELECTING_CONTAINER != selectionMode) {
         OpenContainer(container, containerIndex);
         containerSelection -> SetRedrawList(true);
       }
       break;
     }
-    case ('t') : {
+    case (TAKE) : {
       if (SELECTING_ITEMS == selectionMode) {
         if(!RootContainerIsPlayerInventory()) {
           TakeItem(container, containerIndex);
@@ -206,7 +219,7 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       }
       break;
     }
-    case ('d') : {
+    case (DROP) : {
       if (SELECTING_ITEMS == selectionMode) {
         if(RootContainerIsPlayerInventory()) {
         // If we've not selected anything, select the currently chosen item
@@ -219,10 +232,12 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       }
       break;
     }
-    case ('m') : {
+    case (MOVE) : {
       this -> AttemptMoveItems(containerSelection);
       break;
     }
+    default:
+      return 0;
   }
   return 0;
 }
