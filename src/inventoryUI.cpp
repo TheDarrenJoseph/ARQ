@@ -106,10 +106,12 @@ int InventoryUI::AttemptMoveItems(ContainerSelection* containerSelection) {
 	} else {
 	  Item* targetItem;
 	  if (SELECTING_CONTAINER == selectionMode) {
-	    targetItem = containerSelection -> GetSelectedOtherContainer();
+	    long int selectionIndex = otherContainerSelection -> GetContainerIndex();
+	    targetItem = container -> GetItem(selectionIndex);
 	  } else {
 	    targetItem = container -> GetItem(containerIndex);
 	  }
+
     std::vector<Item*>::iterator targetFindIter = std::find(movingItems.begin(), movingItems.end(), targetItem);
     bool targetIsInSelection = targetFindIter != movingItems.end();
     if (targetIsInSelection) {
@@ -371,6 +373,7 @@ void InventoryUI::HandleSelection(ContainerSelection* containerSelection) {
   long int invStartIndex = containerSelection -> GetInvStartIndex();
   Container* c = containerSelection -> GetContainer();
   SelectionMode selectionMode = containerSelection -> GetSelectionMode();
+
   if (SELECTING_ITEMS == selectionMode || MOVING_ITEMS == selectionMode) {
     int containerSize = c -> GetSize();
     if (containerSize > 0) {
@@ -409,13 +412,17 @@ void InventoryUI::HandleSelection(ContainerSelection* containerSelection) {
   }
 
   if (SELECTING_CONTAINER == selectionMode) {
-   long int otherContainerSelectionIndex = containerSelection -> GetOtherContainerSelectionIndex();
-   HighlightInvLine(otherContainerSelectionIndex,0);
-   inputChoice = mainUI->ConsoleGetInput();
-   if (this -> otherContainerSelection != NULL) {
-     this -> otherContainerSelection -> HandleSelection(inputChoice);
-   }
-   wrefresh(invwin_front);
+    if (this -> otherContainerSelection != NULL) {
+      long int selectionIndex = otherContainerSelection ->  GetSelectionIndex();
+      long int previousSelectionIndex = otherContainerSelection -> GetPreviousSelectionIndex();
+      if (selectionIndex != previousSelectionIndex) {
+        UnhighlightInvLine(previousSelectionIndex);
+      }
+      HighlightInvLine(selectionIndex,0);
+      inputChoice = mainUI->ConsoleGetInput();
+      this -> otherContainerSelection -> HandleSelection(inputChoice);
+      wrefresh(invwin_front);
+    }
   }
   // delete the old selection
   this -> containerSelections.pop_back();

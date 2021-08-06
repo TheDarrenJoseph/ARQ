@@ -14,9 +14,6 @@ class ContainerSelection {
 
     // For selecting another container
     std::vector<Container*> otherContainers;
-    int otherContainerSelectionStartIndex = 0;
-    int otherContainerSelectionIndex = 0;
-    Container* selectedOtherContainer=NULL;
 
   public:
     //void HandleOtherContainerSelection(int choice);
@@ -102,18 +99,6 @@ class ContainerSelection {
 
     void SetOtherContainers(std::vector<Container*> containers) {
       this -> otherContainers = containers;
-    }
-
-    int GetOtherContainerSelectionIndex() const {
-      return otherContainerSelectionIndex;
-    }
-
-    int GetOtherContainerSelectionStartIndex() const {
-      return otherContainerSelectionStartIndex;
-    }
-
-    Container* GetSelectedOtherContainer() const {
-      return selectedOtherContainer;
     }
 
     ContainerSelection(Container* container, const  int itemViewLineCount, bool playerInventory) {
