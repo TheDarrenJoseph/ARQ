@@ -10,6 +10,7 @@
 #include "containers.h"
 #include "stringUtils.h"
 #include "containerSelection.h"
+#include "itemListSelection.h"
 
 class InventoryUI {
   private:
@@ -20,6 +21,7 @@ class InventoryUI {
     std::vector<ContainerSelection*> containerSelections;
     bool selectingItems = false;
     bool movingItem = false;
+    ItemListSelection* otherContainerSelection = NULL;
 
     //Selection loop
     int inputChoice = -1;

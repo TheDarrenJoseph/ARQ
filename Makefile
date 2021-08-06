@@ -1,8 +1,8 @@
 CFLAGS=-Wall -Wextra
 LIBS=-l curses
 INCLUDES=-I ../include -std=gnu++20
-SOURCES=main.cpp game.cpp characters.cpp map.cpp items.cpp containers.cpp doors.cpp room.cpp stringUtils.cpp pathfinding.cpp cursesUI.cpp inventoryUI.cpp containerSelection.cpp playerUI.cpp  
-OBJECTS=main.o game.o characters.o map.o items.o containers.o doors.o room.o stringUtils.o pathfinding.o cursesUI.o inventoryUI.o containerSelection.o playerUI.o 
+SOURCES=main.cpp game.cpp characters.cpp map.cpp items.cpp containers.cpp doors.cpp room.cpp stringUtils.cpp pathfinding.cpp cursesUI.cpp inventoryUI.cpp containerSelection.cpp itemListSelection.cpp playerUI.cpp  
+OBJECTS=main.o game.o characters.o map.o items.o containers.o doors.o room.o stringUtils.o pathfinding.o cursesUI.o inventoryUI.o containerSelection.o itemListSelection.o playerUI.o 
 
 all : clean arq
 

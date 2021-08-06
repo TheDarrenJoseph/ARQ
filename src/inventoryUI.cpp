@@ -171,9 +171,11 @@ int InventoryUI::InventoryInput(ContainerSelection* containerSelection, int inpu
       if (SELECTING_CONTAINER != selectionMode) {
         if (containerSelection -> HasSelectedItems()) {
           containerSelection -> SetSelectionMode(SELECTING_CONTAINER);
-          std::vector<Container*> otherContainers = containerSelection -> GetOtherContainersNotSelected();
+          std::vector<Container*> otherContainers = containerSelection -> GetContainersNotSelected();
           if (!otherContainers.empty()) {
             this -> DrawOtherContainers(otherContainers);
+            std::vector<Container*> unselectedContainers = containerSelection -> GetContainersNotSelected();
+            this -> otherContainerSelection = new ItemListSelection(unselectedContainers, INVWIN_FRONT_Y, false);
           } else {
             containerSelection -> SetSelectionMode(SELECTING_ITEMS);
             mainUI -> ClearConsole();
@@ -395,7 +397,9 @@ void InventoryUI::HandleSelection(ContainerSelection* containerSelection) {
    long int otherContainerSelectionIndex = containerSelection -> GetOtherContainerSelectionIndex();
    HighlightInvLine(otherContainerSelectionIndex,0);
    inputChoice = mainUI->ConsoleGetInput();
-   containerSelection -> HandleOtherContainerSelection(inputChoice);
+   if (this -> otherContainerSelection != NULL) {
+     this -> otherContainerSelection -> HandleSelection(inputChoice);
+   }
    wrefresh(invwin_front);
   }
   // delete the old selection

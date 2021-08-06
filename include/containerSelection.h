@@ -3,168 +3,97 @@
 
 #include <curses.h>  
 #include "containers.h"
-
-enum SelectionMode { SELECTING_ITEMS, MOVING_ITEMS, SELECTING_CONTAINER };
+#include "itemListSelection.h"
 
 class ContainerSelection {
   private:
     Logging* logging = &logging -> getInstance();
-    SelectionMode selectionMode = SELECTING_ITEMS;
-    long int previousSelectionIndex = 0;
-    long int selectionIndex = 0;
-    long int invStartIndex = 0; //The index of the topmost item on the screen, allows scrolling
-    long int containerSelectionStart = -1;
-    long int containerIndex = 0;
-    bool redrawList = false;
-    bool playerInventory = false;
-    bool selectingItems = false;
+
     Container* container = NULL;
-    std::vector<int> selectedIndices;
-    std::vector<Item*> selectedItems;
-    int itemViewLineCount;
+    ItemListSelection* itemListSelection = NULL;
+
     // For selecting another container
     std::vector<Container*> otherContainers;
     int otherContainerSelectionStartIndex = 0;
     int otherContainerSelectionIndex = 0;
     Container* selectedOtherContainer=NULL;
 
-    void AddSelectedItem(int index, Item* selectedItem) {
-      this -> selectedIndices.push_back(index);
-      this -> selectedItems.push_back(selectedItem);
-    }
-
-    void RemoveSelectedItem(int index, Item* selectedItem) {
-	  std::vector<int>::iterator indexIter = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index);
-	  if (indexIter != this -> selectedIndices.end()) {
-		  this -> selectedIndices.erase(indexIter);
-	  }
-
-	  std::vector<Item*>::iterator selectionIter = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem);
-	  if (selectionIter != this -> selectedItems.end()) {
-		  this -> selectedItems.erase(selectionIter);
-	  }
-    }
-
-    void UpdateSelection(long int newSelectionIndex);
-
   public:
-    SelectionMode GetSelectionMode() {
-      return this -> selectionMode;
-    }
+    //void HandleOtherContainerSelection(int choice);
+    std::vector<Container*> GetContainersNotSelected();
 
-    void SetSelectionMode(SelectionMode selectionMode) {
-      this -> selectionMode = selectionMode;
+    // --- Passthrough methods
+    void HandleSelection(int choice) {
+      return this -> itemListSelection -> HandleSelection(choice);
     }
-
-    void HandleSelection(int choice);
-    void HandleOtherContainerSelection(int choice);
 
     long int GetPreviousSelectionIndex() {
-      return this -> previousSelectionIndex;
+      return this -> itemListSelection -> GetPreviousSelectionIndex();
     }
 
     long int GetSelectionIndex() {
-      return this -> selectionIndex;
+      return this -> itemListSelection -> GetSelectionIndex();
     }
 
     long int GetInvStartIndex() {
-      return this -> invStartIndex;
+      return this -> itemListSelection -> GetInvStartIndex();
     }
 
     long int GetContainerIndex() {
-      return this -> containerIndex;
-    }
-
-    Container* GetContainer() {
-      return this -> container;
-    }
-
-    std::vector<Item*> GetSelectedItems() {
-      return this -> selectedItems;
-    }
-
-    std::vector<Container*> GetSelectedContainers();
-    std::vector<Container*> GetOtherContainersNotSelected();
-
-    bool HasSelectedItems() {
-      return !this -> selectedItems.empty();
-    }
-
-
-    bool IsSelected(long int index) {
-        bool foundIndex = std::find(this -> selectedIndices.begin(), this -> selectedIndices.end(), index) != selectedIndices.end();
-        if (foundIndex) {
-        	Item* selectedItem = this -> container -> GetItem(index);
-        	bool foundItem = std::find(this -> selectedItems.begin(), this -> selectedItems.end(), selectedItem) != selectedItems.end();
-        	return foundItem;
-        } else {
-			logging -> logline("index not in selection: " + std::to_string(index));
-        }
-        return false;
-    }
-
-    void Deselect(long int index) {
-      if (IsSelected(index)) {
-		  Item* selectedItem = this -> container -> GetItem(index);
-		  if (selectedItem != NULL) {
-			this -> RemoveSelectedItem(index, selectedItem);
-			logging -> logline("Deselected item idx: " + std::to_string(index));
-		  } else {
-			logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
-		  }
-      } else {
-		logging -> logline("Index: " + std::to_string(index) + " not selected. Ignoring..");
-      }
+      return this -> itemListSelection -> GetContainerIndex();
     }
 
     void Select(long int index) {
-      if (!IsSelected(index)) {
-		  Item* selectedItem = this -> container -> GetItem(index);
-		  if (selectedItem != NULL) {
-			this -> AddSelectedItem(index, selectedItem);
-			  logging -> logline("Selected item idx: " + std::to_string(index));
-		  } else {
-		    logging -> logline("Container has no item at: " + std::to_string(index) + ". Ignoring selection.");
-		  }
-      } else {
-        logging -> logline("Index: " + std::to_string(index) + " already selected. Ignoring..");
-      }
-    } 
-
-    void DeselectRange(int startIndex, int endIndex) {
-      for (int i=startIndex; i<endIndex; i++) this -> Deselect(i);
+      this -> itemListSelection -> Select(index);
     }
 
-    void SelectRange(int startIndex, int endIndex) {
-      for (int i=startIndex; i<endIndex; i++) this -> Select(i);
+    bool IsSelected(long int index) {
+        return this -> itemListSelection -> IsSelected(index);
     }
 
-    void ClearSelection() {
-      this -> selectedIndices.clear();
-      this -> selectedItems.clear();
-      this -> containerSelectionStart = -1;
-      this -> selectingItems = false;
-    } 
-
-
-    bool IsRedrawList() {
-      return this -> redrawList;
+    bool HasSelectedItems() {
+      return this -> itemListSelection -> HasSelectedItems();
     }
 
-    void SetRedrawList(bool redrawList) {
-      this -> redrawList = redrawList;
+    std::vector<Item*> GetSelectedItems() {
+      return this -> itemListSelection -> GetSelectedItems();
     }
 
-    bool IsPlayerInventory() {
-      return this -> playerInventory;
+    std::vector<Container*> GetSelectedContainers() {
+      return this -> itemListSelection -> GetSelectedContainers();
     }
 
     std::vector<int> GetSelectedIndices() {
-      return this -> selectedIndices;
+      return this -> itemListSelection -> GetSelectedIndices();
     }
 
-    void ClearSelectedIndices() {
-      return this -> selectedIndices.clear();
+    SelectionMode GetSelectionMode() {
+      return this -> itemListSelection -> GetSelectionMode();
+    }
+
+    void SetSelectionMode(SelectionMode selectionMode) {
+      return this -> itemListSelection -> SetSelectionMode(selectionMode);
+    }
+
+    bool IsRedrawList() {
+      return this -> itemListSelection -> IsRedrawList();
+    }
+
+    void SetRedrawList(bool redrawList) {
+      this -> itemListSelection -> SetRedrawList(redrawList);
+    }
+
+    void ClearSelection() {
+      this -> itemListSelection -> ClearSelection();
+    }
+
+    bool IsPlayerInventory() {
+      return this -> itemListSelection -> IsPlayerInventory();
+    }
+    // ---------
+
+    Container* GetContainer() {
+      return this -> container;
     }
 
     std::vector<Container*> GetOtherContainers() {
@@ -189,8 +118,7 @@ class ContainerSelection {
 
     ContainerSelection(Container* container, const  int itemViewLineCount, bool playerInventory) {
       this -> container = container;
-      this -> itemViewLineCount = itemViewLineCount;
-      this -> playerInventory = playerInventory;
+      this -> itemListSelection = new ItemListSelection(container -> GetItems(), itemViewLineCount, playerInventory);
     }
 
 

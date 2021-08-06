@@ -21,15 +21,20 @@ struct Container : public Item
     ContainerType containerType;
     int weightLimit = 0;
     Logging* logging = &logging -> getInstance();
+    std::vector<Item*> inv = std::vector<Item*>();
+
     std::vector<Item*>::iterator indexToIterator(long int i);
     bool sizeCheck(long int i);
 
   public:
-  std::vector<Item*> inv = std::vector<Item*>();
 
   ContainerType GetContainerType();
 
   Item* GetInv();
+
+  std::vector<Item*> GetItems() {
+    return this -> inv;
+  }
   
   long int IndexOf(Item* item);
   void AddItem(Item* i);
