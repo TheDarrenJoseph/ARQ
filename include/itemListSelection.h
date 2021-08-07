@@ -16,6 +16,7 @@ class ItemListSelection {
     long int selectionIndex = 0;
     long int invStartIndex = 0; //The index of the topmost item on the screen, allows scrolling
     long int containerSelectionStart = -1;
+    long int previousContainerIndex = 0;
     long int containerIndex = 0;
     bool redrawList = false;
     bool selectingItems = false;
@@ -51,6 +52,19 @@ class ItemListSelection {
     }
 
     void UpdateSelection(long int newSelectionIndex);
+
+    void CheckSelectingItemsAbove();
+    void CheckReducingSelectionAbove();
+    void CheckSelectingItemsBelow();
+    void CheckReducingSelectionBelow();
+    void UpdateSelectionIndices(long int newSelectionIndex);
+    void ChooseItem();
+    long int PageUp();
+    long int PageDown();
+    long int MoveUp();
+    long int MoveDown();
+    int DetermineMaxScrollIndex();
+    int DetermineMaxSelectionIndex();
 
   public:
     void HandleSelection(int choice);
