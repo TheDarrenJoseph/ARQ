@@ -1,13 +1,15 @@
 use std::convert::TryInto;
-use log::debug;
+use futures::future::err;
+use log::{debug, error, info};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
 use ratatui::widgets::{Block, Borders, Widget};
 use termion::event::Key;
 use tokio::sync::mpsc;
+use uuid::Uuid;
 use crate::engine::command::open_command::OpenedContainerEventType;
-use crate::engine::command::open_command::OpenedContainerEventType::{Escape, TakeItems};
+use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -15,17 +17,19 @@ use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::container::TakeItemsRequest;
+use crate::view::framehandler::container::{build_container_frame_handler, OpenContainerRequest, TakeItemsRequest};
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 
 #[derive(Debug, Clone)]
 pub struct ContainerWidget {
+    pub(crate) container_id: Uuid,
     pub(crate) columns : Vec<Column>,
     pub(crate) row_count: i32
 }
 
+#[derive(Debug, Clone)]
 pub struct ContainerWidgetData {
     pub container : Container,
     pub ui_areas: UIAreas,
@@ -35,6 +39,7 @@ pub struct ContainerWidgetData {
 
 impl ContainerWidgetData {
     pub async fn handle_event(&mut self, event: Event) {
+        let source_container_id = self.container.get_self_item().get_id();
         log::debug!("Handling event: {:?}", event);
         match event {
             Event::Termion(termion_event) => {
@@ -47,10 +52,31 @@ impl ContainerWidgetData {
                             Key::Down => {
                                 self.item_list_selection.move_down();
                             },
+                            Key::Char('o') => {
+                                if (!self.item_list_selection.is_selecting()) {
+                                    let focused_item = self.item_list_selection.get_focused_item().unwrap();
+                                    if let Some(focused_container) = self.container.find_mut(focused_item) {
+                                        if focused_container.is_true_container() {
+                                            info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
+                                            let data = OpenContainerRequest {
+                                                source_container_id,
+                                                target: focused_container.clone()
+                                            };
+                                            self.event_sender.send(
+                                                Event::AppEvent(OpenedContainerEvent(OpenContainer(data)))
+                                            ).expect("Error sending event");
+                                        }
+                                    } else {
+                                        error!("Could not find focused container to open");   
+                                    }
+                                }
+                            },
                             Key::Char('t') => {
                                 let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
                                 let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
-                                self.event_sender.send(Event::AppEvent(OpenedContainerEvent(TakeItems(data))));
+                                self.event_sender.send(
+                                    Event::AppEvent(OpenedContainerEvent(TakeItems(data)))
+                                ).expect("Error sending event");
                             },
                             Key::Char('\n') => {
                                 self.item_list_selection.toggle_select();

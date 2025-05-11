@@ -32,6 +32,13 @@ pub struct ContainerFrameHandler {
     usage_line : UsageLineWidget
 }
 
+// For opening a container while browsing a map container
+#[derive(Clone, Debug)]
+pub struct OpenContainerRequest {
+    pub source_container_id: Uuid,
+    pub target: Container
+}
+
 #[derive(Clone, Debug)]
 pub struct TakeItemsRequest {
     pub source: Container,

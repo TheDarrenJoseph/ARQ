@@ -269,6 +269,7 @@ impl Draw for UI {
     }
 
     fn draw_container_widgets(&mut self, widget_data: &mut ContainerWidgetData, frame: &mut ratatui::Frame) {
+        let widget_data_container_id = widget_data.container.get_self_item().get_id();
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
             let mut _offset = 0;
@@ -277,7 +278,10 @@ impl Draw for UI {
             for widget in self.stateful_widgets.iter_mut() {
                 match widget {
                     StatefulWidgetType::Container(container_widget) => {
-                        frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
+                        // If the data belongs to this widget, render it
+                        if (container_widget.container_id == widget_data_container_id) {
+                            frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
+                        }
                     }
                     _ => {}
                 }

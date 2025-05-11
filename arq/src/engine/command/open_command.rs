@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::input::{IoKeyInputResolver, KeyInputResolver, MockKeyInputResolver};
@@ -19,12 +20,13 @@ use std::io;
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use uuid::Uuid;
 use crate::engine::command::open_command::OpenedContainerEventType::TakeItems;
 use crate::engine::container_util;
 use crate::map::objects::items::Item;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::ui_areas::UIAreas;
-use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, TakeItemsRequest, TakeItemsResponse};
+use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -39,6 +41,7 @@ const NOTHING_ERROR : &str = "There's nothing here to open.";
 
 #[derive(Debug)]
 pub enum OpenedContainerEventType {
+    OpenContainer(OpenContainerRequest),
     TakeItems(TakeItemsRequest),
     TakeItemsResult(TakeItemsResponse),
     Escape
@@ -157,9 +160,19 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let mut ui_layout = self.ui.ui_layout.clone().unwrap();
         let ui_areas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit);
 
+        let container_id = c.get_self_item().get_id();
+        let mut current_container_id = container_id;
+        
         let (container_event_sender, mut container_event_receiver) = mpsc::unbounded_channel();
-        let container_widget = create_container_widget();
+        let container_widget = create_container_widget(container_id);
+        
+        let mut widget_data_by_id : HashMap<Uuid, ContainerWidgetData> = HashMap::new();
+        let child_container_sender = container_event_sender.clone();
         let mut widget_data = create_container_widget_data(c.clone(), ui_areas.clone(), container_event_sender);
+        widget_data_by_id.insert(container_id, widget_data);
+        
+        let mut container_ids = vec![container_id];
+        
         self.update_usage_line();
 
         let ui = &mut self.ui;
@@ -175,15 +188,16 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let mut running = true;
         while running {
             debug!("LOOPING");
+            let current_container_widget_data = widget_data_by_id.get_mut(&current_container_id).unwrap();
 
             self.terminal_manager.terminal.draw(|frame| {
-                ui.render(None, Some(&mut widget_data), frame);
+                ui.render(None, Some(current_container_widget_data), frame);
             })?;
 
             // Whenever there's a UI event, ask the widget data to handle it
             debug!("Waiting for a UI event");
             if let Some(e) = event_handler.receiver.recv().await {
-                widget_data.handle_event(e).await;
+                current_container_widget_data.handle_event(e).await;
             } else {
                 info!("Receiver returned None!");
                 running = false;
@@ -194,8 +208,56 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
                 Ok(event) => {
                     debug!("Handling container event");
                     match event {
+                        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer(open_container_request))) => {
+                            let target_container = open_container_request.target;
+                            let target_container_id = target_container.get_self_item().get_id();
+                            let container_widget = create_container_widget(target_container_id);
+                            let stateful_widgets = ui.get_stateful_widgets_mut();
+                            stateful_widgets.push(StatefulWidgetType::Container(container_widget));
+
+                            let container_widget_data = create_container_widget_data(target_container, ui_areas.clone(), child_container_sender.clone());
+                            widget_data_by_id.insert(target_container_id, container_widget_data);
+                            container_ids.push(target_container_id);
+                            current_container_id = target_container_id;
+                        }
                         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
-                            running = false;
+                            let closing_container_id = current_container_id.clone();
+                            if (widget_data_by_id.len() > 1) {
+                                // If we have more than one container opened, remove the current one
+                                let stateful_widgets = ui.get_stateful_widgets_mut();
+                                let current_widget_index = stateful_widgets.iter().position(|widget| {
+                                    return match widget {
+                                        StatefulWidgetType::Container(container_widget) => {
+                                            container_widget.container_id == closing_container_id
+                                        },
+                                        _ => {
+                                            false
+                                        }
+                                    }
+                                });
+                                if let Some(idx) = current_widget_index {
+                                    // The index of the parent container
+                                    let parent_container_id = container_ids.get(container_ids.len() - 2).unwrap();
+                                    
+                                    // Update the parent container with the updated current container contents
+                                    let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
+                                    let mut parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
+                                    let updated_container = current_widget_data.container.clone();
+                                    parent_container_widget_data.container.replace_container(updated_container);
+                                    
+                                    // Remove the widget and it's data
+                                    stateful_widgets.remove(idx);
+                                    widget_data_by_id.remove(&current_container_id);
+                                    
+                                    // Drop the last container id from the list
+                                    container_ids.pop();
+                                    // Set the current container ID to the last one in the list
+                                    current_container_id = container_ids.last().unwrap().clone();
+                                }
+                            } else if (widget_data_by_id.len() == 1) {
+                                // If only one container is open, stop the command
+                                running = false;
+                            }
                         },
                         Event::AppEvent(OpenedContainerEvent(TakeItems(mut data))) => {
                             log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
@@ -246,8 +308,9 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     }
 }
 
-fn create_container_widget() -> ContainerWidget {
+fn create_container_widget(container_id: Uuid) -> ContainerWidget {
     ContainerWidget {
+        container_id,
         columns: vec![
             Column {name : "NAME".to_string(), size: 30},
             Column {name : "STORAGE (Kg)".to_string(), size: 12}
