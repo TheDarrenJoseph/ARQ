@@ -11,7 +11,7 @@ use crate::engine::combat::Combat;
 use crate::engine::command::command::Command;
 use crate::engine::command::inventory_command::InventoryCommand;
 use crate::engine::command::look_command::LookCommand;
-use crate::engine::command::open_command::{OpenCommandEventHandling, OpenCommandNew};
+use crate::engine::command::open_command::{OpenCommandContainerData, OpenCommandNew};
 use crate::engine::engine_helpers::game_loop::game_loop;
 use crate::engine::engine_helpers::input_handler::InputHandler;
 use crate::engine::engine_helpers::menu::menu_command;
@@ -465,7 +465,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
                     input_resolver: input_resolver.clone(),
                     key_bindings: key_bindings.clone(),
-                    event_handling: OpenCommandEventHandling::new()
+                    container_data: OpenCommandContainerData::new()
                 };
                 match command.begin().await {
                     Result::Ok(..) => {
