@@ -1,11 +1,10 @@
 The MIT License (MIT)
 
-For ratatui (portions of example code used):
+Copyright (c) 2021 Darren Joseph
+
+For portions of code from (https://github.com/ratatui/templates) / other examples:
 Copyright (c) 2021-2025 Orhun Parmaksiz
 Copyright (c) 2023 The Ratatui Developers
-
-For anything else:
-Copyright (c) 2021 Darren Joseph
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

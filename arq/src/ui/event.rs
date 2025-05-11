@@ -1,3 +1,29 @@
+/*
+Based on example code from https://github.com/ratatui/templates
+
+The MIT License (MIT)
+
+Copyright (c) 2021-2022 Orhun Parmaksiz
+Copyright (c) 2023 The Ratatui Developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
 use std::time::Duration;
 use log::{debug, error, info};
 use termion::input::TermRead;
@@ -6,28 +32,17 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use crate::engine::command::open_command_new::OpenContainerEventType;
 
-/*
-    Based on example code from https://github.com/ratatui/templates
- */
 #[derive(Debug)]
 pub struct TerminalEventHandler {
     pub(crate) sender: mpsc::UnboundedSender<Event>,
     pub(crate) receiver: mpsc::UnboundedReceiver<Event>,
 }
 
-
-/*
-    A thread that handles reading terminal events and emitting tick events on a regular schedule.
-    Based on example code from https://github.com/ratatui/templates
- */
 pub struct EventTask {
     cancellation_token: CancellationToken,
     sender: mpsc::UnboundedSender<Event>,
 }
 
-/*
-    Based on example code from https://github.com/ratatui/templates
- */
 #[derive(Debug)]
 pub enum Event {
     /// An event that is emitted on a regular schedule.
@@ -46,9 +61,6 @@ pub enum AppEventType {
     OpenContainerEvent(OpenContainerEventType)
 }
 
-/*
-    Based on example code from https://github.com/ratatui/templates
- */
 impl TerminalEventHandler {
     pub fn new() -> TerminalEventHandler {
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -120,8 +132,6 @@ impl EventTask {
     }
     
     fn send(&self, event: Event) {
-        // Ignores the result because shutting down the app drops the receiver, which causes the send
-        // operation to fail. This is expected behavior and should not panic.
         let _ = self.sender.send(event);
     }
 }
