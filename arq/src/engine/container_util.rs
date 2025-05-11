@@ -3,10 +3,11 @@ use std::io;
 
 use crate::character::Character;
 use crate::engine::level::Level;
+use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{MoveItems, TakeItems};
-use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsData, TakeItemsData};
+use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsData, TakeItemsRequest, TakeItemsResponse};
 
 pub struct AddToTargetResult {
     pub moved : Vec<Container>,
@@ -42,8 +43,9 @@ fn add_to_target(source : Container, target: &mut Container, to_add: Vec<Item>) 
     return AddToTargetResult { moved, unmoved, updated_target: Some(target.clone()) };
 }
 
-pub fn take_items(data: TakeItemsData, level : &mut Level) -> Option<ContainerFrameHandlerInputResult> {
+pub fn take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItemsResponse, ErrorWrapper> {
     let player_result = level.get_player_mut();
+    let total_to_take = data.to_take.len();
     if let Some(player) = player_result {
         log::info!("Found player: {}", player.get_name());
         if let Some(pos) = data.position {
@@ -70,22 +72,36 @@ pub fn take_items(data: TakeItemsData, level : &mut Level) -> Option<ContainerFr
                     untaken.push(item);
                 }
             }
+            
             if !taken.is_empty() || !untaken.is_empty() {
                 let map_container = level.get_map_mut().unwrap().find_container(&data.source, pos);
                 if let Some(source_container) = map_container {
-                    source_container.remove_matching_items(taken);
+                    source_container.remove_matching_items(taken.clone());
                 }
             }
-            log::info!("[take_items] returning TakeItems with {} un-taken items", untaken.len());
-            let data = TakeItemsData { source: data.source.clone(), to_take: untaken, position: data.position };
-            return Some(TakeItems(data));
+            
+            let taken_items_message;
+            if (taken.is_empty()) {
+                taken_items_message = "You cannot take anything".to_owned();
+            } else if (untaken.is_empty() && taken.len() == total_to_take) {
+                taken_items_message = format!("You take all {} items", total_to_take).to_owned();
+            } else {
+                // Both taken and untaken items
+                taken_items_message = format!("You took {} of the {} items, but could not carry any more", taken.len(), total_to_take);
+            }
+            
+            log::info!("[take_items] returning TakeItemsResponse with {} un-taken items", untaken.len());
+            let response = TakeItemsResponse {
+                message: taken_items_message.to_owned(),
+                untaken
+            };
+            return Ok(response);
         } else {
-            log::error!("[take_items] No map position to take items from!");
+            return Err(ErrorWrapper::new_internal( String::from("[container_util::take_items] No map position to take items from!")));
         }
     } else {
-        log::error!("Failed to find the player in the level.");
+        return Err(ErrorWrapper::new_internal( String::from("[container_util::take_items] Failed to find the player in the level.")));
     }
-    return None
 }
 
 fn find_container_mut(root : &mut Container, target: Item) -> Option<&mut Container> {

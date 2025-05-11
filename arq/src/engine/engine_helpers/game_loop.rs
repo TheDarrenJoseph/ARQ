@@ -1,3 +1,5 @@
+use futures::future::err;
+use log::error;
 use crate::engine::game_engine::GameEngine;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::view::game_over_view::GameOverChoice;
@@ -12,13 +14,17 @@ pub async fn game_loop<B: ratatui::backend::Backend + Send>(engine: &mut GameEng
         },
         Err(e) => {
             match e.error_type {
-                // Handle internal errors by putting the message into the console
-                ErrorType::INTERNAL => {
-                    engine.ui_wrapper.ui.set_console_buffer(e.message.clone().unwrap());
+                // Handle displayable errors by putting the message into the console
+                ErrorType::DISPLAYABLE => {
+                    engine.ui_wrapper.ui.set_console_buffer(e.displayable_message.clone().unwrap());
                     engine.ui_wrapper.re_render()?;
                     // TODO use a mockable input handler
-                    
                     //self.input_handler.get_input_key()?;
+                    return Ok(None)
+                }
+                // Handle internal errors by logging them 
+                ErrorType::INTERNAL => {
+                    error!("Internal error: {}", e);
                     return Ok(None)
                 }
                 ErrorType::IO => {

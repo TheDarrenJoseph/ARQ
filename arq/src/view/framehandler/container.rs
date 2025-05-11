@@ -33,7 +33,7 @@ pub struct ContainerFrameHandler {
 }
 
 #[derive(Clone, Debug)]
-pub struct TakeItemsData {
+pub struct TakeItemsRequest {
     pub source: Container,
     pub to_take: Vec<Item>,
     pub position: Option<Position>
@@ -41,7 +41,8 @@ pub struct TakeItemsData {
 
 #[derive(Clone, Debug)]
 pub struct TakeItemsResponse {
-    pub untaken: Vec<Item>
+    pub untaken: Vec<Item>,
+    pub message: String
 }
 
 #[derive(Clone, Debug)]
@@ -69,7 +70,7 @@ pub enum ContainerFrameHandlerInputResult {
     // This is meant to handle moving an item/container in the container view into another container
     MoveToContainerChoice(MoveToContainerChoiceData),
     MoveItems(MoveItemsData),
-    TakeItems(TakeItemsData),
+    TakeItems(TakeItemsRequest),
     DropItems(Vec<Item>),
     EquipItems(Vec<Item>)
 }

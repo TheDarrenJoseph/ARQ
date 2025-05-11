@@ -246,7 +246,7 @@ impl <'c, B : ratatui::backend::Backend> Callback<'c, ContainerFrameHandlerInput
                         self.frame_handler.choice_frame_handler = result.ok()
                     } else {
                         let error = result.err().unwrap();
-                        self.ui.set_console_buffer(error.message.unwrap())
+                        self.ui.set_console_buffer(error.internal_message.unwrap())
                     }
                 },
                 ContainerFrameHandlerInputResult::MoveItems(ref data) => {

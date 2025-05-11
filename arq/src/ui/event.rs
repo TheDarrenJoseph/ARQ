@@ -30,7 +30,7 @@ use termion::input::TermRead;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::engine::command::open_command_new::OpenContainerEventType;
+use crate::engine::command::open_command::OpenedContainerEventType;
 
 #[derive(Debug)]
 pub struct TerminalEventHandler {
@@ -58,7 +58,7 @@ pub enum Event {
 
 #[derive(Debug)]
 pub enum AppEventType {
-    OpenContainerEvent(OpenContainerEventType)
+    OpenedContainerEvent(OpenedContainerEventType)
 }
 
 impl TerminalEventHandler {

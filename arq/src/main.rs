@@ -49,11 +49,11 @@ async fn begin() -> Result<(), ErrorWrapper> {
             Ok(Some(goc)) => {
                 match goc {
                     GameOverChoice::RESTART => {
-                    engine.rebuild();
-                    choice = Some(Play);
+                        engine.rebuild();
+                        choice = Some(Play);
                     },
                     GameOverChoice::EXIT => {
-                    game_over = true;
+                      game_over = true;
                     }
                 }
             },

@@ -6,16 +6,16 @@ use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
 use ratatui::widgets::{Block, Borders, Widget};
 use termion::event::Key;
 use tokio::sync::mpsc;
-use crate::engine::command::open_command_new::OpenContainerEventType;
-use crate::engine::command::open_command_new::OpenContainerEventType::{Escape, TakeItems};
+use crate::engine::command::open_command::OpenedContainerEventType;
+use crate::engine::command::open_command::OpenedContainerEventType::{Escape, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::ui::event::AppEventType::OpenContainerEvent;
+use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::container::TakeItemsData;
+use crate::view::framehandler::container::TakeItemsRequest;
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
@@ -49,8 +49,8 @@ impl ContainerWidgetData {
                             },
                             Key::Char('t') => {
                                 let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                                let data = TakeItemsData { source: self.container.clone(), to_take: selected_items, position: None };
-                                self.event_sender.send(Event::AppEvent(OpenContainerEvent(TakeItems(data))));
+                                let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
+                                self.event_sender.send(Event::AppEvent(OpenedContainerEvent(TakeItems(data))));
                             },
                             Key::Char('\n') => {
                                 self.item_list_selection.toggle_select();
@@ -59,7 +59,7 @@ impl ContainerWidgetData {
                                 if self.item_list_selection.is_selecting() {
                                     self.item_list_selection.cancel_selection();
                                 } else {
-                                    self.event_sender.send(Event::AppEvent(OpenContainerEvent(Escape))).expect("Failed to send event");
+                                    self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Escape))).expect("Failed to send event");
                                 }
                             }
                             _ => {}
@@ -69,7 +69,7 @@ impl ContainerWidgetData {
                     _ => {}
                 }
             },
-            Event::AppEvent(OpenContainerEvent(OpenContainerEventType::TakeItemsResult(take_items_response))) => {
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItemsResult(take_items_response))) => {
                 self.retain_selected_items(take_items_response.untaken);
             },
             _ => {}

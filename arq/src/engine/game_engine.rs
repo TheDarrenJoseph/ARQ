@@ -11,7 +11,7 @@ use crate::engine::combat::Combat;
 use crate::engine::command::command::Command;
 use crate::engine::command::inventory_command::InventoryCommand;
 use crate::engine::command::look_command::LookCommand;
-use crate::engine::command::open_command_new::OpenCommandNew;
+use crate::engine::command::open_command::OpenCommandNew;
 use crate::engine::engine_helpers::game_loop::game_loop;
 use crate::engine::engine_helpers::input_handler::InputHandler;
 use crate::engine::engine_helpers::menu::menu_command;
@@ -19,7 +19,7 @@ use crate::engine::engine_helpers::spawning::{respawn_npcs, respawn_player};
 use crate::engine::level::{init_level_manager, LevelChange, LevelChangeResult, Levels};
 use crate::engine::process::map_generation::MapGeneration;
 use crate::error::errors::ErrorWrapper;
-use crate::input::IoKeyInputResolver;
+use crate::input::{IoKeyInputResolver, KeyInputResolver};
 use crate::map::position::{Area, Side};
 use crate::map::Map;
 use crate::settings::{build_settings, Settings, SETTING_BG_MUSIC, SETTING_RESOLUTION, SETTING_RNG_SEED};
@@ -391,8 +391,7 @@ impl <B : Backend + Send> GameEngine<B> {
 
     pub(crate) async fn player_turn(&mut self) -> Result<Option<GameOverChoice>, ErrorWrapper> {
         let key = get_input_key()?;
-        self.handle_input(key).await?;
-        return Ok(None);
+        self.handle_input(key).await
     }
     
     pub async fn handle_input(&mut self, key: Key) -> Result<Option<GameOverChoice>, ErrorWrapper> {
@@ -405,7 +404,7 @@ impl <B : Backend + Send> GameEngine<B> {
                 return Ok(Some(goc));
             }
         }
-        return Ok(None);
+        Ok(None)
     }
     
     async fn handle_action(&mut self, action: Action, input: Option<Key>) -> Result<Option<GameOverChoice>, ErrorWrapper> {
@@ -459,15 +458,22 @@ impl <B : Backend + Send> GameEngine<B> {
             Action::OpenNearby => {
                 let key_bindings = self.settings.key_bindings.command_specific_key_bindings.open_key_bindings.clone();
                 
+                let mut input_resolver = Box::new(IoKeyInputResolver {});
                 let mut command = OpenCommandNew {
                     level,
                     ui: &mut self.ui_wrapper.ui,
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
-                    input_resolver: Box::new(IoKeyInputResolver {}),
+                    input_resolver: input_resolver.clone(),
                     key_bindings: key_bindings.clone()
                 };
-                command.begin().await?;
-                Ok(None)
+                match command.begin().await {
+                    Result::Ok(..) => {
+                        return Ok(None);
+                    },
+                    Err(error_wrapper) => {
+                        return Err(error_wrapper);
+                    }
+                }
             },
             Action::MovePlayer(side) => {
                 if let Some(game_over_choice) = self.handle_player_movement(side.clone()).await? {

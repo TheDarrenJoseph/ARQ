@@ -9,7 +9,7 @@ use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::UI;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
-use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, TakeItemsData};
+use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, TakeItemsRequest};
 use crate::view::framehandler::container_choice::{ContainerChoiceFrameHandler, ContainerChoiceFrameHandlerInputResult};
 use crate::view::framehandler::{FrameData, FrameHandler};
 use crate::view::util::callback::Callback;
@@ -129,7 +129,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for WorldContainerView<
             Key::Char('t') => {
                 if let Some(parent_view) = self.frame_handlers.container_frame_handlers.last_mut() {
                     let selected_container_items = parent_view.get_selected_items();
-                    let data = TakeItemsData { source: self.container.clone(), to_take: selected_container_items, position: None };
+                    let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_container_items, position: None };
                     let result = ContainerFrameHandlerInputResult::TakeItems(data);
 
                     // TODO for now we do both messaging and callback
@@ -221,7 +221,7 @@ impl <'c, B : ratatui::backend::Backend> Callback<'c, ContainerFrameHandlerInput
                         self.frame_handlers.choice_frame_handler = result.ok()
                     } else {
                         let error = result.err().unwrap();
-                        self.ui.set_console_buffer(error.message.unwrap())
+                        self.ui.set_console_buffer(error.internal_message.unwrap())
                     }
                 },
                 ContainerFrameHandlerInputResult::MoveItems(ref data) => {

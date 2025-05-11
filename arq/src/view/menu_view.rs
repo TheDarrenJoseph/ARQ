@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io;
 
 use crate::error::errors::ErrorWrapper;
-use log::info;
+use log::{debug, info};
 use termion::input::TermRead;
 use ratatui::layout::Rect;
 use ratatui::CompletedFrame;
@@ -31,7 +31,7 @@ impl<B : ratatui::backend::Backend> MenuView<'_, B> {
             let key = io::stdin().keys().next().unwrap().unwrap();
             start_menu_mut.handle_input(key);
             let selection = start_menu_mut.selection;
-            info!("Selected menu item: {}", selection);
+            //debug!("Selected menu item: {}", selection);
 
             if start_menu_mut.selected {
                 match start_menu_mut.selection.try_into() {
@@ -43,7 +43,7 @@ impl<B : ratatui::backend::Backend> MenuView<'_, B> {
             }
 
             if last_selection != selection {
-                info!("Selection changed to: {}", selection);
+                //debug!("Selection changed to: {}", selection);
                 self.draw(None)?;
             }
         }
