@@ -68,7 +68,7 @@ async fn begin() -> Result<(), ErrorWrapper> {
     Ok(())
 }
 
-#[tokio::main(worker_threads = 2)]
+#[tokio::main(worker_threads = 3)]
 async fn main<>() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     begin().await.expect("Failure in main thread!");

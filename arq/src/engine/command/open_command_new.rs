@@ -192,37 +192,36 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
             }
 
             // If the widget data has sent us an event, handle that
-            // match container_event_receiver.try_recv() {
-            //     Ok(event) => {
-            //         debug!("Handling container event");
-            //         match event {
-            //             Event::AppEvent(OpenContainerEvent(OpenContainerEventType::Escape)) => {
-            //                 info!("LOOP | Stopping open command loop");
-            //                 running = false;
-            //             },
-            //             Event::AppEvent(OpenContainerEvent(TakeItems(mut data))) => {
-            //                 log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
-            //                 data.position = Some(p.clone());
-            // 
-            //                 let result = container_util::take_items(data, self.level);
-            // 
-            //                 // If we have a result for this take handling, send it back via the main event handler
-            //                 // So that the container widget/data can update appropriately
-            //                 if let Some(ContainerFrameHandlerInputResult::TakeItems(take_items_data)) = result {
-            //                     let take_items_response = TakeItemsResponse {
-            //                         // to_take is actually the "untaken" items here
-            //                         untaken: take_items_data.to_take
-            //                     };
-            //                     event_handler.sender.send(Event::AppEvent(OpenContainerEvent(OpenContainerEventType::TakeItemsResult(take_items_response)))).unwrap();
-            //                 }
-            //             }
-            //             _ => {}
-            //         }
-            //     },
-            //     Err(e) => {
-            //         error!("Could not receive container event: {:?}", e);
-            //     }
-            // }
+            match container_event_receiver.try_recv() {
+                Ok(event) => {
+                    debug!("Handling container event");
+                    match event {
+                        Event::AppEvent(OpenContainerEvent(OpenContainerEventType::Escape)) => {
+                            running = false;
+                        },
+                        Event::AppEvent(OpenContainerEvent(TakeItems(mut data))) => {
+                            log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
+                            data.position = Some(p.clone());
+            
+                            let result = container_util::take_items(data, self.level);
+            
+                            // If we have a result for this take handling, send it back via the main event handler
+                            // So that the container widget/data can update appropriately
+                            if let Some(ContainerFrameHandlerInputResult::TakeItems(take_items_data)) = result {
+                                let take_items_response = TakeItemsResponse {
+                                    // to_take is actually the "untaken" items here
+                                    untaken: take_items_data.to_take
+                                };
+                                event_handler.sender.send(Event::AppEvent(OpenContainerEvent(OpenContainerEventType::TakeItemsResult(take_items_response)))).unwrap();
+                            }
+                        }
+                        _ => {}
+                    }
+                },
+                Err(e) => {
+                    error!("Could not receive container event: {:?}", e);
+                }
+            }
         }
 
         event_handler.receiver.close();
