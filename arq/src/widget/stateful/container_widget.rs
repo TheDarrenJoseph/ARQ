@@ -70,7 +70,11 @@ impl ContainerWidgetData {
                 }
             },
             Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItemsResult(take_items_response))) => {
-                self.retain_selected_items(take_items_response.untaken);
+                // Only listen to messages relevant to the container we are displaying
+                let source_container_id = self.container.get_self_item().get_id();
+                if (source_container_id == take_items_response.container_id) {
+                    self.retain_selected_items(take_items_response.untaken);
+                }
             },
             _ => {}
         }

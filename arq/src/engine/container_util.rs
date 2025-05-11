@@ -46,6 +46,7 @@ fn add_to_target(source : Container, target: &mut Container, to_add: Vec<Item>) 
 pub fn take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItemsResponse, ErrorWrapper> {
     let player_result = level.get_player_mut();
     let total_to_take = data.to_take.len();
+    let source_container_id = data.source.get_self_item().get_id();
     if let Some(player) = player_result {
         log::info!("Found player: {}", player.get_name());
         if let Some(pos) = data.position {
@@ -92,6 +93,7 @@ pub fn take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItem
             
             log::info!("[take_items] returning TakeItemsResponse with {} un-taken items", untaken.len());
             let response = TakeItemsResponse {
+                container_id: source_container_id,
                 message: taken_items_message.to_owned(),
                 untaken
             };

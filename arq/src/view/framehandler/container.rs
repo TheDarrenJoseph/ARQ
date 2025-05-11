@@ -6,7 +6,7 @@ use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders};
-
+use uuid::Uuid;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -41,6 +41,7 @@ pub struct TakeItemsRequest {
 
 #[derive(Clone, Debug)]
 pub struct TakeItemsResponse {
+    pub container_id: Uuid,
     pub untaken: Vec<Item>,
     pub message: String
 }

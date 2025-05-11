@@ -65,6 +65,8 @@ async fn begin() -> Result<(), ErrorWrapper> {
             Ok(None) => {}
         }
     }
+    engine.ui_wrapper.terminal_manager.clear_screen().expect("Failed to clear screen");
+    ratatui::restore();
     Ok(())
 }
 
