@@ -17,7 +17,6 @@ pub mod framehandler;
 pub mod util;
 pub mod character_info_view;
 pub mod map_view;
-pub mod world_container_view;
 pub mod settings_menu_view;
 pub mod game_over_view;
 pub mod combat_view;

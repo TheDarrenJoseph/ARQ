@@ -52,6 +52,12 @@ impl ContainerWidgetData {
                             Key::Down => {
                                 self.item_list_selection.move_down();
                             },
+                            Key::PageUp => {
+                                self.item_list_selection.page_up();
+                            },
+                            Key::PageDown => {
+                                self.item_list_selection.page_down();
+                            }
                             Key::Char('o') => {
                                 if (!self.item_list_selection.is_selecting()) {
                                     let focused_item = self.item_list_selection.get_focused_item().unwrap();
