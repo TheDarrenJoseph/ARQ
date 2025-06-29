@@ -93,6 +93,7 @@ pub trait Draw {
     fn draw_additional_widgets(&mut self, frame: &mut ratatui::Frame);
     fn draw_level_widgets(&mut self, level: &mut Level, frame: &mut ratatui::Frame);
     fn draw_container_widgets(&mut self, container: &mut ContainerWidgetData, frame: &mut ratatui::Frame);
+    fn draw_character_info(&mut self, widget_data: &mut CharacterInfoWidgetData, frame: &mut ratatui::Frame);
 }
 
 fn build_main_block<'a>() -> Block<'a> {
@@ -152,10 +153,9 @@ impl UI {
             },
             UIViewMode::Container(mut widget_data) => {
                 self.draw_container_widgets(&mut widget_data, frame);
-                // TODO
             },
-            UIViewMode::CharacterInfo(info) => {
-                // TODO
+            UIViewMode::CharacterInfo(mut widget_data) => {
+                self.draw_character_info(&mut widget_data, frame);
             }
         }
         
@@ -298,6 +298,24 @@ impl Draw for UI {
                         if (container_widget.container_id == widget_data_container_id) {
                             frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
                         }
+                    }
+                    _ => {}
+                }
+                _offset += 1;
+            }
+        }
+    }
+
+    fn draw_character_info(&mut self, widget_data: &mut CharacterInfoWidgetData, frame: &mut ratatui::Frame) {
+        let widget_count = self.stateful_widgets.len();
+        if widget_count > 0 {
+            let mut _offset = 0;
+            let ui_layout = self.ui_layout.as_mut().unwrap();
+            let ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
+                    StatefulWidgetType::CharacterInfo(charcter_info_widget) => {
+                        frame.render_stateful_widget(charcter_info_widget.clone(), frame.size(), widget_data);
                     }
                     _ => {}
                 }

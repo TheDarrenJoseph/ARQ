@@ -1,17 +1,24 @@
+use log::{error, info};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
 use ratatui::symbols::line::VERTICAL;
 use ratatui::widgets::{Block, Borders, Tabs, Widget};
+use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use crate::item_list_selection::ItemListSelection;
+use crate::engine::command::open_command::OpenedContainerEventType;
+use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
+use crate::engine::command::util::CurrentContainersData;
+use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::{Area, Position};
+use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::character_info_view::Tab;
+use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 
 #[derive(PartialEq, Clone, Debug)]
@@ -21,7 +28,7 @@ pub enum TabChoice {
     CHARACTER
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CharacterInfoWidget {
     pub container_widget : ContainerWidget
 }
@@ -41,33 +48,42 @@ pub struct CharacterInfoWidgetData {
     pub tab_choice: TabChoice,
     pub container : Container,
     pub ui_areas: UIAreas,
-    pub item_list_selection : ItemListSelection,
     pub event_sender: mpsc::UnboundedSender<Event>,
-    pub container_widget_data: ContainerWidgetData,
+    pub containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
 }
 
 impl CharacterInfoWidgetData {
     pub fn new(
         inventory_container: Container, 
         ui_areas: UIAreas,
-        container_widget_data: ContainerWidgetData,
         container_event_sender: UnboundedSender<Event>
     ) -> CharacterInfoWidgetData {
         let items = inventory_container.to_cloned_item_list();
-        // Total area height - 3 for title, heading, and stat line
+        
+        // Total area height - 4 for:
+        // title, heading, and stat line
+        // Plus the tabs for each section of the character info view
         let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-        let line_count = main_area.area.height - 3;
+        let line_count = main_area.area.height - 4;
         let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
         
         CharacterInfoWidgetData {
             tab_choice: TabChoice::INVENTORY,
             container: inventory_container.clone(),
             ui_areas: ui_areas.clone(),
-            item_list_selection,
             event_sender: container_event_sender.clone(),
-            container_widget_data: container_widget_data,
+            containers_data: CurrentContainersData::new()
         }
     }
+
+    pub async fn handle_event(&mut self, event: Event) {
+        log::debug!("Handling event: {:?}", event);
+        if let Some(current_container_data) =  self.containers_data.get_current_data_mut() {
+            current_container_data.handle_event(event).await;
+        }
+        // TODO any event handling for this parent widget
+    }
+
 }
 
 impl StatefulWidget for CharacterInfoWidget {
@@ -98,12 +114,11 @@ impl StatefulWidget for CharacterInfoWidget {
         );
 
         tabs.render(heading_area, buf);
-        
-        let mut container_widget_data = &mut widget_data.container_widget_data.clone();
-        self.container_widget.render(
-            area, buf, &mut container_widget_data
-        );
-        
-        todo!()
+
+        if let Some(current_container_data) =  widget_data.containers_data.get_current_data_mut() {
+            self.container_widget.render(
+                area, buf, current_container_data
+            );
+        }
     }
 }

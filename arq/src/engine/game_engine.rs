@@ -430,8 +430,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     level,
                     ui: &mut self.ui_wrapper.ui,
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
-                    widget_data: None,
-                    containers_data: CurrentContainersData::new()
+                    widget_data: None
                 };
                 command.start().await?;
                 

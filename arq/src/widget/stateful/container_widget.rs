@@ -14,6 +14,7 @@ use crate::engine::command::open_command::OpenedContainerEventType::{Escape, Ope
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
+use crate::map::position::Area;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
@@ -46,23 +47,23 @@ impl ContainerWidget {
 #[derive(Debug, Clone)]
 pub struct ContainerWidgetData {
     pub container : Container,
-    pub ui_areas: UIAreas,
+    pub ui_area: Area,
     pub item_list_selection : ItemListSelection,
     pub event_sender: mpsc::UnboundedSender<Event>
 }
 
 impl ContainerWidgetData {
-    pub(crate) fn new(container: Container, ui_areas: UIAreas, sender: UnboundedSender<Event>) -> ContainerWidgetData {
-        let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-
-        // Total area height - 3 for title, heading, and stat line
-        let line_count = main_area.area.height - 3;
-        
+    pub(crate) fn new(
+        container: Container, 
+        ui_area: Area, 
+        line_count: i32,
+        sender: UnboundedSender<Event>
+    ) -> ContainerWidgetData {
         let items = container.to_cloned_item_list();
         let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
         ContainerWidgetData {
             container: container.clone(),
-            ui_areas: ui_areas.clone(),
+            ui_area: ui_area.clone(),
             item_list_selection,
             event_sender: sender,
         }
@@ -180,8 +181,8 @@ impl StatefulWidget for ContainerWidget {
     type State = ContainerWidgetData;
 
     fn render(mut self, _: Rect, buf: &mut Buffer, data: &mut ContainerWidgetData) {
-        let main_area = data.ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-        let frame_size = main_area.area.to_rect();
+        let main_area = data.ui_area;
+        let frame_size = main_area.to_rect();
         
         let container = &mut data.container;
         let item_list_selection = &mut data.item_list_selection;

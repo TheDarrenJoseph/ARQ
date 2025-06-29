@@ -27,7 +27,7 @@ use crate::engine::container_util;
 use crate::map::objects::items::Item;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::ui::UIViewMode::Map;
-use crate::ui::ui_areas::UIAreas;
+use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
@@ -170,26 +170,28 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let frame_size = self.terminal_manager.terminal.get_frame().area();
         let mut ui_layout = self.ui.ui_layout.clone().unwrap();
         let ui_areas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit);
-
-        self.container_data.current_container_id = Some(c.get_self_item().get_id());
-        let mut current_container_id = self.container_data.current_container_id.unwrap();
-        self.container_data.container_ids = vec![current_container_id];
+        
 
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
         let (container_event_sender, mut container_event_receiver) = mpsc::unbounded_channel();
-        let container_widget = ContainerWidget::new(current_container_id);
-
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
-        let widget_data = ContainerWidgetData::new(c.clone(), ui_areas.clone(), container_event_sender.clone());
-        self.container_data.widget_data_by_id.insert(current_container_id, widget_data);
 
+        let container_id = c.get_self_item().get_id();
+        let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+        let ui_area = main_area.area;
+        // Total area height - 3 for title, heading, and stat line
+        let line_count = main_area.area.height - 3;
+        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, container_event_sender.clone());
+        
+        self.container_data.add_container_data(container_id, widget_data.clone());
         self.update_usage_line();
 
         let ui = &mut self.ui;
 
         // Add the container widget to the UI
+        let container_widget = ContainerWidget::new(self.container_data.current_container_id.unwrap());
         let stateful_widgets = ui.get_stateful_widgets_mut();
         stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
@@ -292,7 +294,18 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             let stateful_widgets = ui.get_stateful_widgets_mut();
             stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
-            let container_widget_data = ContainerWidgetData::new(target_container, ui_areas.clone(), child_container_sender.clone());
+
+            let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+            let ui_area = main_area.area;
+            // Total area height - 3 for title, heading, and stat line
+            let line_count = main_area.area.height - 3;
+            let container_widget_data = ContainerWidgetData::new(
+                target_container,
+                ui_area.clone(), 
+                line_count as i32,
+                child_container_sender.clone()
+            );
+            
             widget_data_by_id.insert(target_container_id, container_widget_data);
             container_ids.push(target_container_id);
             container_data.current_container_id = Some(target_container_id);

@@ -24,7 +24,7 @@ use crate::ui::bindings::action_bindings::Action;
 use crate::ui::bindings::inventory_bindings::InventoryInput;
 use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::ui::{UIViewMode, UI};
-use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
+use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::character_info_view::{CharacterInfoView, Tab, TabChoice};
 use crate::view::framehandler::character_info::CharacterInfoFrameHandler;
@@ -46,8 +46,7 @@ pub struct CharacterInfoCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
     pub ui: &'a mut UI,
     pub terminal_manager : &'a mut TerminalManager<B>,
-    pub widget_data: Option<CharacterInfoWidgetData>,
-    pub containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
+    pub widget_data: Option<CharacterInfoWidgetData>
 }
 
 async fn handle_container_event<'a, B: ratatui::backend::Backend>(
@@ -60,41 +59,36 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<Event>,
 ) -> bool {
-    
     false
 }
 
 impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     pub async fn start(&mut self) -> Result<(), ErrorWrapper> {
-        log::info!("Player opening inventory.");
-        self.bootstrap();
+        log::info!("Player opening Character Info Screen.");
+        self.bootstrap().await;
         
         let terminal_manager = &mut self.terminal_manager;
         let ui = &mut self.ui;
 
         ui.set_console_buffer(UI_USAGE_HINT.to_string());
-
-
+        
         // Spawn a thread to handle the UI events 
         let mut event_handler = TerminalEventHandler::new();
         let event_thread_data = event_handler.spawn_thread();
 
         let mut running = true;
         while running {
-            debug!("LOOPING");
-
-            if let Some(widget_data) = &self.widget_data {
-                let current_container_id = self.containers_data.current_container_id.unwrap();
-                let current_container_widget_data = self.containers_data.widget_data_by_id.get_mut(&current_container_id).unwrap();
-
+            if let Some(widget_data) = &mut self.widget_data {
                 terminal_manager.terminal.draw(|frame| {
-                    ui.render(None, UIViewMode::Container(current_container_widget_data.clone()), frame);
+                    debug!("Rendering Character Info Screen");
+                    ui.render(None, UIViewMode::CharacterInfo(widget_data.clone()), frame);
                 })?;
 
                 // Whenever there's a UI event, ask the widget data to handle it
-                debug!("Waiting for a UI event");
+                debug!("Waiting for a Character InfoUI event");
                 if let Some(e) = event_handler.receiver.recv().await {
-                    current_container_widget_data.handle_event(e).await;
+                    debug!("Handling Character Info UI Event");
+                    widget_data.handle_event(e).await;
                 } else {
                     info!("Receiver returned None!");
                     running = false;
@@ -116,18 +110,28 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         let ui_areas = ui.ui_layout.as_mut().expect("Failed to get UI Layout").get_ui_areas(LayoutType::StandardSplit);
         
         if self.widget_data.is_none() {
-            let container_widget_data = ContainerWidgetData::new(inventory_container.clone(), ui_areas.clone(), container_event_sender.clone());
-            self.widget_data = Some(CharacterInfoWidgetData::new(
+            let mut character_info_widget_data = CharacterInfoWidgetData::new(
                 inventory_container.clone(),
                 ui_areas.clone(),
-                container_widget_data,
                 container_event_sender.clone(),
-            ));
+            );
+            
+            let widget_data = build_container_widget_data(
+                inventory_container.clone(),
+                ui_areas.clone(),
+                container_event_sender.clone()
+            );
+            
+            character_info_widget_data.containers_data.add_container_data(
+                inventory_container.get_self_item().get_id(),
+                widget_data
+            );
+            
+            self.widget_data = Some(character_info_widget_data);
         }
 
         let current_container_id = inventory_container.get_self_item().get_id();
         let container_widget = ContainerWidget::new(current_container_id.clone());
-
         let character_info_widget = CharacterInfoWidget::new(
             container_widget
         );
@@ -136,7 +140,6 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         let stateful_widgets = self.ui.get_stateful_widgets_mut();
         stateful_widgets.push(StatefulWidgetType::CharacterInfo(character_info_widget));
         
-
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
         
@@ -176,3 +179,22 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     }
 
 }
+
+fn build_container_widget_data(container: Container, ui_areas: UIAreas, container_event_sender: UnboundedSender<Event>) -> ContainerWidgetData {
+    let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+    // Total area height - 4 for title, tabs row, heading row, and usage line at the bottom 
+    let line_count = main_area.area.height - 4;
+
+    let items = container.to_cloned_item_list();
+    let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
+    
+    let ui_area = main_area.area;
+    
+    ContainerWidgetData {
+        container: container.clone(),
+        ui_area,
+        item_list_selection,
+        event_sender: container_event_sender,
+    }
+}
+    
