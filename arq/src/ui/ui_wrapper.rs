@@ -15,6 +15,7 @@ use crate::map::room::Room;
 use crate::menu;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::{get_input_key, Draw, StartMenuChoice, UI};
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::character_stats::CharacterFrameHandlerInputResult::VALIDATION;
@@ -37,7 +38,7 @@ impl <B : Backend> UIWrapper<B> {
     pub(crate) fn re_render(&mut self) -> Result<(), io::Error>  {
         let ui = &mut self.ui;
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(None, None, frame);
+            ui.render(None, Map(), frame);
         })?;
         Ok(())
     }
@@ -45,7 +46,7 @@ impl <B : Backend> UIWrapper<B> {
     pub(crate) fn re_render_all(&mut self, level: Level) -> Result<(), io::Error>  {
         let ui = &mut self.ui;
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(Some(level), None, frame);
+            ui.render(Some(level), Map(), frame);
         })?;
         Ok(())
     }
@@ -128,7 +129,7 @@ impl <B : Backend> UIWrapper<B> {
                 self.terminal_manager.terminal.draw(|frame| {
                     let mut main_area = main.area;
                     main_area.height -= 2;
-                    ui.render(None, None, frame);
+                    ui.render(None, Map(), frame);
                     character_view.handle_frame(frame, FrameData { data: base_character.clone(), ui_areas: ui_areas.clone(), frame_area: main_area });
                 })?;
             }

@@ -11,6 +11,7 @@ use crate::map::map_view_areas::MapViewAreas;
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::UI;
+use crate::ui::ui::UIViewMode::Map;
 use crate::view::util::cell_builder::CellBuilder;
 use crate::view::{verify_display_size, GenericInputResult, InputHandler, InputResult, View};
 use crate::widget::stateful::map_widget::MapWidget;
@@ -93,7 +94,7 @@ impl<B : ratatui::backend::Backend> View<bool> for MapView<'_, B> {
         
         return Ok(terminal.draw(|frame| {
             // First let the UI draw everything else
-            ui.render(None, None, frame);
+            ui.render(None, Map(), frame);
 
             // Then render the map widget
             let map_widget = ui.get_stateful_widgets_mut().iter_mut().find(|w| match w {

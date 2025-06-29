@@ -13,6 +13,7 @@ use crate::error::errors::ErrorWrapper;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::UI;
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::character_equipment::CharacterEquipmentFrameHandler;
@@ -38,7 +39,7 @@ pub enum TabChoice {
 #[derive(Clone)]
 pub struct Tab {
     tab_choice: TabChoice,
-    title: String
+    pub(crate) title: String
 }
 
 impl Tab {
@@ -94,7 +95,7 @@ impl <B : ratatui::backend::Backend> CharacterInfoView<'_, B> {
     fn re_render(&mut self) -> Result<(), std::io::Error>  {
         let ui = &mut self.ui;
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(None, None, frame);
+            ui.render(None, Map(), frame);
         })?;
         Ok(())
     }
@@ -317,7 +318,7 @@ impl <'b, B : ratatui::backend::Backend> View<bool> for CharacterInfoView<'_, B>
         if let Some(main) = ui_areas.get_area(UI_AREA_NAME_MAIN) {
             let main_area = main.area;
             return Ok(self.terminal_manager.terminal.draw(|frame| {
-                ui.render(None, None, frame);
+                ui.render(None, Map(), frame);
                 // Sizes for the entire 'Character Info' frame area
 
                 let rect = Rect { x: main_area.start_position.x, y: main_area.start_position.y + 1, width: main_area.width.clone(), height: main_area.height.clone() - 1 };

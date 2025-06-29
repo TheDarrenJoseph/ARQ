@@ -10,8 +10,10 @@ use crate::character::characters::Characters;
 use crate::engine::combat::Combat;
 use crate::engine::command::command::Command;
 use crate::engine::command::inventory_command::InventoryCommand;
+use crate::engine::command::character_info::{CharacterInfoCommand};
 use crate::engine::command::look_command::LookCommand;
-use crate::engine::command::open_command::{OpenCommandContainerData, OpenCommandNew};
+use crate::engine::command::open_command::{OpenCommandNew};
+use crate::engine::command::util::CurrentContainersData;
 use crate::engine::engine_helpers::game_loop::game_loop;
 use crate::engine::engine_helpers::input_handler::InputHandler;
 use crate::engine::engine_helpers::menu::menu_command;
@@ -41,6 +43,7 @@ use crate::view::util::progress_display::ProgressDisplay;
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::StandardWidgetType;
+use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
 
 pub struct GameEngine<B: 'static + Backend>  {
     pub ui_wrapper : UIWrapper<B>,
@@ -423,18 +426,20 @@ impl <B : Backend + Send> GameEngine<B> {
                 Ok(self.begin_combat()?)
             },
             Action::ShowInventory => {
-                let mut command = InventoryCommand {
+                let mut command = CharacterInfoCommand {
                     level,
                     ui: &mut self.ui_wrapper.ui,
-                    terminal_manager: &mut self.ui_wrapper.terminal_manager
+                    terminal_manager: &mut self.ui_wrapper.terminal_manager,
+                    widget_data: None,
+                    containers_data: CurrentContainersData::new()
                 };
-                command.start()?;
+                command.start().await?;
                 
                 if let Some(key) = input {
                     let key_bindings = &mut self.settings.key_bindings.command_specific_key_bindings.inventory_key_bindings;
                     let bindings = key_bindings.get_bindings();
                     let input = bindings.get(&key);
-                    command.handle_input(input)?;
+                    //command.handle_input(input)?;
                 }
                 Ok(None)
             },
@@ -465,7 +470,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
                     input_resolver: input_resolver.clone(),
                     key_bindings: key_bindings.clone(),
-                    container_data: OpenCommandContainerData::new()
+                    container_data: CurrentContainersData::new()
                 };
                 match command.begin().await {
                     Result::Ok(..) => {

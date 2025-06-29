@@ -7,6 +7,7 @@ use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
 use ratatui::widgets::{Block, Borders, Widget};
 use termion::event::Key;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
@@ -29,12 +30,44 @@ pub struct ContainerWidget {
     pub(crate) row_count: i32
 }
 
+impl ContainerWidget {
+    pub(crate) fn new(container_id: Uuid) -> ContainerWidget {
+        ContainerWidget {
+            container_id,
+            columns: vec![
+                Column {name : "NAME".to_string(), size: 30},
+                Column {name : "STORAGE (Kg)".to_string(), size: 12}
+            ],
+            row_count: 1,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ContainerWidgetData {
     pub container : Container,
     pub ui_areas: UIAreas,
     pub item_list_selection : ItemListSelection,
     pub event_sender: mpsc::UnboundedSender<Event>
+}
+
+impl ContainerWidgetData {
+    pub(crate) fn new(container: Container, ui_areas: UIAreas, sender: UnboundedSender<Event>) -> ContainerWidgetData {
+        let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+
+        // Total area height - 3 for title, heading, and stat line
+        let line_count = main_area.area.height - 3;
+        
+        let items = container.to_cloned_item_list();
+        let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
+        ContainerWidgetData {
+            container: container.clone(),
+            ui_areas: ui_areas.clone(),
+            item_list_selection,
+            event_sender: sender,
+        }
+    }
+
 }
 
 impl ContainerWidgetData {

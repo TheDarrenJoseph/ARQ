@@ -6,3 +6,4 @@ pub mod button_widget;
 pub mod console_input_widget;
 pub mod map_widget;
 pub mod container_widget;
+pub mod character_info_widget;

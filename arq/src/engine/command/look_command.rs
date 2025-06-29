@@ -15,6 +15,7 @@ use crate::ui::bindings::action_bindings::Action;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::look_bindings::{map_look_input_to_side, LookInput, LookKeyBindings};
 use crate::ui::ui::{get_input_key, UI};
+use crate::ui::ui::UIViewMode::Map;
 
 pub struct LookCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -104,7 +105,7 @@ impl <B: ratatui::backend::Backend> LookCommand<'_, B> {
         let ui = &mut self.ui;
         let level = self.level.clone();
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(Some(level), None, frame);
+            ui.render(Some(level), Map(), frame);
         })?;
         Ok(())
     }

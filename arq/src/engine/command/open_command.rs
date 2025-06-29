@@ -9,7 +9,7 @@ use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::open_bindings::{map_open_input_to_side, OpenInput, OpenKeyBindings};
 use crate::ui::event::{Event, TerminalEventHandler};
-use crate::ui::ui::UI;
+use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
@@ -22,9 +22,11 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use uuid::Uuid;
 use crate::engine::command::open_command::OpenedContainerEventType::TakeItems;
+use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
 use crate::map::objects::items::Item;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::UIAreas;
 use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 
@@ -34,29 +36,12 @@ pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub terminal_manager : &'a mut TerminalManager<B>,
     pub input_resolver: Box<dyn KeyInputResolver>,
     pub key_bindings: OpenKeyBindings,
-    pub container_data: OpenCommandContainerData
-}
-
-// Tracks the currently open containers / relevant widget data
-pub struct OpenCommandContainerData {
-    current_container_id: Option<Uuid>,
-    container_ids : Vec<Uuid>,
-    widget_data_by_id : HashMap<Uuid, ContainerWidgetData>
+    pub container_data: CurrentContainersData
 }
 
 pub struct OpenCommandChannels {
     pub container_event_receiver: UnboundedReceiver<Event>, // This receives events from all the container widgets/their data handling
     pub child_container_sender: UnboundedSender<Event> // This is the sender channel that all child containers / their data that get opened will use
-}
-
-impl OpenCommandContainerData {
-    pub fn new() -> OpenCommandContainerData {
-        OpenCommandContainerData {
-            current_container_id: None,
-            container_ids : vec![],
-            widget_data_by_id : HashMap::new()
-        }   
-    }
 }
 
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
@@ -76,7 +61,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let ui = &mut self.ui;
         let level = self.level.clone();
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(Some(level), None, frame);
+            ui.render(Some(level), Map(), frame);
         })?;
         Ok(())
     }
@@ -193,11 +178,11 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
         let (container_event_sender, mut container_event_receiver) = mpsc::unbounded_channel();
-        let container_widget = create_container_widget(current_container_id);
+        let container_widget = ContainerWidget::new(current_container_id);
 
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
-        let widget_data = create_container_widget_data(c.clone(), ui_areas.clone(), container_event_sender.clone());
+        let widget_data = ContainerWidgetData::new(c.clone(), ui_areas.clone(), container_event_sender.clone());
         self.container_data.widget_data_by_id.insert(current_container_id, widget_data);
 
         self.update_usage_line();
@@ -237,7 +222,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
             let current_container_widget_data = self.container_data.widget_data_by_id.get_mut(&current_container_id).unwrap();
 
             terminal_manager.terminal.draw(|frame| {
-                ui.render(None, Some(current_container_widget_data), frame);
+                ui.render(None, UIViewMode::Container(current_container_widget_data.clone()), frame);
             })?;
 
             // Whenever there's a UI event, ask the widget data to handle it
@@ -287,7 +272,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     position: Position, // Needed for TakeItems
     event: Event,
     event_handler: &mut TerminalEventHandler, // This provides terminal IO input (key input)
-    container_data: &mut OpenCommandContainerData, // Tracks the currently open containers / relevant widget data
+    container_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<Event>,
 ) -> bool {
     debug!("Handling container event");
@@ -303,11 +288,11 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer(open_container_request))) => {
             let target_container = open_container_request.target;
             let target_container_id = target_container.get_self_item().get_id();
-            let container_widget = create_container_widget(target_container_id);
+            let container_widget = ContainerWidget::new(target_container_id);
             let stateful_widgets = ui.get_stateful_widgets_mut();
             stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
-            let container_widget_data = create_container_widget_data(target_container, ui_areas.clone(), child_container_sender.clone());
+            let container_widget_data = ContainerWidgetData::new(target_container, ui_areas.clone(), child_container_sender.clone());
             widget_data_by_id.insert(target_container_id, container_widget_data);
             container_ids.push(target_container_id);
             container_data.current_container_id = Some(target_container_id);
@@ -386,24 +371,3 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     return true;
 }
 
-fn create_container_widget(container_id: Uuid) -> ContainerWidget {
-    ContainerWidget {
-        container_id,
-        columns: vec![
-            Column {name : "NAME".to_string(), size: 30},
-            Column {name : "STORAGE (Kg)".to_string(), size: 12}
-        ],
-        row_count: 1,
-    }
-}
-
-fn create_container_widget_data(container: Container, ui_areas: UIAreas, sender: UnboundedSender<Event>) -> ContainerWidgetData {
-    let items = container.to_cloned_item_list();
-    let item_list_selection =  ItemListSelection::new(items.clone(), 4);
-    ContainerWidgetData {
-        container: container.clone(),
-        ui_areas: ui_areas.clone(),
-        item_list_selection,
-        event_sender: sender,
-    }
-}

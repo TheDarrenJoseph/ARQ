@@ -9,11 +9,13 @@ use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::{LayoutType, UILayout};
 use crate::view::framehandler::console::{ConsoleBuffer, ConsoleFrameHandler};
 use crate::view::framehandler::{FrameData, FrameHandler};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
+use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
 use crate::widget::stateful::container_widget::ContainerWidgetData;
 
 pub struct UI {
@@ -64,6 +66,12 @@ impl std::convert::TryFrom<usize> for StartMenuChoice {
 pub enum SettingsMenuChoice {
     FogOfWar,
     Quit
+}
+
+pub enum UIViewMode {
+    Map(), // The default view mode
+    Container(ContainerWidgetData),
+    CharacterInfo(CharacterInfoWidgetData)
 }
 
 impl std::convert::TryFrom<usize> for SettingsMenuChoice {
@@ -121,7 +129,7 @@ impl UI {
     pub fn render<'a>(
         &mut self,
         level: Option<Level>,
-        container_widget_data: Option<&mut ContainerWidgetData>,
+        view_mode: UIViewMode,
         frame: &mut ratatui::Frame<'_>
     ) {
         let ui_layout =  self.ui_layout.as_mut().ok_or("Failed to get ui_layout, has it been initialised?").unwrap();
@@ -133,14 +141,22 @@ impl UI {
                 frame.render_widget(main_block, main_area.to_rect());
             }
         }
-        
-        // TODO Render any major stateful widgets
+
+        // Render any major stateful widgets
         if let Some(mut level) = level {
             self.draw_level_widgets(&mut level, frame);
         }
-
-        if let Some(mut widget_data) = container_widget_data {
-            self.draw_container_widgets(&mut widget_data, frame);
+        match view_mode {
+            UIViewMode::Map() => {
+                // TODO Map widget support
+            },
+            UIViewMode::Container(mut widget_data) => {
+                self.draw_container_widgets(&mut widget_data, frame);
+                // TODO
+            },
+            UIViewMode::CharacterInfo(info) => {
+                // TODO
+            }
         }
         
         if self.console_visible {
@@ -191,7 +207,7 @@ pub fn get_input_key() -> Result<Key, io::Error> {
 impl Draw for UI {
 
     fn draw_info(&mut self, frame: &mut ratatui::Frame<'_>) {
-        self.render(None, None, frame);
+        self.render(None, Map(), frame);
 
         let dev_spans = vec!(Span::raw("Made by Darren Joseph. Written in Rust."));
         let spans = vec![Line::from(dev_spans),

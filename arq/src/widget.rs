@@ -2,6 +2,7 @@ use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
 use crate::widget::stateful::boolean_widget::BooleanState;
 use crate::widget::stateful::button_widget::ButtonState;
+use crate::widget::stateful::character_info_widget::CharacterInfoWidget;
 use crate::widget::stateful::console_input_widget::ConsoleInputState;
 use crate::widget::stateful::container_widget::ContainerWidget;
 use crate::widget::stateful::dropdown_widget::DropdownInputState;
@@ -39,7 +40,8 @@ pub enum StatefulWidgetType {
     Dropdown(DropdownInputState),
     Button(ButtonState),
     Map(MapWidget),
-    Container(ContainerWidget)
+    Container(ContainerWidget),
+    CharacterInfo(CharacterInfoWidget)
 }
 
 // Non stateful

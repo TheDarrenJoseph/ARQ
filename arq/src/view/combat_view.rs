@@ -11,6 +11,7 @@ use crate::error::errors::ErrorWrapper;
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::UI;
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::combat::CombatFrameHandler;
 use crate::view::framehandler::{FrameData, FrameHandler};
@@ -36,7 +37,7 @@ impl  <B: ratatui::backend::Backend> CombatView<'_, B> {
     fn re_render(&mut self) -> Result<(), io::Error>  {
         let ui = &mut self.ui;
         self.terminal_manager.terminal.draw(|frame| {
-            ui.render(None, None, frame);
+            ui.render(None, Map(), frame);
         })?;
         Ok(())
     }
