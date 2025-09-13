@@ -1,7 +1,6 @@
 use std::fs;
 use rand::distr::Alphanumeric;
 use rand::{thread_rng, Rng};
-
 use crate::global_flags::GLOBALS;
 use crate::ui::bindings::action_bindings::build_default_action_keybindings;
 use crate::ui::bindings::input_bindings::{AllKeyBindings, CommandSpecificKeyBindings};
@@ -107,7 +106,8 @@ pub fn build_settings() -> Settings {
     let settings_raw = fs::read_to_string(RESOURCE_SETTINGS_FILE).unwrap();
     let settings_json : serde_json::Value = serde_json::from_str(&settings_raw).unwrap();
     let bg_music_volume_default : u32 = settings_json.get("BG_MUSIC_VOLUME_DEFAULT").unwrap().as_u64().unwrap() as u32;
-    
+    let resolution_default : String = String::from(settings_json.get("RESOLUTION_DEFAULT").unwrap().as_str().unwrap());
+
     let fog_of_war : Setting<bool> = Setting { name: SETTING_FOG_OF_WAR.to_string(), value: false };
     // Generate a new random seed
     let random_seed: String = thread_rng()
@@ -120,7 +120,19 @@ pub fn build_settings() -> Settings {
 
 
     let resolution_options = get_resolution_dropdown_options();
-    let initial_option = resolution_options.first().clone().unwrap();
+    let mut default_resolution_option = None;
+    if (!resolution_default.is_empty()) {
+        default_resolution_option = resolution_options.iter()
+            .find(|opt| opt.display_name.eq(resolution_default.as_str()))
+            .map(|opt| opt.clone())
+            .take()
+    }
+
+    let initial_option = if (default_resolution_option.is_some()) {
+        default_resolution_option.unwrap()
+    } else {
+         resolution_options.first().unwrap().clone()
+    };
     let resolution_dropdown_setting : DropdownSetting<DropdownOption<Resolution>> = DropdownSetting {
         options: resolution_options.clone(),
         chosen_option: initial_option.clone()

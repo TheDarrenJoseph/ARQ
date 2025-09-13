@@ -19,6 +19,7 @@ use crate::widget::StatefulWidgetType;
 
 pub async fn start_menu<B: ratatui::backend::Backend + Send>(engine: &mut GameEngine<B>, _choice: Option<StartMenuChoice>) -> Pin<Box<dyn Future< Output = Result<Option<GameOverChoice>, ErrorWrapper> > + '_ >> {
     Box::pin(async move {
+        engine.update_from_settings().expect("Failed to update from settings");
         let game_running= engine.is_game_running();
         let ui_wrapper = &mut engine.ui_wrapper;
         ui_wrapper.clear_screen()?;
