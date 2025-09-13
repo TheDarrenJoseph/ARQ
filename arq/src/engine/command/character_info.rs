@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::character::Character;
 use crate::character::equipment::get_potential_slots;
 use crate::engine::command::command::Command;
-use crate::engine::command::open_command::{OpenCommandChannels};
+use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventType};
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
 use crate::engine::level::Level;
@@ -23,6 +23,7 @@ use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::action_bindings::Action;
 use crate::ui::bindings::inventory_bindings::InventoryInput;
 use crate::ui::event::{Event, TerminalEventHandler};
+use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
@@ -53,20 +54,79 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     terminal_manager: &mut TerminalManager<B>, // Necessary for building new widgets / widget data
     ui: &'a mut UI, // Necessary for building new widgets / widget data
     level: &'a mut Level, // Necessary to make actual changes to the level / world
-    position: Position, // Needed for TakeItems
+    player_position: Position, // Needed for DropItems
     event: Event,
     event_handler: &mut TerminalEventHandler, // This provides terminal IO input (key input)
     containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<Event>,
 ) -> bool {
-    false
+    debug!("Handling character_info container event");
+    let frame_size = terminal_manager.terminal.get_frame().area();
+    let mut ui_layout = ui.ui_layout.clone().unwrap();
+    let ui_areas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit);
+
+    let current_container_id = containers_data.current_container_id.unwrap().clone();
+    let widget_data_by_id = &mut containers_data.widget_data_by_id;
+    let container_ids = &mut containers_data.container_ids;
+
+    match event {
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
+            // TODO can this be refactored to be shared between this and open_command?
+            let closing_container_id = current_container_id.clone();
+            if (widget_data_by_id.len() > 1) {
+                // If we have more than one container opened, remove the current one
+                let stateful_widgets = ui.get_stateful_widgets_mut();
+                let current_widget_index = stateful_widgets.iter().position(|widget| {
+                    return match widget {
+                        StatefulWidgetType::Container(container_widget) => {
+                            container_widget.container_id == closing_container_id
+                        },
+                        _ => {
+                            false
+                        }
+                    }
+                });
+                if let Some(idx) = current_widget_index {
+                    // The index of the parent container
+                    let parent_container_id = container_ids.get(container_ids.len() - 2).unwrap();
+
+                    // Update the parent container with the updated current container contents
+                    let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
+                    let mut parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
+                    let updated_container = current_widget_data.container.clone();
+                    parent_container_widget_data.container.replace_container(updated_container);
+
+                    // Remove the widget and it's data
+                    stateful_widgets.remove(idx);
+                    widget_data_by_id.remove(&current_container_id);
+
+                    // Drop the last container id from the list
+                    container_ids.pop();
+                    // Set the current container ID to the last one in the list
+                    containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
+                }
+            } else if (widget_data_by_id.len() == 1) {
+                // If only one container is open, stop the command
+                return false;
+            }
+        },
+        _ => {}
+    }
+
+    // Keep running by default
+    true
 }
 
 impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     pub async fn start(&mut self) -> Result<(), ErrorWrapper> {
         log::info!("Player opening Character Info Screen.");
-        self.bootstrap().await;
-        
+
+        // Build the CharacterInfoWidgetData and return the required event channels for communicating
+        let channels = self.bootstrap().await;
+
+        let mut container_event_receiver = channels.container_event_receiver;
+        let child_container_sender = channels.child_container_sender;
+
         let terminal_manager = &mut self.terminal_manager;
         let ui = &mut self.ui;
 
@@ -93,6 +153,31 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
                     info!("Receiver returned None!");
                     running = false;
                 }
+
+                if let Some(widget_data) = &mut self.widget_data {
+                    let player_position = self.level.get_player_mut().unwrap().get_global_position();
+
+                    // If the widget data has sent us an event, handle that
+                    match container_event_receiver.try_recv() {
+                        Ok(event) => {
+                            // Handle the event / break the loop if we need to
+                            running = handle_container_event(
+                                terminal_manager,
+                                ui,
+                                self.level,
+                                player_position.clone(),
+                                event,
+                                &mut event_handler,
+                                &mut widget_data.containers_data,
+                                child_container_sender.clone()
+                            ).await;
+                        },
+                        Err(e) => {
+                            error!("Could not receive container event: {:?}", e);
+                        }
+                    }
+                }
+
             }
         }
 
@@ -105,7 +190,7 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
-        let (container_event_sender, mut container_event_receiver) = mpsc::unbounded_channel();
+        let (container_event_sender, container_event_receiver) = mpsc::unbounded_channel();
         let inventory_container = self.level.get_player_mut().unwrap().get_inventory_mut();
         let ui_areas = ui.ui_layout.as_mut().expect("Failed to get UI Layout").get_ui_areas(LayoutType::StandardSplit);
         

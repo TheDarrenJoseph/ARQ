@@ -36,7 +36,7 @@ pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub terminal_manager : &'a mut TerminalManager<B>,
     pub input_resolver: Box<dyn KeyInputResolver>,
     pub key_bindings: OpenKeyBindings,
-    pub container_data: CurrentContainersData
+    pub containers_data: CurrentContainersData
 }
 
 pub struct OpenCommandChannels {
@@ -185,13 +185,13 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let line_count = main_area.area.height - 3;
         let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, container_event_sender.clone());
         
-        self.container_data.add_container_data(container_id, widget_data.clone());
+        self.containers_data.add_container_data(container_id, widget_data.clone());
         self.update_usage_line();
 
         let ui = &mut self.ui;
 
         // Add the container widget to the UI
-        let container_widget = ContainerWidget::new(self.container_data.current_container_id.unwrap());
+        let container_widget = ContainerWidget::new(self.containers_data.current_container_id.unwrap());
         let stateful_widgets = ui.get_stateful_widgets_mut();
         stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
@@ -219,9 +219,9 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let mut running = true;
         while running {
             debug!("LOOPING");
-            let current_container_id = self.container_data.current_container_id.unwrap();
+            let current_container_id = self.containers_data.current_container_id.unwrap();
             
-            let current_container_widget_data = self.container_data.widget_data_by_id.get_mut(&current_container_id).unwrap();
+            let current_container_widget_data = self.containers_data.widget_data_by_id.get_mut(&current_container_id).unwrap();
 
             terminal_manager.terminal.draw(|frame| {
                 ui.render(None, UIViewMode::Container(current_container_widget_data.clone()), frame);
@@ -247,7 +247,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
                        position.clone(),
                        event,
                        &mut event_handler,
-                       &mut self.container_data,
+                       &mut self.containers_data,
                        child_container_sender.clone()
                    ).await;
                 },
@@ -274,17 +274,17 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     position: Position, // Needed for TakeItems
     event: Event,
     event_handler: &mut TerminalEventHandler, // This provides terminal IO input (key input)
-    container_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
+    containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<Event>,
 ) -> bool {
-    debug!("Handling container event");
+    debug!("Handling open_command container event");
     let frame_size = terminal_manager.terminal.get_frame().area();
     let mut ui_layout = ui.ui_layout.clone().unwrap();
     let ui_areas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit);
 
-    let current_container_id = container_data.current_container_id.unwrap().clone();
-    let widget_data_by_id = &mut container_data.widget_data_by_id;
-    let container_ids = &mut container_data.container_ids;
+    let current_container_id = containers_data.current_container_id.unwrap().clone();
+    let widget_data_by_id = &mut containers_data.widget_data_by_id;
+    let container_ids = &mut containers_data.container_ids;
 
     match event {
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer(open_container_request))) => {
@@ -308,7 +308,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             
             widget_data_by_id.insert(target_container_id, container_widget_data);
             container_ids.push(target_container_id);
-            container_data.current_container_id = Some(target_container_id);
+            containers_data.current_container_id = Some(target_container_id);
         }
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
             let closing_container_id = current_container_id.clone();
@@ -342,7 +342,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     // Drop the last container id from the list
                     container_ids.pop();
                     // Set the current container ID to the last one in the list
-                    container_data.current_container_id = Some(container_ids.last().unwrap().clone());
+                    containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
                 }
             } else if (widget_data_by_id.len() == 1) {
                 // If only one container is open, stop the command
@@ -381,6 +381,8 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
         }
         _ => {}
     }
-    return true;
+
+    // Keep running by default
+    true
 }
 

@@ -469,7 +469,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
                     input_resolver: input_resolver.clone(),
                     key_bindings: key_bindings.clone(),
-                    container_data: CurrentContainersData::new()
+                    containers_data: CurrentContainersData::new()
                 };
                 match command.begin().await {
                     Result::Ok(..) => {
