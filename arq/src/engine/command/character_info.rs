@@ -25,7 +25,7 @@ use crate::ui::bindings::inventory_bindings::InventoryInput;
 use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::ui::{UIViewMode, UI};
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::character_info_view::{CharacterInfoView, Tab, TabChoice};
 use crate::view::framehandler::character_info::CharacterInfoFrameHandler;
@@ -200,7 +200,7 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
                 ui_areas.clone(),
                 container_event_sender.clone(),
             );
-            
+
             let widget_data = build_container_widget_data(
                 inventory_container.clone(),
                 ui_areas.clone(),
@@ -265,19 +265,31 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
 }
 
+fn build_container_widget_area(main_area: &UIArea) -> Area {
+    let mut result = main_area.clone();
+    let ui_area = &mut result.area;
+    // Offset the container start y to allow for tabs
+    ui_area.start_position.y += 2;
+    ui_area.height -= 2;
+    ui_area.end_position.y -= 2;
+    result.area
+}
+
 fn build_container_widget_data(container: Container, ui_areas: UIAreas, container_event_sender: UnboundedSender<Event>) -> ContainerWidgetData {
     let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-    // Total area height - 4 for title, tabs row, heading row, and usage line at the bottom 
-    let line_count = main_area.area.height - 4;
+    let widget_ui_area = build_container_widget_area(&main_area);
 
+    // -3 to account for:
+    // 1. Title / Border top
+    // 2. Table headings
+    // 3. Border bottom
+    let line_count = widget_ui_area.height - 3;
     let items = container.to_cloned_item_list();
     let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
-    
-    let ui_area = main_area.area;
-    
+
     ContainerWidgetData {
         container: container.clone(),
-        ui_area,
+        ui_area: widget_ui_area,
         item_list_selection,
         event_sender: container_event_sender,
     }
