@@ -1,34 +1,34 @@
-use std::collections::HashMap;
+use crate::engine::command::open_command::OpenedContainerEventType::TakeItems;
+use crate::engine::command::util::CurrentContainersData;
+use crate::engine::container_util;
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::input::{IoKeyInputResolver, KeyInputResolver, MockKeyInputResolver};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
+use crate::map::objects::items::Item;
 use crate::map::position::Position;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::open_bindings::{map_open_input_to_side, OpenInput, OpenKeyBindings};
+use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::{Event, TerminalEventHandler};
+use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
+use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
+use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
+use std::collections::HashMap;
 use std::io;
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use uuid::Uuid;
-use crate::engine::command::open_command::OpenedContainerEventType::TakeItems;
-use crate::engine::command::util::CurrentContainersData;
-use crate::engine::container_util;
-use crate::map::objects::items::Item;
-use crate::ui::event::AppEventType::OpenedContainerEvent;
-use crate::ui::ui::UIViewMode::Map;
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
-use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,

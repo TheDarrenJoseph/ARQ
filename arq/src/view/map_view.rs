@@ -1,17 +1,17 @@
 use std::io::Error;
 
 use log::info;
-use termion::event::Key;
 use ratatui::buffer::Cell;
 use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::map_view_areas::MapViewAreas;
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::ui::UI;
 use crate::ui::ui::UIViewMode::Map;
+use crate::ui::ui::UI;
 use crate::view::util::cell_builder::CellBuilder;
 use crate::view::{verify_display_size, GenericInputResult, InputHandler, InputResult, View};
 use crate::widget::stateful::map_widget::MapWidget;

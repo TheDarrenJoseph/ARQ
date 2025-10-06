@@ -14,8 +14,8 @@ use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::action_bindings::Action;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::look_bindings::{map_look_input_to_side, LookInput, LookKeyBindings};
-use crate::ui::ui::{get_input_key, UI};
 use crate::ui::ui::UIViewMode::Map;
+use crate::ui::ui::{get_input_key, UI};
 
 pub struct LookCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,

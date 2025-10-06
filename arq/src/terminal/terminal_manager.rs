@@ -1,8 +1,8 @@
 use std::io;
 
-use termion::raw::{IntoRawMode, RawTerminal};
 use ratatui::backend::{Backend, CrosstermBackend, TestBackend};
 use ratatui::Terminal;
+use termion::raw::{IntoRawMode, RawTerminal};
 
 use crate::ui::resolution::Resolution;
 

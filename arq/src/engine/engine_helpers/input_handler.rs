@@ -33,7 +33,7 @@ mod tests {
     use termion::event::Key;
 
     use crate::character::builder::character_builder::{CharacterBuilder, CharacterPattern};
-    
+
     use crate::engine::game_engine::*;
     use crate::engine::level::Levels;
     use crate::map::position::Position;

@@ -1,8 +1,8 @@
+use crate::map::position::Side;
 use crate::ui::bindings::input_bindings::KeyBindings;
+use crate::ui::bindings::open_bindings::OpenInput::{OpenDown, OpenLeft, OpenRight, OpenUp};
 use std::collections::HashMap;
 use termion::event::Key;
-use crate::map::position::Side;
-use crate::ui::bindings::open_bindings::OpenInput::{OpenDown, OpenLeft, OpenRight, OpenUp};
 
 #[derive(Debug, Clone)]
 pub enum OpenInput {

@@ -1,9 +1,9 @@
-use crate::ui::bindings::input_bindings::KeyBindings;
-use std::collections::HashMap;
-use termion::event::Key;
 use crate::map::position::Side;
 use crate::map::position::Side::{BOTTOM, LEFT, RIGHT, TOP};
 use crate::ui::bindings::action_bindings::Action::{DevBeginCombat, Escape, LookAround, MovePlayer, OpenNearby, ShowInventory};
+use crate::ui::bindings::input_bindings::KeyBindings;
+use std::collections::HashMap;
+use termion::event::Key;
 /*
   An Action that the Player can take
  */

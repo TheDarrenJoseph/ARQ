@@ -1,8 +1,8 @@
+use crate::map::position::Area;
 use ratatui::layout::Alignment;
 use ratatui::style::Style;
-use ratatui::text::{Span, Line};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
-use crate::map::position::Area;
 
 #[derive(Debug, Clone)]
 pub struct Column {

@@ -1,15 +1,15 @@
-use std::collections::HashMap;
-use rand_seeder::Seeder;
-use uuid::Uuid;
 use crate::character::builder::character_builder::{CharacterBuilder, CharacterPattern};
-use crate::character::Character;
 use crate::character::characters::Characters;
+use crate::character::Character;
 use crate::engine::level::{init_level_manager, Level, Levels};
 use crate::map::objects::container::{Container, ContainerType};
+use crate::map::objects::items::Item;
 use crate::map::position::{build_square_area, Position};
 use crate::map::tile::{Colour, TileType};
 use crate::map::{Map, Tiles};
-use crate::map::objects::items::Item;
+use rand_seeder::Seeder;
+use std::collections::HashMap;
+use uuid::Uuid;
 
 pub fn build_test_level(area_container: Option<(Position, Container)>, player: Option<Character>) -> Level {
     let tile_library = crate::map::tile::build_library();

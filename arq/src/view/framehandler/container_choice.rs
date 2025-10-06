@@ -1,10 +1,10 @@
 use std::convert::TryInto;
 
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders};
+use termion::event::Key;
 
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
@@ -182,21 +182,21 @@ impl InputHandler<ContainerChoiceFrameHandlerInputResult> for ContainerChoiceFra
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use ratatui::layout::Rect;
-    use ratatui::style::{Modifier, Style};
     use crate::error::errors::ErrorWrapper;
     use crate::map::position::Area;
     use crate::terminal::terminal_manager::init_test;
     use crate::test::utils::test_resource_loader::read_expected_buffer_file;
     use crate::test::utils::test_utils::build_test_container;
     use crate::ui::ui_areas::UIAreas;
-    use crate::view::framehandler::container_choice::{ContainerChoiceFrameHandler};
+    use crate::view::framehandler::container_choice::ContainerChoiceFrameHandler;
     use crate::view::framehandler::{FrameData, FrameHandler};
-    
+    use ratatui::layout::Rect;
+    use ratatui::style::{Modifier, Style};
+    use std::collections::HashMap;
+
     use crate::view::MIN_RESOLUTION;
-    
-    
+
+
     #[test]
     fn test_draw_to_frame() {
         // GIVEN a valid ContainerChoiceFrameHandler

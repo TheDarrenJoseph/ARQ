@@ -1,19 +1,19 @@
 use std::io::Error;
 
-use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::symbols::line::VERTICAL;
-use ratatui::CompletedFrame;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Tabs};
+use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::character::Character;
 use crate::error::errors::ErrorWrapper;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::ui::UI;
 use crate::ui::ui::UIViewMode::Map;
+use crate::ui::ui::UI;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::character_equipment::CharacterEquipmentFrameHandler;
@@ -22,11 +22,11 @@ use crate::view::framehandler::character_stats::{CharacterStatsFrameHandler, Vie
 use crate::view::framehandler::container::ContainerFrameHandlerInputResult;
 use crate::view::framehandler::container_choice::ContainerChoiceFrameHandlerInputResult;
 use crate::view::framehandler::{container, FrameData, FrameHandler};
-use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 use crate::view::util::callback::Callback;
+use crate::view::util::try_build_container_choice_frame_handler;
 use crate::view::InputHandler;
 use crate::view::{resolve_input, verify_display_size, GenericInputResult, InputResult, View};
-use crate::view::util::try_build_container_choice_frame_handler;
+use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 use crate::widget::widgets::WidgetList;
 
 #[derive(PartialEq, Clone, Debug)]

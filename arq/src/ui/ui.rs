@@ -1,11 +1,5 @@
 use std::io;
 
-use termion::event::Key;
-use termion::input::TermRead;
-use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Style};
-use ratatui::text::{Span, Line};
-use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
@@ -14,9 +8,15 @@ use crate::ui::ui_areas::{UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::{LayoutType, UILayout};
 use crate::view::framehandler::console::{ConsoleBuffer, ConsoleFrameHandler};
 use crate::view::framehandler::{FrameData, FrameHandler};
-use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
 use crate::widget::stateful::container_widget::ContainerWidgetData;
+use crate::widget::{StandardWidgetType, StatefulWidgetType};
+use ratatui::layout::{Alignment, Rect};
+use ratatui::style::{Color, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use termion::event::Key;
+use termion::input::TermRead;
 
 pub struct UI {
     pub render_additional: bool,

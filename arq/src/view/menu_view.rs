@@ -2,11 +2,10 @@ use std::convert::TryInto;
 use std::io;
 
 use crate::error::errors::ErrorWrapper;
-use log::{debug, info};
-use termion::input::TermRead;
 use ratatui::layout::Rect;
-use ratatui::CompletedFrame;
 use ratatui::widgets::ListState;
+use ratatui::CompletedFrame;
+use termion::input::TermRead;
 
 use crate::map::position::Area;
 use crate::menu::{Menu, Selection, ToList};

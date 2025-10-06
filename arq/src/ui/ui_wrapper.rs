@@ -1,10 +1,9 @@
 use std::io;
 use std::time::Instant;
 
-use log::debug;
-use termion::event::Key;
 use ratatui::backend::Backend;
 use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::character::Character;
 use crate::engine::level::{Level, LevelChange};
@@ -14,8 +13,8 @@ use crate::map::position::{build_rectangular_area, Area, Position};
 use crate::map::room::Room;
 use crate::menu;
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::ui::{get_input_key, Draw, StartMenuChoice, UI};
 use crate::ui::ui::UIViewMode::Map;
+use crate::ui::ui::{get_input_key, Draw, StartMenuChoice, UI};
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::character_stats::CharacterFrameHandlerInputResult::VALIDATION;

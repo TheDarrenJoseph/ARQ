@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-use tokio::sync::mpsc::UnboundedSender;
-use uuid::Uuid;
-use crate::map::objects::container::Container;
-use crate::ui::event::Event;
-use crate::ui::ui_areas::UIAreas;
 use crate::widget::stateful::container_widget::ContainerWidgetData;
+use std::collections::HashMap;
+use uuid::Uuid;
 
 // Tracks the currently open containers / relevant widget data
 #[derive(Clone, Debug)]

@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
-use ratatui::buffer::Buffer;
 use crate::map::position::Area;
+use ratatui::buffer::Buffer;
 
 pub fn read_expected_buffer_file(path: String, buffer_area: Area) -> Buffer {
     let mut input_string = String::new();

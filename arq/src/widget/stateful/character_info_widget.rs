@@ -1,12 +1,3 @@
-use log::{error, info};
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
-use ratatui::symbols::line::VERTICAL;
-use ratatui::widgets::{Block, Borders, Tabs, Widget};
-use termion::event::Key;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
 use crate::engine::command::util::CurrentContainersData;
@@ -20,6 +11,15 @@ use crate::ui::ui_layout::LayoutType;
 use crate::view::character_info_view::Tab;
 use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
+use log::{error, info};
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
+use ratatui::symbols::line::VERTICAL;
+use ratatui::widgets::{Block, Borders, Tabs, Widget};
+use termion::event::Key;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::UnboundedSender;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {

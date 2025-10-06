@@ -1,18 +1,18 @@
-use std::io::{Error, ErrorKind};
 use log::info;
 use rand_seeder::Seeder;
-use termion::event::Key;
 use ratatui::backend::Backend;
+use std::io::{Error, ErrorKind};
+use termion::event::Key;
 
 use crate::character::battle::Battle;
 use crate::character::builder::character_builder::{build_dev_player_inventory, CharacterBuilder, CharacterPattern};
 use crate::character::characters::Characters;
 use crate::engine::combat::Combat;
+use crate::engine::command::character_info::CharacterInfoCommand;
 use crate::engine::command::command::Command;
 use crate::engine::command::inventory_command::InventoryCommand;
-use crate::engine::command::character_info::{CharacterInfoCommand};
 use crate::engine::command::look_command::LookCommand;
-use crate::engine::command::open_command::{OpenCommandNew};
+use crate::engine::command::open_command::OpenCommandNew;
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::engine_helpers::game_loop::game_loop;
 use crate::engine::engine_helpers::input_handler::InputHandler;
@@ -36,14 +36,14 @@ use crate::view::combat_view::CombatView;
 use crate::view::dialog_view::DialogView;
 use crate::view::framehandler::map_generation::MapGenerationFrameHandler;
 use crate::view::game_over_view::{build_game_over_menu, GameOverChoice};
-use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 use crate::view::util::callback::Callback;
 use crate::view::util::callback::CallbackHandler;
 use crate::view::util::progress_display::ProgressDisplay;
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
-use crate::widget::StandardWidgetType;
+use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
 use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
+use crate::widget::StandardWidgetType;
 
 pub struct GameEngine<B: 'static + Backend>  {
     pub ui_wrapper : UIWrapper<B>,

@@ -1,7 +1,7 @@
-use termion::event::Key;
+use crate::global_flags::ENTER_KEY;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem};
-use crate::global_flags::ENTER_KEY;
+use termion::event::Key;
 
 pub struct Menu {
     pub menu_titles: Vec<String>,

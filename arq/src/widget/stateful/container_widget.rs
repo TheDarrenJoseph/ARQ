@@ -1,14 +1,3 @@
-use std::convert::TryInto;
-use futures::future::err;
-use log::{debug, error, info};
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
-use ratatui::widgets::{Block, Borders, Widget};
-use termion::event::Key;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::UnboundedSender;
-use uuid::Uuid;
 use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
@@ -23,6 +12,17 @@ use crate::view::framehandler::container::{build_container_frame_handler, OpenCo
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
+use futures::future::err;
+use log::{debug, error, info};
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
+use ratatui::widgets::{Block, Borders, Widget};
+use std::convert::TryInto;
+use termion::event::Key;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::UnboundedSender;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct ContainerWidget {

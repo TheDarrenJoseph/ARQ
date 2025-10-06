@@ -2,11 +2,7 @@ use std::convert::TryInto;
 use std::io::Error;
 
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Block, Borders};
-use uuid::Uuid;
+use crate::global_flags::ENTER_KEY;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -15,9 +11,13 @@ use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use crate::view::framehandler::{FrameData, FrameHandler};
-use crate::widget::standard::usage_line::UsageLineWidget;
 use crate::view::{resolve_input, GenericInputResult, InputHandler, InputResult};
-use crate::global_flags::ENTER_KEY;
+use crate::widget::standard::usage_line::UsageLineWidget;
+use ratatui::layout::Rect;
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::widgets::{Block, Borders};
+use termion::event::Key;
+use uuid::Uuid;
 
 /*
     This frame handler is meant to display containers (Chests, Floor items, Dead bodies) in a tabular display
@@ -529,7 +529,7 @@ mod tests {
 
     use ratatui::layout::Rect;
     use ratatui::style::{Modifier, Style};
-    
+
 
     use crate::item_list_selection::ListSelection;
     use crate::map::position::Area;
@@ -541,7 +541,7 @@ mod tests {
     use crate::view::framehandler::container::{build_testing_container_frame_handler, ContainerFrameHandler, ContainerFrameHandlerInputResult};
     use crate::view::framehandler::{FrameData, FrameHandler};
     use crate::view::MIN_RESOLUTION;
-    
+
     #[test]
     fn test_handler_build() {
         // GIVEN valid components

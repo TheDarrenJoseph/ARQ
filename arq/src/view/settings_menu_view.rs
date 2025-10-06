@@ -1,8 +1,7 @@
-
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;

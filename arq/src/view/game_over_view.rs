@@ -1,10 +1,9 @@
-
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Style;
-use ratatui::CompletedFrame;
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;

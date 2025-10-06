@@ -1,8 +1,7 @@
-
 use log::error;
-use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::widgets::{Block, Borders};
+use termion::event::Key;
 
 use crate::character::stats::attributes::get_all_attributes;
 use crate::character::{determine_class, Character, Class};

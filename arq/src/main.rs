@@ -2,9 +2,9 @@ extern crate core;
 
 use std::io;
 
+use ratatui::backend::CrosstermBackend;
 use termion::input::TermRead;
 use termion::raw::RawTerminal;
-use ratatui::backend::CrosstermBackend;
 
 use crate::engine::engine_helpers::menu::start_menu;
 use crate::engine::game_engine::{build_game_engine, GameEngine};

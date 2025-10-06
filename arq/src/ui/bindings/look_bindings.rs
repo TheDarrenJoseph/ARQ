@@ -1,7 +1,7 @@
+use crate::map::position::Side;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use std::collections::HashMap;
 use termion::event::Key;
-use crate::map::position::Side;
 
 #[derive(Debug, Clone)]
 pub enum LookInput {

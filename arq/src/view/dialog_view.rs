@@ -1,10 +1,9 @@
-
 use crate::error::errors::ErrorWrapper;
 use log::error;
 use ratatui::style::{Color, Style};
-use ratatui::CompletedFrame;
 use ratatui::text::Span;
 use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::CompletedFrame;
 
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;

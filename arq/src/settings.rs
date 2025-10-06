@@ -1,6 +1,3 @@
-use std::fs;
-use rand::distr::Alphanumeric;
-use rand::{thread_rng, Rng};
 use crate::global_flags::GLOBALS;
 use crate::ui::bindings::action_bindings::build_default_action_keybindings;
 use crate::ui::bindings::input_bindings::{AllKeyBindings, CommandSpecificKeyBindings};
@@ -9,6 +6,9 @@ use crate::ui::bindings::look_bindings::build_default_look_keybindings;
 use crate::ui::bindings::open_bindings::build_default_open_keybindings;
 use crate::ui::resolution::Resolution;
 use crate::widget::stateful::dropdown_widget::{get_resolution_dropdown_options, DropdownOption, DropdownSetting};
+use rand::distr::Alphanumeric;
+use rand::{thread_rng, Rng};
+use std::fs;
 
 pub const SETTING_FOG_OF_WAR : &str = "Fog of War";
 pub const SETTING_RNG_SEED : &str = "Map RNG Seed";

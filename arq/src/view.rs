@@ -1,11 +1,11 @@
 use std::io;
 
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
-use termion::input::TermRead;
 use ratatui::layout::Rect;
 use ratatui::CompletedFrame;
 use ratatui::Frame;
+use termion::event::Key;
+use termion::input::TermRead;
 
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;

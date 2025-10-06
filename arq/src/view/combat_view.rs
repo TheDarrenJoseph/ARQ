@@ -1,7 +1,7 @@
 use std::io;
 
-use termion::event::Key;
 use ratatui::CompletedFrame;
+use termion::event::Key;
 
 use crate::character::battle::Battle;
 use crate::character::equipment::WeaponSlot;
@@ -10,8 +10,8 @@ use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::position::Area;
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::ui::UI;
 use crate::ui::ui::UIViewMode::Map;
+use crate::ui::ui::UI;
 use crate::ui::ui_layout::LayoutType;
 use crate::view::framehandler::combat::CombatFrameHandler;
 use crate::view::framehandler::{FrameData, FrameHandler};

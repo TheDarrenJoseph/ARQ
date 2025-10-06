@@ -1,14 +1,5 @@
-use std::collections::HashMap;
-use log::{debug, error, info};
-use std::io::Error;
-use ratatui::prelude::{Line, Modifier, Style};
-use ratatui::symbols::line::VERTICAL;
-use ratatui::widgets::{Block, Borders, Tabs};
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::UnboundedSender;
-use uuid::Uuid;
-use crate::character::Character;
 use crate::character::equipment::get_potential_slots;
+use crate::character::Character;
 use crate::engine::command::command::Command;
 use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventType};
 use crate::engine::command::util::CurrentContainersData;
@@ -22,8 +13,8 @@ use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::action_bindings::Action;
 use crate::ui::bindings::inventory_bindings::InventoryInput;
-use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::event::AppEventType::OpenedContainerEvent;
+use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
@@ -37,6 +28,15 @@ use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::character_info_widget::{CharacterInfoWidget, CharacterInfoWidgetData};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
+use log::{debug, error, info};
+use ratatui::prelude::{Line, Modifier, Style};
+use ratatui::symbols::line::VERTICAL;
+use ratatui::widgets::{Block, Borders, Tabs};
+use std::collections::HashMap;
+use std::io::Error;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::UnboundedSender;
+use uuid::Uuid;
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -70,8 +70,8 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let container_ids = &mut containers_data.container_ids;
 
     match event {
+        // TODO can this be refactored to be shared between this and open_command?
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
-            // TODO can this be refactored to be shared between this and open_command?
             let closing_container_id = current_container_id.clone();
             if (widget_data_by_id.len() > 1) {
                 // If we have more than one container opened, remove the current one

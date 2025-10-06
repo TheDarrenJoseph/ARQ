@@ -1,5 +1,5 @@
 use ratatui::style::Style;
-use ratatui::text::{Span, Line};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
 use crate::character::equipment::{all_equipment_slots, Equipment};

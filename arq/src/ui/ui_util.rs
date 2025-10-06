@@ -2,7 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use ratatui::layout::{Rect, Size};
 use ratatui::style::Style;
-use ratatui::text::{Span, Line};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
 use crate::map::position::{Area, Position};

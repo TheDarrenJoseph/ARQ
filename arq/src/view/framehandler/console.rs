@@ -1,10 +1,10 @@
 use std::convert::TryInto;
 
 use crate::error::errors::ErrorWrapper;
-use termion::event::Key;
 use ratatui::layout::Rect;
 use ratatui::widgets::{Block, Borders};
 use ratatui::Frame;
+use termion::event::Key;
 
 use crate::view::framehandler::{FrameData, FrameHandler};
 use crate::view::{GenericInputResult, InputHandler, InputResult};

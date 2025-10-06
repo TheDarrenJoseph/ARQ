@@ -24,13 +24,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-use std::time::Duration;
+use crate::engine::command::open_command::OpenedContainerEventType;
 use log::{debug, error, info};
+use std::time::Duration;
 use termion::input::TermRead;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::engine::command::open_command::OpenedContainerEventType;
 
 #[derive(Debug)]
 pub struct TerminalEventHandler {

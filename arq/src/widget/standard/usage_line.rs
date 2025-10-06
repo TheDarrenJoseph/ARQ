@@ -1,7 +1,6 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Style, Widget};
-use crate::map::position::Position;
 
 #[derive(Eq, Hash, PartialEq)]
 #[derive(Debug)]
