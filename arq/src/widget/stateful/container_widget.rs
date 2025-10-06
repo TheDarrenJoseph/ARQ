@@ -6,14 +6,11 @@ use crate::map::objects::items::Item;
 use crate::map::position::Area;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::container::{build_container_frame_handler, OpenContainerRequest, TakeItemsRequest};
+use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest};
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
-use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
-use futures::future::err;
-use log::{debug, error, info};
+use log::{error, info};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Modifier, StatefulWidget, Style};
@@ -93,7 +90,7 @@ impl ContainerWidgetData {
                                 self.item_list_selection.page_down();
                             }
                             Key::Char('o') => {
-                                if (!self.item_list_selection.is_selecting()) {
+                                if !self.item_list_selection.is_selecting() {
                                     let focused_item = self.item_list_selection.get_focused_item().unwrap();
                                     if let Some(focused_container) = self.container.find_mut(focused_item) {
                                         if focused_container.is_true_container() {
@@ -138,7 +135,7 @@ impl ContainerWidgetData {
             Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItemsResult(take_items_response))) => {
                 // Only listen to messages relevant to the container we are displaying
                 let source_container_id = self.container.get_self_item().get_id();
-                if (source_container_id == take_items_response.container_id) {
+                if source_container_id == take_items_response.container_id {
                     self.retain_selected_items(take_items_response.untaken);
                 }
             },

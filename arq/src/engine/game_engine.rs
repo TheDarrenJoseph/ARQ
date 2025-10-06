@@ -10,7 +10,6 @@ use crate::character::characters::Characters;
 use crate::engine::combat::Combat;
 use crate::engine::command::character_info::CharacterInfoCommand;
 use crate::engine::command::command::Command;
-use crate::engine::command::inventory_command::InventoryCommand;
 use crate::engine::command::look_command::LookCommand;
 use crate::engine::command::open_command::OpenCommandNew;
 use crate::engine::command::util::CurrentContainersData;
@@ -21,7 +20,7 @@ use crate::engine::engine_helpers::spawning::{respawn_npcs, respawn_player};
 use crate::engine::level::{init_level_manager, LevelChange, LevelChangeResult, Levels};
 use crate::engine::process::map_generation::MapGeneration;
 use crate::error::errors::ErrorWrapper;
-use crate::input::{IoKeyInputResolver, KeyInputResolver};
+use crate::input::IoKeyInputResolver;
 use crate::map::position::{Area, Side};
 use crate::map::Map;
 use crate::settings::{build_settings, Settings, SETTING_BG_MUSIC, SETTING_RESOLUTION, SETTING_RNG_SEED};
@@ -41,8 +40,7 @@ use crate::view::util::callback::CallbackHandler;
 use crate::view::util::progress_display::ProgressDisplay;
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
-use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
-use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
+use crate::widget::standard::usage_line::UsageLineWidget;
 use crate::widget::StandardWidgetType;
 
 pub struct GameEngine<B: 'static + Backend>  {
@@ -462,7 +460,7 @@ impl <B : Backend + Send> GameEngine<B> {
             Action::OpenNearby => {
                 let key_bindings = self.settings.key_bindings.command_specific_key_bindings.open_key_bindings.clone();
                 
-                let mut input_resolver = Box::new(IoKeyInputResolver {});
+                let input_resolver = Box::new(IoKeyInputResolver {});
                 let mut command = OpenCommandNew {
                     level,
                     ui: &mut self.ui_wrapper.ui,

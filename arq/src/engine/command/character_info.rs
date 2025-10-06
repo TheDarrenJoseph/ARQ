@@ -1,42 +1,24 @@
-use crate::character::equipment::get_potential_slots;
-use crate::character::Character;
-use crate::engine::command::command::Command;
 use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventType};
 use crate::engine::command::util::CurrentContainersData;
-use crate::engine::container_util;
 use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::item_list_selection::ItemListSelection;
 use crate::map::objects::container::Container;
-use crate::map::objects::items::Item;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::bindings::action_bindings::Action;
-use crate::ui::bindings::inventory_bindings::InventoryInput;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
-use crate::view::character_info_view::{CharacterInfoView, Tab, TabChoice};
-use crate::view::framehandler::character_info::CharacterInfoFrameHandler;
-use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{DropItems, EquipItems, MoveItems, MoveToContainerChoice};
-use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData};
-use crate::view::util::callback::Callback;
 use crate::view::View;
 use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::character_info_widget::{CharacterInfoWidget, CharacterInfoWidgetData};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
-use ratatui::prelude::{Line, Modifier, Style};
-use ratatui::symbols::line::VERTICAL;
-use ratatui::widgets::{Block, Borders, Tabs};
-use std::collections::HashMap;
-use std::io::Error;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use uuid::Uuid;
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -73,7 +55,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
         // TODO can this be refactored to be shared between this and open_command?
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
             let closing_container_id = current_container_id.clone();
-            if (widget_data_by_id.len() > 1) {
+            if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
                 let stateful_widgets = ui.get_stateful_widgets_mut();
                 let current_widget_index = stateful_widgets.iter().position(|widget| {
@@ -92,7 +74,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
                     // Update the parent container with the updated current container contents
                     let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
-                    let mut parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
+                    let parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
                     let updated_container = current_widget_data.container.clone();
                     parent_container_widget_data.container.replace_container(updated_container);
 
@@ -105,7 +87,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     // Set the current container ID to the last one in the list
                     containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
                 }
-            } else if (widget_data_by_id.len() == 1) {
+            } else if widget_data_by_id.len() == 1 {
                 // If only one container is open, stop the command
                 return false;
             }
@@ -238,7 +220,7 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
-        let mut container_usage_commands = vec![
+        let container_usage_commands = vec![
             UsageCommand::new('o', String::from("open") ),
             UsageCommand::new('t', String::from("take"))
         ];

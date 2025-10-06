@@ -4,9 +4,7 @@ use crate::engine::container_util;
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::input::{IoKeyInputResolver, KeyInputResolver, MockKeyInputResolver};
-use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
-use crate::map::objects::items::Item;
 use crate::map::position::Position;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::input_bindings::KeyBindings;
@@ -15,20 +13,16 @@ use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::{Event, TerminalEventHandler};
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
 use crate::ui::ui_layout::LayoutType;
-use crate::view::framehandler::container::{ContainerFrameHandler, ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
-use crate::view::framehandler::util::tabling::Column;
-use crate::widget::standard::usage_line::{UsageCommand, UsageLineWidget};
+use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
+use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
-use std::collections::HashMap;
 use std::io;
-use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use uuid::Uuid;
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -135,7 +129,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
-        let mut container_usage_commands = vec![
+        let container_usage_commands = vec![
             UsageCommand::new('o', String::from("open") ),
             UsageCommand::new('t', String::from("take"))
         ];
@@ -174,7 +168,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
-        let (container_event_sender, mut container_event_receiver) = mpsc::unbounded_channel();
+        let (container_event_sender, container_event_receiver) = mpsc::unbounded_channel();
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
 
@@ -312,7 +306,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
         }
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
             let closing_container_id = current_container_id.clone();
-            if (widget_data_by_id.len() > 1) {
+            if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
                 let stateful_widgets = ui.get_stateful_widgets_mut();
                 let current_widget_index = stateful_widgets.iter().position(|widget| {
@@ -331,7 +325,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
                     // Update the parent container with the updated current container contents
                     let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
-                    let mut parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
+                    let parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
                     let updated_container = current_widget_data.container.clone();
                     parent_container_widget_data.container.replace_container(updated_container);
 
@@ -344,7 +338,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     // Set the current container ID to the last one in the list
                     containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
                 }
-            } else if (widget_data_by_id.len() == 1) {
+            } else if widget_data_by_id.len() == 1 {
                 // If only one container is open, stop the command
                 return false;
             }

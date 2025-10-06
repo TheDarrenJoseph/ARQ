@@ -1,23 +1,16 @@
-use crate::engine::command::open_command::OpenedContainerEventType;
-use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
 use crate::engine::command::util::CurrentContainersData;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
-use crate::map::position::{Area, Position};
-use crate::ui::event::AppEventType::OpenedContainerEvent;
+use crate::map::position::Position;
 use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
-use crate::ui::ui_layout::LayoutType;
 use crate::view::character_info_view::Tab;
-use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest};
-use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
-use log::{error, info};
+use crate::widget::stateful::container_widget::ContainerWidget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
 use ratatui::symbols::line::VERTICAL;
 use ratatui::widgets::{Block, Borders, Tabs, Widget};
-use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 

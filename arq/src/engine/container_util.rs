@@ -6,7 +6,7 @@ use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{MoveItems, TakeItems};
+use crate::view::framehandler::container::ContainerFrameHandlerInputResult::MoveItems;
 use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsData, TakeItemsRequest, TakeItemsResponse};
 
 pub struct AddToTargetResult {
@@ -82,9 +82,9 @@ pub fn take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItem
             }
             
             let taken_items_message;
-            if (taken.is_empty()) {
+            if taken.is_empty() {
                 taken_items_message = "You cannot take anything".to_owned();
-            } else if (untaken.is_empty() && taken.len() == total_to_take) {
+            } else if untaken.is_empty() && taken.len() == total_to_take {
                 taken_items_message = format!("You take all {} items", total_to_take).to_owned();
             } else {
                 // Both taken and untaken items

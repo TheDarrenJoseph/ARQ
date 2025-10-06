@@ -295,7 +295,7 @@ impl Draw for UI {
                 match widget {
                     StatefulWidgetType::Container(container_widget) => {
                         // If the data belongs to this widget, render it
-                        if (container_widget.container_id == widget_data_container_id) {
+                        if container_widget.container_id == widget_data_container_id {
                             frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
                         }
                     }

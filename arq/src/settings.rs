@@ -121,14 +121,14 @@ pub fn build_settings() -> Settings {
 
     let resolution_options = get_resolution_dropdown_options();
     let mut default_resolution_option = None;
-    if (!resolution_default.is_empty()) {
+    if !resolution_default.is_empty() {
         default_resolution_option = resolution_options.iter()
             .find(|opt| opt.display_name.eq(resolution_default.as_str()))
             .map(|opt| opt.clone())
             .take()
     }
 
-    let initial_option = if (default_resolution_option.is_some()) {
+    let initial_option = if default_resolution_option.is_some() {
         default_resolution_option.unwrap()
     } else {
          resolution_options.first().unwrap().clone()
