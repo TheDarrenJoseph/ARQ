@@ -6,7 +6,7 @@ use crate::map::tile::{Colour, Symbol};
 
 const DEFAULT_SYMBOL: Symbol = Symbol { character: 'X',  colour: Colour::White};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq)]
 pub enum ItemType {
     ITEM,
     CONTAINER,
@@ -16,12 +16,12 @@ pub enum ItemType {
     LEGS
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq)]
 pub struct Weapon {
     pub damage : i32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MaterialType {
     CLOTH,
     LEATHER,

@@ -1,4 +1,4 @@
-ASCII Roguelike Quester (Rust Port) [Rust]
+ASCII Roguelike Quester
 =============================================================
 
 A text-based high fantasy Roguelike written in Rust.

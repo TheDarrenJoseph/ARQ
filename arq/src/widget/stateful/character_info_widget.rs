@@ -13,6 +13,7 @@ use ratatui::symbols::line::VERTICAL;
 use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use uuid::Uuid;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {
@@ -28,8 +29,9 @@ pub struct CharacterInfoWidget {
 
 impl CharacterInfoWidget {
     pub fn new(
-        container_widget : ContainerWidget
+        inventory_container_id: Uuid
     ) -> CharacterInfoWidget {
+        let container_widget = ContainerWidget::new(inventory_container_id);
         CharacterInfoWidget {
             container_widget
         }

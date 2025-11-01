@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::map::objects::items::{Item, ItemType};
 
-#[derive(Clone)]
+#[derive(Clone, Eq)]
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub enum ContainerType {
@@ -26,7 +26,7 @@ impl fmt::Display for ContainerType {
 * Container is an item wrapper at it's most basic (ITEM),
 * otherwise a container for storing items (i.e: OBJECT, AREA) which are also Container instances
 */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Container {
     item : Item,
     pub container_type : ContainerType,

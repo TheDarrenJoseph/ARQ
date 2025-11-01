@@ -17,8 +17,11 @@ use crate::widget::stateful::character_info_widget::{CharacterInfoWidget, Charac
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
+use termion::event::Key;
+use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, OpenContainer};
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -29,7 +32,9 @@ pub struct CharacterInfoCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
     pub ui: &'a mut UI,
     pub terminal_manager : &'a mut TerminalManager<B>,
-    pub widget_data: Option<CharacterInfoWidgetData>
+    pub widget_data: Option<CharacterInfoWidgetData>,
+    // The commands available for the underlying container widgets
+    pub container_widget_commands: Option<Vec<UsageCommand>>
 }
 
 async fn handle_container_event<'a, B: ratatui::backend::Backend>(
@@ -53,7 +58,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
     match event {
         // TODO can this be refactored to be shared between this and open_command?
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
             let closing_container_id = current_container_id.clone();
             if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
@@ -92,6 +97,9 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 return false;
             }
         },
+        // Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems(drop_items_request))) => {
+        //
+        // },
         _ => {}
     }
 
@@ -183,33 +191,35 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
                 container_event_sender.clone(),
             );
 
-            let widget_data = build_container_widget_data(
+            let container_widget_data = build_container_widget_data(
                 inventory_container.clone(),
                 ui_areas.clone(),
                 container_event_sender.clone()
             );
+            // Take a copy of the commands available for the child container widget so we can display them
+            self.container_widget_commands = Some(container_widget_data.usage_commands.clone());
             
             character_info_widget_data.containers_data.add_container_data(
                 inventory_container.get_self_item().get_id(),
-                widget_data
+                container_widget_data
             );
             
             self.widget_data = Some(character_info_widget_data);
         }
 
-        let current_container_id = inventory_container.get_self_item().get_id();
-        let container_widget = ContainerWidget::new(current_container_id.clone());
+        let inventory_container_id = inventory_container.get_self_item().get_id();
         let character_info_widget = CharacterInfoWidget::new(
-            container_widget
+            inventory_container_id.clone()
         );
 
-        // Add the container widget to the UI
+        // Add the character info widget to the UI
         let stateful_widgets = self.ui.get_stateful_widgets_mut();
         stateful_widgets.push(StatefulWidgetType::CharacterInfo(character_info_widget));
         
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
-        
+
+        // Updates the UI usage line widget to reflect an opened inventory container
         self.update_usage_line();
         
         OpenCommandChannels {
@@ -220,10 +230,7 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
-        let container_usage_commands = vec![
-            UsageCommand::new('o', String::from("open") ),
-            UsageCommand::new('t', String::from("take"))
-        ];
+        let container_usage_commands = self.container_widget_commands.clone().unwrap();
         for widget in self.ui.get_additional_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
@@ -269,10 +276,21 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
     let items = container.to_cloned_item_list();
     let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
 
+    // These are the usage commands available specifically to the character info command relating to the container widget
+    let commands: Vec<UsageCommand> = vec![
+        UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+        UsageCommand::for_container_event(Key::Char('d'), String::from("drop"), OpenedContainerEventType::DropItems),
+        UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
+        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainer),
+        UsageCommand::for_container_event(Key::Char('e'), String::from("equip"), OpenedContainerEventType::EquipItems),
+        UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close),
+    ];
+
     ContainerWidgetData {
         container: container.clone(),
         ui_area: widget_ui_area,
         item_list_selection,
+        usage_commands: commands,
         event_sender: container_event_sender,
     }
 }

@@ -1,34 +1,46 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Style, Widget};
+use termion::event::Key;
+use crate::engine::command::open_command::OpenedContainerEventType;
+use crate::util::describe_key;
 
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Eq)]
+#[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct UsageCommand  {
-    pub key : char,
-    pub description : String
+    pub key : Key,
+    pub description : String,
+    // If needed, we can indicate the opened container event type to use for this
+    pub opened_container_event_type: Option<OpenedContainerEventType>
 }
 
 impl UsageCommand {
-    pub const fn new(key: char, description: String) -> Self {
-        UsageCommand { key, description}
+    pub const fn new(key: Key, description: String) -> Self {
+        UsageCommand { key, description, opened_container_event_type: None }
     }
 
-    pub fn get_key(self) -> char {
+    pub const fn for_container_event(key: Key, description: String, opened_container_event_type: OpenedContainerEventType) -> Self {
+        UsageCommand { key, description, opened_container_event_type: Some(opened_container_event_type) }
+    }
+
+
+    pub fn get_key(self) -> Key {
         self.key
     }
     pub fn get_description(self) -> String {
         self.description
     }
     fn describe_usage(&self) -> String {
-        format!("{} - {}", self.key, self.description)
+        format!("{} - {}", describe_key(self.key), self.description)
     }
 }
 
 #[derive(Clone)]
 #[derive(Debug)]
-#[derive(PartialEq, Eq)]
+#[derive(Eq)]
+#[derive(PartialEq)]
 pub struct UsageLineWidget {
     pub commands : Vec<UsageCommand>
 }
@@ -56,9 +68,9 @@ impl UsageLineWidget {
 
     fn default_commands() -> Vec<UsageCommand> {
         vec![
-            UsageCommand::new('i', String::from("Inventory") ),
-            UsageCommand::new('o', String::from("Open") ),
-            UsageCommand::new('k', String::from("Look") )
+            UsageCommand::new(Key::Char('i'), String::from("Inventory")),
+            UsageCommand::new(Key::Char('o'), String::from("Open")),
+            UsageCommand::new(Key::Char('k'), String::from("Look"))
         ]
     }
     

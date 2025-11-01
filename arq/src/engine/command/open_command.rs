@@ -1,4 +1,4 @@
-use crate::engine::command::open_command::OpenedContainerEventType::TakeItems;
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, TakeItems, TakeItemsResult};
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
 use crate::engine::level::Level;
@@ -21,8 +21,11 @@ use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidget
 use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
 use std::io;
+use termion::event::Key;
+use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use crate::engine::command::open_command::OpenedContainerEventData::OpenContainer;
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -41,12 +44,31 @@ pub struct OpenCommandChannels {
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
 const NOTHING_ERROR : &str = "There's nothing here to open.";
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum OpenedContainerEventType {
+    // Generic Container Events
+    OpenContainer,
+    Close,
+    // World Container Events
+    TakeItems,
+    TakeItemsResult,
+    // Character Inventory Specific Events
+    DropItems,
+    DropItemsResult,
+    MoveItems,
+    MoveItemsResult,
+    MoveItemsToContainer,
+    MoveItemsToContainerResult,
+    EquipItems,
+    EquipItemsResult
+}
+
+// Specifying the request types used for a specific OpenedContainerEventType
+#[derive(Debug)]
+pub enum OpenedContainerEventData {
     OpenContainer(OpenContainerRequest),
     TakeItems(TakeItemsRequest),
-    TakeItemsResult(TakeItemsResponse),
-    Escape
+    TakeItemsResult(TakeItemsResponse)
 }
 
 impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
@@ -130,8 +152,9 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
         let container_usage_commands = vec![
-            UsageCommand::new('o', String::from("open") ),
-            UsageCommand::new('t', String::from("take"))
+            UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
+            UsageCommand::for_container_event(Esc, String::from("close"), Close)
         ];
         for widget in self.ui.get_additional_widgets_mut().iter_mut() {
             match widget {
@@ -177,7 +200,12 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let ui_area = main_area.area;
         // Total area height - 3 for title, heading, and stat line
         let line_count = main_area.area.height - 3;
-        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, container_event_sender.clone());
+        let commands: Vec<UsageCommand> = vec![
+            UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
+            UsageCommand::for_container_event(Key::Esc, String::from("close"), Close)
+        ];
+        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, commands, container_event_sender.clone());
         
         self.containers_data.add_container_data(container_id, widget_data.clone());
         self.update_usage_line();
@@ -281,7 +309,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let container_ids = &mut containers_data.container_ids;
 
     match event {
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer(open_container_request))) => {
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer, Some(OpenContainer(open_container_request)))) => {
             let target_container = open_container_request.target;
             let target_container_id = target_container.get_self_item().get_id();
             let container_widget = ContainerWidget::new(target_container_id);
@@ -293,10 +321,16 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             let ui_area = main_area.area;
             // Total area height - 3 for title, heading, and stat line
             let line_count = main_area.area.height - 3;
+            let commands: Vec<UsageCommand> = vec![
+                UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+                UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
+                UsageCommand::for_container_event(Key::Esc, String::from("close"), Close)
+            ];
             let container_widget_data = ContainerWidgetData::new(
                 target_container,
                 ui_area.clone(), 
                 line_count as i32,
+                commands,
                 child_container_sender.clone()
             );
             
@@ -304,7 +338,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             container_ids.push(target_container_id);
             containers_data.current_container_id = Some(target_container_id);
         }
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Escape)) => {
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
             let closing_container_id = current_container_id.clone();
             if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
@@ -343,7 +377,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 return false;
             }
         },
-        Event::AppEvent(OpenedContainerEvent(TakeItems(mut data))) => {
+        Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(mut data)))) => {
             log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
             data.position = Some(position.clone());
 
@@ -356,7 +390,8 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     event_handler.sender.send(
                         Event::AppEvent(
                             OpenedContainerEvent(
-                                OpenedContainerEventType::TakeItemsResult(take_items_response)
+                                TakeItemsResult,
+                                Some(OpenedContainerEventData::TakeItemsResult(take_items_response))
                             )
                         )
                     ).unwrap();

@@ -33,20 +33,20 @@ pub struct ContainerFrameHandler {
 }
 
 // For opening a container while browsing a map container
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct OpenContainerRequest {
     pub source_container_id: Uuid,
     pub target: Container
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TakeItemsRequest {
     pub source: Container,
     pub to_take: Vec<Item>,
     pub position: Option<Position>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TakeItemsResponse {
     pub container_id: Uuid,
     pub untaken: Vec<Item>,
@@ -439,7 +439,7 @@ impl InputHandler<ContainerFrameHandlerInputResult> for ContainerFrameHandler {
             match key {
                 Key::Char('d') => {
                     log::info!("[container frame handler] new result for DropItems..");
-                    if self.usage_line.commands.iter().find( |c| c.key == 'd').is_some() {
+                    if self.usage_line.commands.iter().find( |c| c.key == Key::Char('d')).is_some() {
                         let selected_container_items = self.get_selected_items();
                         return Ok(InputResult {
                             generic_input_result: GenericInputResult { done: false, requires_view_refresh: true },
@@ -448,7 +448,7 @@ impl InputHandler<ContainerFrameHandlerInputResult> for ContainerFrameHandler {
                     }
                 },
                 Key::Char('e') => {
-                    if self.usage_line.commands.iter().find( |c| c.key == 'e').is_some() {
+                    if self.usage_line.commands.iter().find( |c| c.key == Key::Char('e')).is_some() {
                         log::info!("[container frame handler] new result for EquipItems..");
                         let focused_item = self.find_focused_item().unwrap();
                         let mut items = Vec::new();

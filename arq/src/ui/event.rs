@@ -24,7 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-use crate::engine::command::open_command::OpenedContainerEventType;
+use crate::engine::command::open_command::{OpenedContainerEventData, OpenedContainerEventType};
 use log::{debug, error, info};
 use std::time::Duration;
 use termion::input::TermRead;
@@ -58,7 +58,7 @@ pub enum Event {
 
 #[derive(Debug)]
 pub enum AppEventType {
-    OpenedContainerEvent(OpenedContainerEventType)
+    OpenedContainerEvent(OpenedContainerEventType, Option<OpenedContainerEventData>)
 }
 
 impl TerminalEventHandler {

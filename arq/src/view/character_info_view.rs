@@ -9,6 +9,7 @@ use ratatui::CompletedFrame;
 use termion::event::Key;
 
 use crate::character::Character;
+use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::error::errors::ErrorWrapper;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
@@ -76,11 +77,11 @@ pub struct CharacterInfoView<'a, B : ratatui::backend::Backend> {
 impl <B : ratatui::backend::Backend> CharacterInfoView<'_, B> {
     fn initialise(&mut self) {
         let commands: Vec<UsageCommand> = vec![
-            UsageCommand::new('o', String::from("open")),
-            UsageCommand::new('d', String::from("drop")),
-            UsageCommand::new('m', String::from("move")),
-            UsageCommand::new('c', String::from("move-to-container")),
-            UsageCommand::new('e', String::from("equip"))
+            UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+            UsageCommand::for_container_event(Key::Char('d'), String::from("drop"), OpenedContainerEventType::DropItems),
+            UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
+            UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainer),
+            UsageCommand::for_container_event(Key::Char('e'), String::from("equip"), OpenedContainerEventType::EquipItems)
         ];
         let usage_line = UsageLineWidget::for_commands(commands);
 

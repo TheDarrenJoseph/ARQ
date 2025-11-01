@@ -1,5 +1,5 @@
-use crate::engine::command::open_command::OpenedContainerEventType;
-use crate::engine::command::open_command::OpenedContainerEventType::{Escape, OpenContainer, TakeItems};
+use crate::engine::command::open_command::{OpenedContainerEventData, OpenedContainerEventType};
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, OpenContainer, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -20,6 +20,8 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::ui::bindings::action_bindings::Action::Escape;
+use crate::widget::standard::usage_line::UsageCommand;
 
 #[derive(Debug, Clone)]
 pub struct ContainerWidget {
@@ -46,14 +48,16 @@ pub struct ContainerWidgetData {
     pub container : Container,
     pub ui_area: Area,
     pub item_list_selection : ItemListSelection,
-    pub event_sender: mpsc::UnboundedSender<Event>
+    pub usage_commands: Vec<UsageCommand>,
+    pub event_sender: mpsc::UnboundedSender<Event>,
 }
 
 impl ContainerWidgetData {
     pub(crate) fn new(
-        container: Container, 
-        ui_area: Area, 
+        container: Container,
+        ui_area: Area,
         line_count: i32,
+        usage_commands: Vec<UsageCommand>,
         sender: UnboundedSender<Event>
     ) -> ContainerWidgetData {
         let items = container.to_cloned_item_list();
@@ -62,6 +66,7 @@ impl ContainerWidgetData {
             container: container.clone(),
             ui_area: ui_area.clone(),
             item_list_selection,
+            usage_commands: usage_commands,
             event_sender: sender,
         }
     }
@@ -77,6 +82,9 @@ impl ContainerWidgetData {
                 match termion_event {
                     termion::event::Event::Key(key) => {
                         match key {
+                            Key::Esc => {
+                                self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Close, None))).expect("Failed to send event");
+                            }
                             Key::Up => {
                                 self.item_list_selection.move_up();
                             },
@@ -88,41 +96,57 @@ impl ContainerWidgetData {
                             },
                             Key::PageDown => {
                                 self.item_list_selection.page_down();
-                            }
-                            Key::Char('o') => {
-                                if !self.item_list_selection.is_selecting() {
-                                    let focused_item = self.item_list_selection.get_focused_item().unwrap();
-                                    if let Some(focused_container) = self.container.find_mut(focused_item) {
-                                        if focused_container.is_true_container() {
-                                            info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
-                                            let data = OpenContainerRequest {
-                                                source_container_id,
-                                                target: focused_container.clone()
-                                            };
-                                            self.event_sender.send(
-                                                Event::AppEvent(OpenedContainerEvent(OpenContainer(data)))
-                                            ).expect("Error sending event");
-                                        }
-                                    } else {
-                                        error!("Could not find focused container to open");   
-                                    }
-                                }
                             },
-                            Key::Char('t') => {
-                                let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                                let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
-                                self.event_sender.send(
-                                    Event::AppEvent(OpenedContainerEvent(TakeItems(data)))
-                                ).expect("Error sending event");
-                            },
-                            Key::Char('\n') => {
+                            Key::Backspace | Key::Char('\n') => {
                                 self.item_list_selection.toggle_select();
                             },
-                            Key::Esc => {
-                                if self.item_list_selection.is_selecting() {
-                                    self.item_list_selection.cancel_selection();
-                                } else {
-                                    self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Escape))).expect("Failed to send event");
+                            // Matching any UsageCommand with a corresponding OpenedContainerEventType bound to it
+                            Key::Char(c) => {
+                                let matching_command = self.usage_commands.iter().find(|uc| uc.key == Key::Char(c));
+                                match matching_command {
+                                    Some(uc) => {
+                                        if let Some(container_event_type) = &uc.opened_container_event_type {
+                                            match container_event_type {
+                                                Close => {
+                                                    if self.item_list_selection.is_selecting() {
+                                                        self.item_list_selection.cancel_selection();
+                                                    } else {
+                                                        self.event_sender.send(Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None))).expect("Failed to send event");
+                                                    }
+                                                },
+                                                TakeItems => {
+                                                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                                                    let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
+                                                    self.event_sender.send(
+                                                        Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(data))))
+                                                    ).expect("Error sending event");
+                                                },
+                                                OpenContainer => {
+                                                    if !self.item_list_selection.is_selecting() {
+                                                        let focused_item = self.item_list_selection.get_focused_item().unwrap();
+                                                        if let Some(focused_container) = self.container.find_mut(focused_item) {
+                                                            if focused_container.is_true_container() {
+                                                                info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
+                                                                let data = OpenContainerRequest {
+                                                                    source_container_id,
+                                                                    target: focused_container.clone()
+                                                                };
+                                                                self.event_sender.send(
+                                                                    Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(data))))
+                                                                ).expect("Error sending event");
+                                                            }
+                                                        } else {
+                                                            error!("Could not find focused container to open");
+                                                        }
+                                                    }
+                                                },
+                                                _ => {
+                                                    info!("Unsupported OpenedContainerEventType {:?}", container_event_type)
+                                                }
+                                            }
+                                        }
+                                    },
+                                    _ => {}
                                 }
                             }
                             _ => {}
@@ -132,7 +156,7 @@ impl ContainerWidgetData {
                     _ => {}
                 }
             },
-            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItemsResult(take_items_response))) => {
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItemsResult, Some(OpenedContainerEventData::TakeItemsResult(take_items_response)))) => {
                 // Only listen to messages relevant to the container we are displaying
                 let source_container_id = self.container.get_self_item().get_id();
                 if source_container_id == take_items_response.container_id {

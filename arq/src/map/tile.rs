@@ -8,7 +8,7 @@ pub enum TileType
     NoTile,Corridor,Room,Wall,Window,Door,Entry,Exit,Deadly
 }
 
-#[derive(Copy)]
+#[derive(Copy, Eq)]
 #[derive(Clone)]
 #[derive(PartialEq, Debug)]
 pub enum Colour {None,Red,Green,Blue,Cyan,Brown,White,Black}
@@ -23,7 +23,7 @@ pub struct TileDetails
     pub name: String
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Symbol {
     pub character: char,
     pub colour: Colour,
