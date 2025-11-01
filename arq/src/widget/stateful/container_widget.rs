@@ -74,17 +74,61 @@ impl ContainerWidgetData {
 }
 
 impl ContainerWidgetData {
-    pub async fn handle_event(&mut self, event: Event) {
+    pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         let source_container_id = self.container.get_self_item().get_id();
+        if let Some(container_event_type) = &usage_command.opened_container_event_type {
+            match container_event_type {
+                Close => {
+                    // As a priority - close will cancel any selection in progress to allow resetting it
+                    if (self.item_list_selection.is_selecting()) {
+                        self.item_list_selection.cancel_selection();
+                    } else {
+                        // If there is no state to modify, the escape intention is to close the window
+                        self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Close, None))).expect("Failed to send event");
+                    }
+                },
+                TakeItems => {
+                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
+                    self.event_sender.send(
+                        Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(data))))
+                    ).expect("Error sending event");
+                },
+                OpenContainer => {
+                    if !self.item_list_selection.is_selecting() {
+                        let focused_item = self.item_list_selection.get_focused_item().unwrap();
+                        if let Some(focused_container) = self.container.find_mut(focused_item) {
+                            if focused_container.is_true_container() {
+                                info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
+                                let data = OpenContainerRequest {
+                                    source_container_id,
+                                    target: focused_container.clone(),
+                                };
+                                self.event_sender.send(
+                                    Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(data))))
+                                ).expect("Error sending event");
+                            }
+                        } else {
+                            error!("Could not find focused container to open");
+                        }
+                    }
+                },
+                _ => {
+                    info!("Unsupported OpenedContainerEventType {:?}", container_event_type)
+                }
+            }
+        }
+    }
+
+    pub async fn handle_event(&mut self, event: Event) {
         log::debug!("Handling event: {:?}", event);
         match event {
             Event::Termion(termion_event) => {
                 match termion_event {
                     termion::event::Event::Key(key) => {
                         match key {
-                            Key::Esc => {
-                                self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Close, None))).expect("Failed to send event");
-                            }
+                            // These are key specific as they are not attached to events and thus are purely UI controls for the widget
+                            // These may move into some bindings in future to make them dynamic instead of hardcoded
                             Key::Up => {
                                 self.item_list_selection.move_up();
                             },
@@ -100,56 +144,20 @@ impl ContainerWidgetData {
                             Key::Backspace | Key::Char('\n') => {
                                 self.item_list_selection.toggle_select();
                             },
-                            // Matching any UsageCommand with a corresponding OpenedContainerEventType bound to it
+                            // Check commands tied to character keys
                             Key::Char(c) => {
                                 let matching_command = self.usage_commands.iter().find(|uc| uc.key == Key::Char(c));
-                                match matching_command {
-                                    Some(uc) => {
-                                        if let Some(container_event_type) = &uc.opened_container_event_type {
-                                            match container_event_type {
-                                                Close => {
-                                                    if self.item_list_selection.is_selecting() {
-                                                        self.item_list_selection.cancel_selection();
-                                                    } else {
-                                                        self.event_sender.send(Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None))).expect("Failed to send event");
-                                                    }
-                                                },
-                                                TakeItems => {
-                                                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                                                    let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
-                                                    self.event_sender.send(
-                                                        Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(data))))
-                                                    ).expect("Error sending event");
-                                                },
-                                                OpenContainer => {
-                                                    if !self.item_list_selection.is_selecting() {
-                                                        let focused_item = self.item_list_selection.get_focused_item().unwrap();
-                                                        if let Some(focused_container) = self.container.find_mut(focused_item) {
-                                                            if focused_container.is_true_container() {
-                                                                info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
-                                                                let data = OpenContainerRequest {
-                                                                    source_container_id,
-                                                                    target: focused_container.clone()
-                                                                };
-                                                                self.event_sender.send(
-                                                                    Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(data))))
-                                                                ).expect("Error sending event");
-                                                            }
-                                                        } else {
-                                                            error!("Could not find focused container to open");
-                                                        }
-                                                    }
-                                                },
-                                                _ => {
-                                                    info!("Unsupported OpenedContainerEventType {:?}", container_event_type)
-                                                }
-                                            }
-                                        }
-                                    },
-                                    _ => {}
+                                if let Some(uc) = matching_command {
+                                    self.handle_usage_command(uc.clone()).await
                                 }
                             }
-                            _ => {}
+                            // Check commands tied to non-character keys
+                            k => {
+                                let matching_command = self.usage_commands.iter().find(|uc| uc.key == k);
+                                if let Some(uc) = matching_command {
+                                    self.handle_usage_command(uc.clone()).await
+                                }
+                            }
                         }
 
                     }
