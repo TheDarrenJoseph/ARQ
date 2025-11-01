@@ -59,7 +59,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
     match event {
         // TODO can this be refactored to be shared between this and open_command?
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
+        Event::AppEvent(OpenedContainerEvent(Close, None)) => {
             let closing_container_id = current_container_id.clone();
             if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
@@ -97,6 +97,23 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 // If only one container is open, stop the command
                 return false;
             }
+        },
+        Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(open_container_request)))) => {
+            let target_container = open_container_request.target;
+            let target_container_id = target_container.get_self_item().get_id();
+            let container_widget = ContainerWidget::new(target_container_id);
+            let stateful_widgets = ui.get_stateful_widgets_mut();
+            stateful_widgets.push(StatefulWidgetType::Container(container_widget));
+
+            let container_widget_data = build_container_widget_data(
+                target_container.clone(),
+                ui_areas.clone(),
+                child_container_sender.clone()
+            );
+
+            widget_data_by_id.insert(target_container_id, container_widget_data);
+            container_ids.push(target_container_id);
+            containers_data.current_container_id = Some(target_container_id);
         },
         Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(mut data)))) => {
             log::info!("[open usage] Received data for DropItems with {} items", data.to_drop.len());
