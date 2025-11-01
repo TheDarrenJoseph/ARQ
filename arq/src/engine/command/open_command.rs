@@ -15,7 +15,7 @@ use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
 use crate::ui::ui_layout::LayoutType;
-use crate::view::framehandler::container::{OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
+use crate::view::framehandler::container::{DropItemsRequest, DropItemsResponse, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
@@ -47,8 +47,8 @@ const NOTHING_ERROR : &str = "There's nothing here to open.";
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum OpenedContainerEventType {
     // Generic Container Events
-    OpenContainer,
     Close,
+    OpenContainer,
     // World Container Events
     TakeItems,
     TakeItemsResult,
@@ -68,7 +68,9 @@ pub enum OpenedContainerEventType {
 pub enum OpenedContainerEventData {
     OpenContainer(OpenContainerRequest),
     TakeItems(TakeItemsRequest),
-    TakeItemsResult(TakeItemsResponse)
+    TakeItemsResult(TakeItemsResponse),
+    DropItems(DropItemsRequest),
+    DropItemsResult(DropItemsResponse)
 }
 
 impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
@@ -381,7 +383,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
             data.position = Some(position.clone());
 
-            let result = container_util::take_items(data, level);
+            let result = container_util::player_take_items(data, level);
             match result {
                 // If we have a result for this take handling, send it back via the main event handler
                 // So that the container widget/data can update appropriately

@@ -53,6 +53,20 @@ pub struct TakeItemsResponse {
     pub message: String
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct DropItemsRequest {
+    pub source: Container,
+    pub to_drop: Vec<Item>,
+    pub position: Option<Position>
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DropItemsResponse {
+    pub container_id: Uuid,
+    pub undropped: Vec<Item>,
+    pub message: String
+}
+
 #[derive(Clone, Debug)]
 pub struct MoveToContainerChoiceData {
     pub source: Container,

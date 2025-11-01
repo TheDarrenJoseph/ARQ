@@ -1,7 +1,7 @@
-use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventType};
+use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventData, OpenedContainerEventType};
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::level::Level;
-use crate::error::errors::ErrorWrapper;
+use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::item_list_selection::ItemListSelection;
 use crate::map::objects::container::Container;
 use crate::map::position::{Area, Position};
@@ -21,7 +21,8 @@ use termion::event::Key;
 use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use crate::engine::command::open_command::OpenedContainerEventType::{Close, OpenContainer};
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItemsResult, OpenContainer, TakeItems, TakeItemsResult};
+use crate::engine::container_util;
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -97,9 +98,37 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 return false;
             }
         },
-        // Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems(drop_items_request))) => {
-        //
-        // },
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(mut data)))) => {
+            log::info!("[open usage] Received data for DropItems with {} items", data.to_drop.len());
+            data.position = Some(player_position.clone());
+
+            let result = container_util::player_drop_items(data, level);
+            match result {
+                // If we have a result for this drop handling, send it back via the main event handler
+                // So that the container widget/data can update appropriately
+                Ok(drop_items_response) => {
+                    ui.set_console_buffer(drop_items_response.message.clone());
+                    event_handler.sender.send(
+                        Event::AppEvent(
+                            OpenedContainerEvent(
+                                DropItemsResult,
+                                Some(OpenedContainerEventData::DropItemsResult(drop_items_response))
+                            )
+                        )
+                    ).unwrap();
+                }
+                Err(error_wrapper) => {
+                    match error_wrapper.error_type {
+                        ErrorType::DISPLAYABLE => {
+                            ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
+                        },
+                        _ => {
+                            error!("Error while taking items: {:?}", error_wrapper);
+                        }
+                    }
+                }
+            }
+        }
         _ => {}
     }
 
