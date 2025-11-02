@@ -1,5 +1,5 @@
 use crate::engine::command::open_command::{OpenedContainerEventData, OpenedContainerEventType};
-use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItems, OpenContainer, TakeItems};
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItems, MoveItems, OpenContainer, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -7,7 +7,7 @@ use crate::map::position::Area;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::container::{DropItemsRequest, OpenContainerRequest, TakeItemsRequest};
+use crate::view::framehandler::container::{DropItemsRequest, MoveItemsRequest, OpenContainerRequest, TakeItemsRequest};
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use log::{error, info};
@@ -74,6 +74,16 @@ impl ContainerWidgetData {
 }
 
 impl ContainerWidgetData {
+    fn get_focused_container(&self) -> Option<&Container> {
+        let focused_item = self.item_list_selection.get_focused_item().unwrap();
+        if let Some(focused_container) = self.container.find(focused_item) {
+            if focused_container.is_true_container() {
+                return Some(focused_container);
+            }
+        }
+        None
+    }
+
     pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         // Handle inputs that start usage command based events
         let source_container_id = self.container.get_self_item().get_id();
@@ -90,8 +100,9 @@ impl ContainerWidgetData {
                 },
                 OpenContainer => {
                     if !self.item_list_selection.is_selecting() {
-                        let focused_item = self.item_list_selection.get_focused_item().unwrap();
-                        if let Some(focused_container) = self.container.find_mut(focused_item) {
+                        // Find and clone either the focused container or item
+                        let focused_container_result = self.get_focused_container().map(|c| c.clone());
+                        if let Some(focused_container) = focused_container_result {
                             if focused_container.is_true_container() {
                                 info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
                                 let data = OpenContainerRequest {
@@ -112,6 +123,27 @@ impl ContainerWidgetData {
                     let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
                     self.event_sender.send(
                         Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(data))))
+                    ).expect("Error sending event");
+                },
+                MoveItems => {
+                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    let focused_item = self.item_list_selection.get_focused_item().unwrap();
+
+                    focused_item.is_container();
+
+                    // Find and clone either the focused container or item
+                    let target_container = self.get_focused_container().map(|c| c.clone());
+                    let target_item = self.item_list_selection.get_focused_item().map(|i| i.clone());
+
+                    let data = MoveItemsRequest {
+                        source: self.container.clone(),
+                        to_move: selected_items,
+                        position: None,
+                        target_container,
+                        target_item
+                    };
+                    self.event_sender.send(
+                        Event::AppEvent(OpenedContainerEvent(MoveItems, Some(OpenedContainerEventData::MoveItems(data))))
                     ).expect("Error sending event");
                 },
                 DropItems => {
@@ -179,6 +211,22 @@ impl ContainerWidgetData {
                     self.retain_selected_items(take_items_response.untaken);
                 }
             },
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsResult, Some(OpenedContainerEventData::MoveItemsResult(response)))) => {
+                // Only listen to messages relevant to the container we are displaying
+                let source_container_id = self.container.get_self_item().get_id();
+                if source_container_id == response.source.get_self_item().get_id() {
+                    let is_target_container = response.target_container.as_ref().map_or_else(|| false, |t| t.id_equals(&self.container));
+                    if (is_target_container) {
+                        // Update the current container details to the updated target
+                        self.container = response.target_container.unwrap();
+                    } else {
+                        // Update the current container details to the updated source
+                        self.container = response.source;
+                    }
+                    self.item_list_selection.cancel_selection();
+                    self.rebuild_selection();
+                }
+            }
             Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItemsResult, Some(OpenedContainerEventData::DropItemsResult(drop_items_response)))) => {
                 // Only listen to messages relevant to the container we are displaying
                 let source_container_id = self.container.get_self_item().get_id();
