@@ -16,7 +16,7 @@ use crate::ui::ui::UI;
 use crate::view::character_info_view::{CharacterInfoView, TabChoice};
 use crate::view::framehandler::character_info::CharacterInfoFrameHandler;
 use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{DropItems, EquipItems, MoveItems, MoveToContainerChoice};
-use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsData, MoveToContainerChoiceData};
+use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, MoveItemsRequest, MoveToContainerChoiceData};
 use crate::view::util::callback::Callback;
 use crate::view::View;
 
@@ -141,37 +141,37 @@ fn build_container_choices<'a>(data: &'a MoveToContainerChoiceData, level: &'a m
 
 fn handle_callback(state: CallbackState) -> Option<ContainerFrameHandlerInputResult> {
     match state.data {
-        DropItems(ref items) => {
-            log::info!("[inventory usage] Received data for DropItems with {} items", items.len());
-            let result = drop_items(items.to_vec(), state);
-            return result;
-        },
-        MoveItems(data) => {
-            log::info!("[inventory usage] Received data for MoveItems with {} items", data.to_move.len());
-            return container_util::move_player_items(data, state.level);
-        },
+        // DropItems(ref items) => {
+        //     log::info!("[inventory usage] Received data for DropItems with {} items", items.len());
+        //     let result = drop_items(items.to_vec(), state);
+        //     return result;
+        // },
+        // MoveItems(data) => {
+        //     log::info!("[inventory usage] Received data for MoveItems with {} items", data.to_move.len());
+        //     return container_util::move_player_items(data, state.level);
+        // },
         EquipItems(ref data) => {
             log::info!("[inventory usage] Received data for EquipItems with {} items", data.len());
             return equip_items(data.clone(), state);
         },
-        MoveToContainerChoice(ref data) => {
-            return if let Some(_target) = &data.target_container {
-                // Translate to the typical moving data
-                let move_data = MoveItemsData {
-                    source: data.source.clone(),
-                    to_move: data.to_move.clone(),
-                    target_container: data.target_container.clone(),
-                    target_item: None,
-                    position: None
-                };
-                log::info!("[inventory usage] Moving player items for MoveToContainerChoice...");
-                return container_util::move_player_items(move_data, state.level);
-            } else {
-                // Build container choices and pass the result back down to the view/handlers
-                log::info!("[inventory usage] Building choices for MoveToContainerChoice...");
-                build_container_choices(data, state.level).ok()
-            }
-        }
+        // MoveToContainerChoice(ref data) => {
+        //     return if let Some(_target) = &data.target_container {
+        //         // Translate to the typical moving data
+        //         let move_data = MoveItemsData {
+        //             source: data.source.clone(),
+        //             to_move: data.to_move.clone(),
+        //             target_container: data.target_container.clone(),
+        //             target_item: None,
+        //             position: None
+        //         };
+        //         log::info!("[inventory usage] Moving player items for MoveToContainerChoice...");
+        //         return container_util::move_player_items(move_data, state.level);
+        //     } else {
+        //         // Build container choices and pass the result back down to the view/handlers
+        //         log::info!("[inventory usage] Building choices for MoveToContainerChoice...");
+        //         build_container_choices(data, state.level).ok()
+        //     }
+        // }
         _ => {
             return None
         }

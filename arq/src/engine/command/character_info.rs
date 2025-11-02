@@ -21,6 +21,7 @@ use termion::event::Key;
 use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::engine::command::open_command::OpenedContainerEventData::MoveItemsResult;
 use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItemsResult, OpenContainer, TakeItems, TakeItemsResult};
 use crate::engine::container_util;
 
@@ -123,13 +124,13 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             match result {
                 // If we have a result for this drop handling, send it back via the main event handler
                 // So that the container widget/data can update appropriately
-                Ok(drop_items_response) => {
-                    ui.set_console_buffer(drop_items_response.message.clone());
+                Ok(response) => {
+                    ui.set_console_buffer(response.message.clone());
                     event_handler.sender.send(
                         Event::AppEvent(
                             OpenedContainerEvent(
                                 DropItemsResult,
-                                Some(OpenedContainerEventData::DropItemsResult(drop_items_response))
+                                Some(OpenedContainerEventData::DropItemsResult(response))
                             )
                         )
                     ).unwrap();
@@ -145,7 +146,33 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     }
                 }
             }
-        }
+        },
+        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(mut data)))) => {
+            let result = container_util::move_player_items(data, level);
+            match result {
+                Ok(response) => {
+                    ui.set_console_buffer(response.message.clone());
+                    event_handler.sender.send(
+                        Event::AppEvent(
+                            OpenedContainerEvent(
+                                OpenedContainerEventType::MoveItemsResult,
+                                Some(OpenedContainerEventData::MoveItemsResult(response))
+                            )
+                        )
+                    ).unwrap();
+                }
+                Err(error_wrapper) => {
+                    match error_wrapper.error_type {
+                        ErrorType::DISPLAYABLE => {
+                            ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
+                        },
+                        _ => {
+                            error!("Error while taking items: {:?}", error_wrapper);
+                        }
+                    }
+                }
+            }
+        },
         _ => {}
     }
 

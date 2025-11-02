@@ -76,13 +76,23 @@ pub struct MoveToContainerChoiceData {
     pub target_container: Option<Container>
 }
 
-#[derive(Clone)]
-pub struct MoveItemsData {
+#[derive(Clone, Debug)]
+pub struct MoveItemsRequest {
     pub source: Container,
     pub to_move: Vec<Item>,
     pub target_container: Option<Container>,
     pub target_item: Option<Item>,
     pub position: Option<Position>
+}
+
+#[derive(Clone, Debug)]
+pub struct MoveItemsResponse {
+    pub source: Container,
+    pub unmoved: Vec<Item>,
+    pub target_container: Option<Container>,
+    pub target_item: Option<Item>,
+    pub position: Option<Position>,
+    pub message: String
 }
 
 #[derive(Clone)]
@@ -91,7 +101,7 @@ pub enum ContainerFrameHandlerInputResult {
     OpenContainerView(ContainerFrameHandler),
     // This is meant to handle moving an item/container in the container view into another container
     MoveToContainerChoice(MoveToContainerChoiceData),
-    MoveItems(MoveItemsData),
+    MoveItems(MoveItemsRequest),
     TakeItems(TakeItemsRequest),
     DropItems(Vec<Item>),
     EquipItems(Vec<Item>)
@@ -238,7 +248,7 @@ impl ContainerFrameHandler {
         let container_name = if let Some(c) = focused_container.clone() { c.get_self_item().get_name() } else { String::from("N/a") };
         log::info!("Triggering MoveItems of {} items into: {}", selected_container_items.len(), container_name);
 
-        let data = MoveItemsData { source: from_container.clone(), to_move: selected_container_items, target_container: focused_container, target_item: focused_item, position: None };
+        let data = MoveItemsRequest { source: from_container.clone(), to_move: selected_container_items, target_container: focused_container, target_item: focused_item, position: None };
         return Ok(InputResult {
             generic_input_result: GenericInputResult { done: false, requires_view_refresh: true },
             view_specific_result: Some(ContainerFrameHandlerInputResult::MoveItems(data))

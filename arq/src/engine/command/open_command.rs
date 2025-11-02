@@ -15,7 +15,7 @@ use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
 use crate::ui::ui_layout::LayoutType;
-use crate::view::framehandler::container::{DropItemsRequest, DropItemsResponse, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
+use crate::view::framehandler::container::{DropItemsRequest, DropItemsResponse, MoveItemsRequest, MoveItemsResponse, OpenContainerRequest, TakeItemsRequest, TakeItemsResponse};
 use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
@@ -70,7 +70,9 @@ pub enum OpenedContainerEventData {
     TakeItems(TakeItemsRequest),
     TakeItemsResult(TakeItemsResponse),
     DropItems(DropItemsRequest),
-    DropItemsResult(DropItemsResponse)
+    DropItemsResult(DropItemsResponse),
+    MoveItems(MoveItemsRequest),
+    MoveItemsResult(MoveItemsResponse)
 }
 
 impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
