@@ -28,6 +28,14 @@ Sidenote:
 Had to duplicate the usage of try_build_container_choice_frame_handler between character and world container views, 
 is there more consolidation we could do for the high-level generic inventory type logic? 
 
+## [TODO] BUG-3 - Page Up/Down stops working after moving items
+1. GIVEN you're in the player inventory screen
+2. WHEN moving items to a new location within the top-level of theinventory
+3. THEN after moving them, the page up/down keys no longer move the cursor to the top/bottom of the view as expected
+
+Hint: need to change what's happening to the item list here as it's likely getting rebuilt wrongly when the items are removed from the selection post-move
+
+##
 ## PLAY-1 - The container choice view is never shown as an option / prompted
 
 It's not clear when you can hit 'c' to use the container choice view
