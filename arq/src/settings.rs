@@ -72,11 +72,11 @@ impl Settings {
     }
 
     pub fn get_rng_seed(&self) -> Option<String> {
-        if let Some(seed_override) = GLOBALS.rng_seed_override {
-            return Some(String::from(seed_override))
-        } else {
+        // if let Some(seed_override) = GLOBALS.rng_seed_override {
+        //     return Some(String::from(seed_override))
+        // } else {
             return self.find_string_setting_value(SETTING_RNG_SEED.to_string())
-        }
+        // }
     }
 
     /*
@@ -102,22 +102,36 @@ pub fn build_default_bindings() -> AllKeyBindings {
     }
 }
 
-pub fn build_settings() -> Settings {
+pub fn load_settings_file() -> serde_json::Value {
     let settings_raw = fs::read_to_string(RESOURCE_SETTINGS_FILE).unwrap();
-    let settings_json : serde_json::Value = serde_json::from_str(&settings_raw).unwrap();
+    serde_json::from_str(&settings_raw).unwrap()
+}
+
+fn get_map_seed(settings_json: &serde_json::Value) -> String {
+    // INITIAL_MAP_SEED allows setting the map seed ahead of time, useful for debugging
+    let initial_map_seed : Option<String> = settings_json.get("INITIAL_MAP_SEED").map(|v| String::from(v.as_str().unwrap()));
+
+    if (initial_map_seed.is_some()) {
+        initial_map_seed.unwrap()
+    } else {
+        // Generate a new random seed
+        thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(12)
+            .map(char::from)
+            .collect()
+    }
+}
+
+pub fn build_settings() -> Settings {
+    let settings_json = load_settings_file();
     let bg_music_volume_default : u32 = settings_json.get("BG_MUSIC_VOLUME_DEFAULT").unwrap().as_u64().unwrap() as u32;
     let resolution_default : String = String::from(settings_json.get("RESOLUTION_DEFAULT").unwrap().as_str().unwrap());
-
     let fog_of_war : Setting<bool> = Setting { name: SETTING_FOG_OF_WAR.to_string(), value: false };
-    // Generate a new random seed
-    let random_seed: String = thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(12)
-        .map(char::from)
-        .collect();
-    let map_seed : Setting<String> = Setting { name: SETTING_RNG_SEED.to_string(), value: random_seed };
-    let bg_music_volume : Setting<u32> = Setting { name: SETTING_BG_MUSIC.to_string(), value: bg_music_volume_default };
 
+    let map_seed_value = get_map_seed(&settings_json);
+    let map_seed : Setting<String> = Setting { name: SETTING_RNG_SEED.to_string(), value: map_seed_value };
+    let bg_music_volume : Setting<u32> = Setting { name: SETTING_BG_MUSIC.to_string(), value: bg_music_volume_default };
 
     let resolution_options = get_resolution_dropdown_options();
     let mut default_resolution_option = None;
