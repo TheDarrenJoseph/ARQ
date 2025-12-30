@@ -1,13 +1,15 @@
 use crate::widget::stateful::container_widget::ContainerWidgetData;
 use std::collections::HashMap;
 use uuid::Uuid;
+use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 
 // Tracks the currently open containers / relevant widget data
 #[derive(Clone, Debug)]
 pub struct CurrentContainersData {
     pub(crate) current_container_id: Option<Uuid>,
     pub(crate) container_ids : Vec<Uuid>,
-    pub(crate) widget_data_by_id : HashMap<Uuid, ContainerWidgetData>
+    pub(crate) widget_data_by_id : HashMap<Uuid, ContainerWidgetData>,
+    pub(crate) container_choice_data : Option<ContainerChoiceWidgetData>
 }
 
 impl CurrentContainersData {
@@ -15,7 +17,8 @@ impl CurrentContainersData {
         CurrentContainersData {
             current_container_id: None,
             container_ids : vec![],
-            widget_data_by_id : HashMap::new()
+            widget_data_by_id : HashMap::new(),
+            container_choice_data: None
         }
     }
 

@@ -297,6 +297,8 @@ impl Draw for UI {
                         // If the data belongs to this widget, render it
                         if container_widget.container_id == widget_data_container_id {
                             frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
+                            // Stop here so we don't waste time drawing more widgets that will be hidden
+                            return;
                         }
                     }
                     _ => {}
@@ -316,6 +318,11 @@ impl Draw for UI {
                 match widget {
                     StatefulWidgetType::CharacterInfo(charcter_info_widget) => {
                         frame.render_stateful_widget(charcter_info_widget.clone(), frame.size(), widget_data);
+                    },
+                    StatefulWidgetType::ContainerChoice(container_choice_widget) => {
+                        if let Some(ccd) = &mut widget_data.containers_data.container_choice_data {
+                            frame.render_stateful_widget(container_choice_widget.clone(), frame.size(), ccd);
+                        }
                     }
                     _ => {}
                 }

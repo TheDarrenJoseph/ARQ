@@ -80,7 +80,7 @@ impl <B : ratatui::backend::Backend> CharacterInfoView<'_, B> {
             UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
             UsageCommand::for_container_event(Key::Char('d'), String::from("drop"), OpenedContainerEventType::DropItems),
             UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
-            UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainer),
+            UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainerChoice),
             UsageCommand::for_container_event(Key::Char('e'), String::from("equip"), OpenedContainerEventType::EquipItems)
         ];
         let usage_line = UsageLineWidget::for_commands(commands);

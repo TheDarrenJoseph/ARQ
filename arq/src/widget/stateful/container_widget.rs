@@ -1,5 +1,5 @@
 use crate::engine::command::open_command::{OpenedContainerEventData, OpenedContainerEventType};
-use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItems, MoveItems, OpenContainer, TakeItems};
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItems, MoveItems, MoveItemsToContainerChoice, OpenContainer, TakeItems};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -7,7 +7,7 @@ use crate::map::position::Area;
 use crate::ui::event::AppEventType::OpenedContainerEvent;
 use crate::ui::event::Event;
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::container::{DropItemsRequest, MoveItemsRequest, OpenContainerRequest, TakeItemsRequest};
+use crate::view::framehandler::container::{DropItemsRequest, MoveItemsRequest, MoveItemsToContainerRequest, OpenContainerRequest, TakeItemsRequest};
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
 use log::{error, info};
@@ -152,7 +152,14 @@ impl ContainerWidgetData {
                     self.event_sender.send(
                         Event::AppEvent(OpenedContainerEvent(DropItems, Some(OpenedContainerEventData::DropItems(data))))
                     ).expect("Error sending event");
-                }
+                },
+                MoveItemsToContainerChoice => {
+                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    let data = MoveItemsToContainerRequest { source: self.container.clone(), to_move: selected_items, position: None };
+                    self.event_sender.send(
+                        Event::AppEvent(OpenedContainerEvent(MoveItemsToContainerChoice, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))))
+                    ).expect("Error sending event");
+                },
                 _ => {
                     info!("Unsupported OpenedContainerEventType {:?}", container_event_type)
                 }

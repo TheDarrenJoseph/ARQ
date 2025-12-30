@@ -25,7 +25,6 @@ impl UsageCommand {
         UsageCommand { key, description, opened_container_event_type: Some(opened_container_event_type) }
     }
 
-
     pub fn get_key(self) -> Key {
         self.key
     }

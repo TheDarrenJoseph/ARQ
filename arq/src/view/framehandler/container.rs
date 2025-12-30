@@ -95,6 +95,18 @@ pub struct MoveItemsResponse {
     pub message: String
 }
 
+#[derive(Clone, Debug)]
+pub struct MoveItemsToContainerRequest {
+    pub source: Container,
+    pub to_move: Vec<Item>,
+    pub position: Option<Position>
+}
+
+#[derive(Clone, Debug)]
+pub struct ContainerTarget {
+    pub target_container_id: Uuid
+}
+
 #[derive(Clone)]
 pub enum ContainerFrameHandlerInputResult {
     None,

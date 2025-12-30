@@ -56,7 +56,7 @@ pub struct ItemListSelection {
 }
 
 impl ItemListSelection {
-    pub fn new(items : Vec<Item>, item_view_line_count: i32) -> ItemListSelection {
+    pub fn new(items : Vec<Item>, page_line_count: i32) -> ItemListSelection {
         let selection_mode = SelectionMode::SelectingItems;
         let start_index = 0;
         let current_index = 0;
@@ -67,7 +67,7 @@ impl ItemListSelection {
         let selecting_items = false;
         let selected_indices = VecDeque::new();
         let selected_items = VecDeque::new();
-        ItemListSelection { selection_mode, start_index, pivot_index, previous_container_index, current_index, true_index, container_index, selecting_items, selected_indices, selected_items, items, page_line_count: item_view_line_count }
+        ItemListSelection { selection_mode, start_index, pivot_index, previous_container_index, current_index, true_index, container_index, selecting_items, selected_indices, selected_items, items, page_line_count }
     }
 
     fn reset_selection(&mut self) {

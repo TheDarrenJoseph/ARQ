@@ -22,8 +22,10 @@ use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::command::open_command::OpenedContainerEventData::MoveItemsResult;
-use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItemsResult, OpenContainer, TakeItems, TakeItemsResult};
+use crate::engine::command::open_command::OpenedContainerEventType::{Close, DropItemsResult, MoveItemsToContainerChoice, OpenContainer, TakeItems, TakeItemsResult};
 use crate::engine::container_util;
+use crate::view::framehandler::container::MoveItemsToContainerRequest;
+use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -58,129 +60,165 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let widget_data_by_id = &mut containers_data.widget_data_by_id;
     let container_ids = &mut containers_data.container_ids;
 
-    match event {
-        // TODO can this be refactored to be shared between this and open_command?
-        Event::AppEvent(OpenedContainerEvent(Close, None)) => {
-            let closing_container_id = current_container_id.clone();
-            if widget_data_by_id.len() > 1 {
-                // If we have more than one container opened, remove the current one
+    let container_choice_data = &containers_data.container_choice_data;
+
+    // Handle any events specific to choosing a container
+    if let Some(choice_data) = container_choice_data {
+        match event {
+            // TODO any events specific to choosing a container
+            _ => {}
+        }
+    } else {
+        // Handle any other events for within a container
+        match event {
+            // TODO can this be refactored to be shared between this and open_command?
+            Event::AppEvent(OpenedContainerEvent(Close, None)) => {
+                let closing_container_id = current_container_id.clone();
+                if widget_data_by_id.len() > 1 {
+                    // If we have more than one container opened, remove the current one
+                    let stateful_widgets = ui.get_stateful_widgets_mut();
+                    let current_widget_index = stateful_widgets.iter().position(|widget| {
+                        return match widget {
+                            StatefulWidgetType::Container(container_widget) => {
+                                container_widget.container_id == closing_container_id
+                            },
+                            _ => {
+                                false
+                            }
+                        }
+                    });
+                    if let Some(idx) = current_widget_index {
+                        // The index of the parent container
+                        let parent_container_id = container_ids.get(container_ids.len() - 2).unwrap();
+
+                        // Update the parent container with the updated current container contents
+                        // For example
+                        // if we had opened a Bag in the parent container
+                        // When closing the widget, we need to update the parent's version of the Bag
+                        // to match any changes made within it
+                        let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
+                        let parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
+                        // Find the container belonging to the widget being closed
+                        let updated_container = current_widget_data.container.clone();
+                        parent_container_widget_data.container.replace_container(updated_container);
+
+                        // Remove the widget and it's data
+                        stateful_widgets.remove(idx);
+                        widget_data_by_id.remove(&current_container_id);
+
+                        // Drop the last container id from the list
+                        container_ids.pop();
+                        // Set the current container ID to the last one in the list
+                        containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
+                    }
+                } else if widget_data_by_id.len() == 1 {
+                    // If only one container is open, stop the command
+                    return false;
+                }
+            },
+            Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(open_container_request)))) => {
+                let target_container = open_container_request.target;
+                let target_container_id = target_container.get_self_item().get_id();
+                let container_widget = ContainerWidget::new(target_container_id);
                 let stateful_widgets = ui.get_stateful_widgets_mut();
-                let current_widget_index = stateful_widgets.iter().position(|widget| {
-                    return match widget {
-                        StatefulWidgetType::Container(container_widget) => {
-                            container_widget.container_id == closing_container_id
-                        },
-                        _ => {
-                            false
-                        }
-                    }
-                });
-                if let Some(idx) = current_widget_index {
-                    // The index of the parent container
-                    let parent_container_id = container_ids.get(container_ids.len() - 2).unwrap();
+                stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
-                    // Update the parent container with the updated current container contents
-                    let current_widget_data = widget_data_by_id.get(&current_container_id).unwrap().clone();
-                    let parent_container_widget_data = widget_data_by_id.get_mut(parent_container_id).unwrap();
-                    let updated_container = current_widget_data.container.clone();
-                    parent_container_widget_data.container.replace_container(updated_container);
+                let container_widget_data = build_container_widget_data(
+                    target_container.clone(),
+                    ui_areas.clone(),
+                    child_container_sender.clone()
+                );
 
-                    // Remove the widget and it's data
-                    stateful_widgets.remove(idx);
-                    widget_data_by_id.remove(&current_container_id);
+                widget_data_by_id.insert(target_container_id, container_widget_data);
+                container_ids.push(target_container_id);
+                containers_data.current_container_id = Some(target_container_id);
+            },
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(mut data)))) => {
+                log::info!("[open usage] Received data for DropItems with {} items", data.to_drop.len());
+                data.position = Some(player_position.clone());
 
-                    // Drop the last container id from the list
-                    container_ids.pop();
-                    // Set the current container ID to the last one in the list
-                    containers_data.current_container_id = Some(container_ids.last().unwrap().clone());
-                }
-            } else if widget_data_by_id.len() == 1 {
-                // If only one container is open, stop the command
-                return false;
-            }
-        },
-        Event::AppEvent(OpenedContainerEvent(OpenContainer, Some(OpenedContainerEventData::OpenContainer(open_container_request)))) => {
-            let target_container = open_container_request.target;
-            let target_container_id = target_container.get_self_item().get_id();
-            let container_widget = ContainerWidget::new(target_container_id);
-            let stateful_widgets = ui.get_stateful_widgets_mut();
-            stateful_widgets.push(StatefulWidgetType::Container(container_widget));
-
-            let container_widget_data = build_container_widget_data(
-                target_container.clone(),
-                ui_areas.clone(),
-                child_container_sender.clone()
-            );
-
-            widget_data_by_id.insert(target_container_id, container_widget_data);
-            container_ids.push(target_container_id);
-            containers_data.current_container_id = Some(target_container_id);
-        },
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(mut data)))) => {
-            log::info!("[open usage] Received data for DropItems with {} items", data.to_drop.len());
-            data.position = Some(player_position.clone());
-
-            let result = container_util::player_drop_items(data, level);
-            match result {
-                // If we have a result for this drop handling, send it back via the main event handler
-                // So that the container widget/data can update appropriately
-                Ok(response) => {
-                    ui.set_console_buffer(response.message.clone());
-                    event_handler.sender.send(
-                        Event::AppEvent(
-                            OpenedContainerEvent(
-                                DropItemsResult,
-                                Some(OpenedContainerEventData::DropItemsResult(response))
+                let result = container_util::player_drop_items(data, level);
+                match result {
+                    // If we have a result for this drop handling, send it back via the main event handler
+                    // So that the container widget/data can update appropriately
+                    Ok(response) => {
+                        ui.set_console_buffer(response.message.clone());
+                        event_handler.sender.send(
+                            Event::AppEvent(
+                                OpenedContainerEvent(
+                                    DropItemsResult,
+                                    Some(OpenedContainerEventData::DropItemsResult(response))
+                                )
                             )
-                        )
-                    ).unwrap();
-                }
-                Err(error_wrapper) => {
-                    match error_wrapper.error_type {
-                        ErrorType::DISPLAYABLE => {
-                            ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
-                        },
-                        _ => {
-                            error!("Error while taking items: {:?}", error_wrapper);
+                        ).unwrap();
+                    }
+                    Err(error_wrapper) => {
+                        match error_wrapper.error_type {
+                            ErrorType::DISPLAYABLE => {
+                                ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
+                            },
+                            _ => {
+                                error!("Error while taking items: {:?}", error_wrapper);
+                            }
                         }
                     }
                 }
-            }
-        },
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(mut data)))) => {
-            let result = container_util::move_player_items(data, level);
-            match result {
-                Ok(response) => {
-                    ui.set_console_buffer(response.message.clone());
-                    event_handler.sender.send(
-                        Event::AppEvent(
-                            OpenedContainerEvent(
-                                OpenedContainerEventType::MoveItemsResult,
-                                Some(OpenedContainerEventData::MoveItemsResult(response))
+            },
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(mut data)))) => {
+                let result = container_util::move_player_items(data, level);
+                match result {
+                    Ok(response) => {
+                        ui.set_console_buffer(response.message.clone());
+                        event_handler.sender.send(
+                            Event::AppEvent(
+                                OpenedContainerEvent(
+                                    OpenedContainerEventType::MoveItemsResult,
+                                    Some(OpenedContainerEventData::MoveItemsResult(response))
+                                )
                             )
-                        )
-                    ).unwrap();
-                }
-                Err(error_wrapper) => {
-                    match error_wrapper.error_type {
-                        ErrorType::DISPLAYABLE => {
-                            ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
-                        },
-                        _ => {
-                            error!("Error while taking items: {:?}", error_wrapper);
+                        ).unwrap();
+                    }
+                    Err(error_wrapper) => {
+                        match error_wrapper.error_type {
+                            ErrorType::DISPLAYABLE => {
+                                ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
+                            },
+                            _ => {
+                                error!("Error while taking items: {:?}", error_wrapper);
+                            }
                         }
                     }
                 }
-            }
-        },
-        _ => {}
+            },
+            Event::AppEvent(
+                OpenedContainerEvent(
+                    OpenedContainerEventType::MoveItemsToContainerChoice,
+                    Some(OpenedContainerEventData::MoveItemsToContainerChoice(mut data))
+                )
+            ) => {
+                let container_choice_widget = ContainerChoiceWidget::new();
+                // Register the widget with the UI
+                let stateful_widgets = ui.get_stateful_widgets_mut();
+                stateful_widgets.push(StatefulWidgetType::ContainerChoice(container_choice_widget));
+
+                // TODO add choices
+                let choices = Vec::new();
+                let container_choice_data = build_container_choice_widget_data(
+                    choices,
+                    ui_areas.clone(),
+                    child_container_sender
+                );
+                containers_data.container_choice_data = Some(container_choice_data);
+            },
+            _ => {}
+        }
     }
 
     // Keep running by default
     true
 }
 
-impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
+impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     pub async fn start(&mut self) -> Result<(), ErrorWrapper> {
         log::info!("Player opening Character Info Screen.");
 
@@ -194,8 +232,8 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         let ui = &mut self.ui;
 
         ui.set_console_buffer(UI_USAGE_HINT.to_string());
-        
-        // Spawn a thread to handle the UI events 
+
+        // Spawn a thread to handle the UI events
         let mut event_handler = TerminalEventHandler::new();
         let event_thread_data = event_handler.spawn_thread();
 
@@ -246,17 +284,17 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
         return Ok(())
     }
-    
+
     async fn bootstrap(&mut self) -> OpenCommandChannels {
         let ui = &mut self.ui;
         ui.set_console_buffer(UI_USAGE_HINT.to_string());
-        
+
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
         let (container_event_sender, container_event_receiver) = mpsc::unbounded_channel();
         let inventory_container = self.level.get_player_mut().unwrap().get_inventory_mut();
         let ui_areas = ui.ui_layout.as_mut().expect("Failed to get UI Layout").get_ui_areas(LayoutType::StandardSplit);
-        
+
         if self.widget_data.is_none() {
             let mut character_info_widget_data = CharacterInfoWidgetData::new(
                 inventory_container.clone(),
@@ -271,12 +309,12 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
             );
             // Take a copy of the commands available for the child container widget so we can display them
             self.container_widget_commands = Some(container_widget_data.usage_commands.clone());
-            
+
             character_info_widget_data.containers_data.add_container_data(
                 inventory_container.get_self_item().get_id(),
                 container_widget_data
             );
-            
+
             self.widget_data = Some(character_info_widget_data);
         }
 
@@ -288,13 +326,13 @@ impl <B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         // Add the character info widget to the UI
         let stateful_widgets = self.ui.get_stateful_widgets_mut();
         stateful_widgets.push(StatefulWidgetType::CharacterInfo(character_info_widget));
-        
+
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
 
         // Updates the UI usage line widget to reflect an opened inventory container
         self.update_usage_line();
-        
+
         OpenCommandChannels {
             container_event_receiver,
             child_container_sender
@@ -354,7 +392,7 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
         UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
         UsageCommand::for_container_event(Key::Char('d'), String::from("drop"), OpenedContainerEventType::DropItems),
         UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
-        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainer),
+        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainerChoice),
         UsageCommand::for_container_event(Key::Char('e'), String::from("equip"), OpenedContainerEventType::EquipItems),
         UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close),
     ];
@@ -367,4 +405,23 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
         event_sender: container_event_sender,
     }
 }
-    
+
+
+fn build_container_choice_widget_data(choices: Vec<Container>, ui_areas: UIAreas, container_event_sender: UnboundedSender<Event>) -> ContainerChoiceWidgetData {
+    let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+    let widget_ui_area = build_container_widget_area(&main_area);
+
+    // -3 to account for:
+    // 1. Title / Border top
+    // 2. Table headings
+    // 3. Border bottom
+    let line_count = (widget_ui_area.height - 3) as i32;
+
+    ContainerChoiceWidgetData::new(
+        choices,
+        main_area.area,
+        line_count,
+        container_event_sender
+    )
+}
+
