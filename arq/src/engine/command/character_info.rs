@@ -1,3 +1,4 @@
+use crate::engine::command::character_info::OpenedContainerEventData::SelectedContainer;
 use crate::engine::command::open_command::{OpenCommandChannels, OpenedContainerEventData, OpenedContainerEventType};
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::level::Level;
@@ -60,19 +61,35 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let widget_data_by_id = &mut containers_data.widget_data_by_id;
     let container_ids = &mut containers_data.container_ids;
 
-    let container_choice_data = &containers_data.container_choice_data;
+    let container_choice_data = &mut containers_data.container_choice_data;
 
+    // If we have a container choice data set, it takes priority
     // Handle any events specific to choosing a container
     if let Some(choice_data) = container_choice_data {
         match event {
-            // TODO any events specific to choosing a container
-            _ => {}
+            // Clear the data if we're exiting the widget
+            Event::AppEvent(OpenedContainerEvent(Close, None)) => {
+                log::info!("Handling Close event");
+                containers_data.container_choice_data = None;
+            },
+            // If we've picked a selection, we should also close the widget
+            Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::SelectedContainer, Some(SelectedContainer(target)))) => {
+                log::info!("Handling SelectedContainer event");
+                containers_data.container_choice_data = None;
+
+                // TODO process the request
+            },
+            _ => {
+                // Otherwise, pass anything that might be of value to the widget data
+                choice_data.handle_event(event).await;
+            }
         }
     } else {
         // Handle any other events for within a container
         match event {
             // TODO can this be refactored to be shared between this and open_command?
             Event::AppEvent(OpenedContainerEvent(Close, None)) => {
+                // If there's no container choice window, we're trying to close the container window
                 let closing_container_id = current_container_id.clone();
                 if widget_data_by_id.len() > 1 {
                     // If we have more than one container opened, remove the current one
@@ -201,8 +218,9 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let stateful_widgets = ui.get_stateful_widgets_mut();
                 stateful_widgets.push(StatefulWidgetType::ContainerChoice(container_choice_widget));
 
-                // TODO add choices
-                let choices = Vec::new();
+                let inventory = level.characters.get_player_mut().unwrap().get_inventory_mut();
+                let container_choices = container_util::build_container_choices(&data.source, inventory);
+                let choices = container_choices.unwrap();
                 let container_choice_data = build_container_choice_widget_data(
                     choices,
                     ui_areas.clone(),
@@ -246,10 +264,18 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
                 })?;
 
                 // Whenever there's a UI event, ask the widget data to handle it
-                debug!("Waiting for a Character InfoUI event");
+                debug!("Waiting for a Character Info UI event");
                 if let Some(e) = event_handler.receiver.recv().await {
-                    debug!("Handling Character Info UI Event");
-                    widget_data.handle_event(e).await;
+
+                    // If we have a container choice data set, it takes priority
+                    // Handle any events specific to choosing a container
+                    if let Some(choice_data) = &mut widget_data.containers_data.container_choice_data {
+                        debug!("Handling Character Info UI Event (container choice)");
+                     choice_data.handle_event(e).await;
+                    } else {
+                        debug!("Handling Character Info UI Event (container)");
+                        widget_data.handle_event(e).await;
+                    }
                 } else {
                     info!("Receiver returned None!");
                     running = false;

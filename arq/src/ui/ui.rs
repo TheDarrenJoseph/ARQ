@@ -1,5 +1,5 @@
 use std::io;
-
+use std::slice::IterMut;
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
@@ -17,6 +17,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use termion::event::Key;
 use termion::input::TermRead;
+use crate::widget::stateful::container_choice_widget::ContainerChoiceWidget;
 
 pub struct UI {
     pub render_additional: bool,
@@ -288,7 +289,6 @@ impl Draw for UI {
         let widget_data_container_id = widget_data.container.get_self_item().get_id();
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
-            let mut _offset = 0;
             let ui_layout = self.ui_layout.as_mut().unwrap();
             let ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
             for widget in self.stateful_widgets.iter_mut() {
@@ -303,7 +303,6 @@ impl Draw for UI {
                     }
                     _ => {}
                 }
-                _offset += 1;
             }
         }
     }
@@ -311,22 +310,30 @@ impl Draw for UI {
     fn draw_character_info(&mut self, widget_data: &mut CharacterInfoWidgetData, frame: &mut ratatui::Frame) {
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
-            let mut _offset = 0;
             let ui_layout = self.ui_layout.as_mut().unwrap();
             let ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
             for widget in self.stateful_widgets.iter_mut() {
                 match widget {
                     StatefulWidgetType::CharacterInfo(charcter_info_widget) => {
                         frame.render_stateful_widget(charcter_info_widget.clone(), frame.size(), widget_data);
-                    },
+                    }
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
                     StatefulWidgetType::ContainerChoice(container_choice_widget) => {
                         if let Some(ccd) = &mut widget_data.containers_data.container_choice_data {
                             frame.render_stateful_widget(container_choice_widget.clone(), frame.size(), ccd);
                         }
                     }
-                    _ => {}
+                    _ => {
+                        continue;
+                    }
                 }
-                _offset += 1;
             }
         }
     }

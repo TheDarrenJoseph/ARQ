@@ -59,7 +59,9 @@ pub enum OpenedContainerEventType {
     MoveItemsResult,
     // Part of the moving items to container event chain
     MoveItemsToContainerChoice,
+    SelectedContainer,
     MoveItemsToContainerResult,
+    // Part of item equipment selection
     EquipItems,
     EquipItemsResult
 }
@@ -75,7 +77,7 @@ pub enum OpenedContainerEventData {
     MoveItems(MoveItemsRequest),
     MoveItemsResult(MoveItemsResponse),
     MoveItemsToContainerChoice(MoveItemsToContainerRequest),
-    ContainerChoice(ContainerTarget),
+    SelectedContainer(ContainerTarget),
     MoveItemsToContainerChoiceResult(MoveItemsResponse),
 }
 
@@ -208,12 +210,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let ui_area = main_area.area;
         // Total area height - 3 for title, heading, and stat line
         let line_count = main_area.area.height - 3;
-        let commands: Vec<UsageCommand> = vec![
-            UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
-            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
-            UsageCommand::for_container_event(Key::Esc, String::from("close"), Close)
-        ];
-        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, commands, container_event_sender.clone());
+        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, container_event_sender.clone());
         
         self.containers_data.add_container_data(container_id, widget_data.clone());
         self.update_usage_line();
@@ -329,16 +326,10 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             let ui_area = main_area.area;
             // Total area height - 3 for title, heading, and stat line
             let line_count = main_area.area.height - 3;
-            let commands: Vec<UsageCommand> = vec![
-                UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
-                UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
-                UsageCommand::for_container_event(Key::Esc, String::from("close"), Close)
-            ];
             let container_widget_data = ContainerWidgetData::new(
                 target_container,
                 ui_area.clone(), 
                 line_count as i32,
-                commands,
                 child_container_sender.clone()
             );
             

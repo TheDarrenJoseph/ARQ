@@ -57,7 +57,6 @@ impl ContainerWidgetData {
         container: Container,
         ui_area: Area,
         line_count: i32,
-        usage_commands: Vec<UsageCommand>,
         sender: UnboundedSender<Event>
     ) -> ContainerWidgetData {
         let items = container.to_cloned_item_list();
@@ -66,7 +65,11 @@ impl ContainerWidgetData {
             container: container.clone(),
             ui_area: ui_area.clone(),
             item_list_selection,
-            usage_commands: usage_commands,
+            usage_commands: vec![
+                UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+                UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
+                UsageCommand::for_container_event(Key::Esc, String::from("close"), Close)
+            ],
             event_sender: sender,
         }
     }
@@ -86,7 +89,6 @@ impl ContainerWidgetData {
 
     pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         // Handle inputs that start usage command based events
-        let source_container_id = self.container.get_self_item().get_id();
         if let Some(container_event_type) = &usage_command.opened_container_event_type {
             match container_event_type {
                 Close => {
@@ -105,6 +107,7 @@ impl ContainerWidgetData {
                         if let Some(focused_container) = focused_container_result {
                             if focused_container.is_true_container() {
                                 info!("Opening focused container: {:?}", focused_container.get_self_item().get_id());
+                                let source_container_id = self.container.get_self_item().get_id();
                                 let data = OpenContainerRequest {
                                     source_container_id,
                                     target: focused_container.clone(),
