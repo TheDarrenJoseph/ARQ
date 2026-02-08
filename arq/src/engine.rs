@@ -8,3 +8,4 @@ pub mod combat;
 pub mod engine_helpers;
 
 pub mod message;
+pub mod event;

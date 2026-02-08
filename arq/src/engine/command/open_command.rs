@@ -1,4 +1,10 @@
-use crate::engine::command::open_command::OpenedContainerEventType::{Close, TakeItems, TakeItemsResult};
+use crate::engine::event::ui::UIEvent;
+use crate::engine::event::ui::TerminalEventHandler;
+use crate::engine::event::container::OpenedContainerEventData::OpenContainer;
+use crate::engine::event::container::OpenedContainerEventType::Close;
+use crate::engine::event::container::OpenedContainerEventData;
+use crate::engine::event::container::OpenedContainerEventData::TakeItems;
+use crate::engine::event::container::OpenedContainerEventType;
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
 use crate::engine::level::Level;
@@ -9,8 +15,7 @@ use crate::map::position::Position;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::open_bindings::{map_open_input_to_side, OpenInput, OpenKeyBindings};
-use crate::ui::event::AppEventType::OpenedContainerEvent;
-use crate::ui::event::{Event, TerminalEventHandler};
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
@@ -25,7 +30,6 @@ use termion::event::Key;
 use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use crate::engine::command::open_command::OpenedContainerEventData::OpenContainer;
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -37,49 +41,13 @@ pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
 }
 
 pub struct OpenCommandChannels {
-    pub container_event_receiver: UnboundedReceiver<Event>, // This receives events from all the container widgets/their data handling
-    pub child_container_sender: UnboundedSender<Event> // This is the sender channel that all child containers / their data that get opened will use
+    pub container_event_receiver: UnboundedReceiver<UIEvent>, // This receives events from all the container widgets/their data handling
+    pub child_container_sender: UnboundedSender<UIEvent> // This is the sender channel that all child containers / their data that get opened will use
 }
 
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
 const NOTHING_ERROR : &str = "There's nothing here to open.";
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum OpenedContainerEventType {
-    // Generic Container Events
-    Close,
-    OpenContainer,
-    // World Container Events
-    TakeItems,
-    TakeItemsResult,
-    // Character Inventory Specific Events
-    DropItems,
-    DropItemsResult,
-    MoveItems,
-    MoveItemsResult,
-    // Part of the moving items to container event chain
-    MoveItemsToContainerChoice,
-    SelectedContainer,
-    MoveItemsToContainerResult,
-    // Part of item equipment selection
-    EquipItems,
-    EquipItemsResult
-}
-
-// Specifying the request types used for a specific OpenedContainerEventType
-#[derive(Debug)]
-pub enum OpenedContainerEventData {
-    OpenContainer(OpenContainerRequest),
-    TakeItems(TakeItemsRequest),
-    TakeItemsResult(TakeItemsResponse),
-    DropItems(DropItemsRequest),
-    DropItemsResult(DropItemsResponse),
-    MoveItems(MoveItemsRequest),
-    MoveItemsResult(MoveItemsResponse),
-    MoveItemsToContainerChoice(MoveItemsToContainerRequest),
-    SelectedContainer(ContainerTarget),
-    MoveItemsToContainerChoiceResult(MoveItemsResponse),
-}
 
 impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
@@ -163,7 +131,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     fn update_usage_line(&mut self) {
         let container_usage_commands = vec![
             UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
-            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), TakeItems),
+            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
             UsageCommand::for_container_event(Esc, String::from("close"), Close)
         ];
         for widget in self.ui.get_additional_widgets_mut().iter_mut() {
@@ -201,7 +169,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
         // This is a special channel designed to allow widget data to send events back to this command
         // So that we can properly perform actions like closing the container display, opening a child container or taking items
-        let (container_event_sender, container_event_receiver) = mpsc::unbounded_channel();
+        let (container_event_sender, container_event_receiver) = mpsc::unbounded_channel::<UIEvent>();
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();
 
@@ -299,10 +267,10 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     ui: &'a mut UI, // Necessary for building new widgets / widget data
     level: &'a mut Level, // Necessary to make actual changes to the level / world
     position: Position, // Needed for TakeItems
-    event: Event,
+    event: UIEvent,
     event_handler: &mut TerminalEventHandler, // This provides terminal IO input (key input)
     containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
-    child_container_sender: UnboundedSender<Event>,
+    child_container_sender: UnboundedSender<UIEvent>,
 ) -> bool {
     debug!("Handling open_command container event");
     let frame_size = terminal_manager.terminal.get_frame().area();
@@ -314,7 +282,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let container_ids = &mut containers_data.container_ids;
 
     match event {
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer, Some(OpenContainer(open_container_request)))) => {
+        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer, Some(OpenContainer(open_container_request)))) => {
             let target_container = open_container_request.target;
             let target_container_id = target_container.get_self_item().get_id();
             let container_widget = ContainerWidget::new(target_container_id);
@@ -337,7 +305,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             container_ids.push(target_container_id);
             containers_data.current_container_id = Some(target_container_id);
         }
-        Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
+        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
             let closing_container_id = current_container_id.clone();
             if widget_data_by_id.len() > 1 {
                 // If we have more than one container opened, remove the current one
@@ -376,7 +344,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 return false;
             }
         },
-        Event::AppEvent(OpenedContainerEvent(TakeItems, Some(OpenedContainerEventData::TakeItems(mut data)))) => {
+        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItems, Some(TakeItems(mut data)))) => {
             log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
             data.position = Some(position.clone());
 
@@ -387,9 +355,9 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 Ok(take_items_response) => {
                     ui.set_console_buffer(take_items_response.message.clone());
                     event_handler.sender.send(
-                        Event::AppEvent(
+                        UIEvent::AppEvent(
                             OpenedContainerEvent(
-                                TakeItemsResult,
+                                OpenedContainerEventType::TakeItemsResult,
                                 Some(OpenedContainerEventData::TakeItemsResult(take_items_response))
                             )
                         )

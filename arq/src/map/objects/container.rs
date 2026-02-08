@@ -187,6 +187,23 @@ impl Container {
         }
     }
 
+    pub fn find_by_id(&self, item_id: &Uuid) -> Option<&Container> {
+        // Initial pass
+        let found = self.contents.iter().find(|c| {
+            let self_item = c.get_self_item();
+            self_item.get_id() == *item_id
+        });
+
+        if found.is_some() {
+            found
+        } else {
+            // Recurse
+            return self.contents.iter().flat_map(|c| {
+                return c.find_by_id(item_id);
+            }).next();
+        }
+    }
+
     pub fn push(&mut self, containers : Vec<Container>) {
         self.contents.extend(containers);
     }

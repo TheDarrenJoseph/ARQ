@@ -1,8 +1,9 @@
+use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
+use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
+use crate::engine::event::container::OpenedContainerEventType;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::tabling::build_headings;
-use crate::engine::command::open_command::OpenedContainerEventData::SelectedContainer;
 use log::info;
-use crate::engine::command::open_command::OpenedContainerEventType::Close;
 use ratatui::prelude::Widget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -12,15 +13,12 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::command::open_command::OpenedContainerEventData::MoveItemsResult;
-use crate::engine::command::open_command::OpenedContainerEventType;
-use crate::engine::command::open_command::OpenedContainerEventType::MoveItemsToContainerChoice;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::map::position::Area;
-use crate::ui::event::AppEventType::OpenedContainerEvent;
-use crate::ui::event::Event;
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::UIEvent;
 use crate::view::framehandler::container::{ContainerTarget, MoveItemsRequest, MoveItemsToContainerRequest};
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::build_buffer;
@@ -62,7 +60,7 @@ pub struct ContainerChoiceWidgetData {
     pub item_list_selection : ItemListSelection,
     pub ui_area: Area,
     pub usage_commands: Vec<UsageCommand>,
-    pub event_sender: mpsc::UnboundedSender<Event>,
+    pub event_sender: mpsc::UnboundedSender<UIEvent>,
 }
 
 impl ContainerChoiceWidgetData {
@@ -70,7 +68,7 @@ impl ContainerChoiceWidgetData {
         choices: Vec<Container>,
         ui_area: Area,
         line_count: i32,
-        sender: UnboundedSender<Event>
+        sender: UnboundedSender<UIEvent>
     ) -> ContainerChoiceWidgetData {
         let choice_items = convert_to_item_list(choices.clone());
         let item_list_selection =  ItemListSelection::new(choice_items, line_count.into());
@@ -79,7 +77,7 @@ impl ContainerChoiceWidgetData {
             item_list_selection,
             ui_area,
             usage_commands: vec![
-                UsageCommand::for_container_event(Key::Backspace, String::from("Select"), OpenedContainerEventType::SelectedContainer),
+                UsageCommand::for_container_event(Key::Char('\n'), String::from("Select"), OpenedContainerEventType::MoveItemsToContainerChoiceSelection),
                 UsageCommand::for_container_event(Key::Esc, String::from("Cancel"), Close),
             ],
             event_sender: sender,
@@ -89,15 +87,15 @@ impl ContainerChoiceWidgetData {
     pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         if let Some(container_event_type) = &usage_command.opened_container_event_type {
             match container_event_type {
-                OpenedContainerEventType::SelectedContainer => {
+                OpenedContainerEventType::MoveItemsToContainerChoiceSelection => {
                     let target = ContainerTarget {
                         target_container_id: self.item_list_selection.get_focused_item().unwrap().get_id()
                     };
-                    self.event_sender.send(Event::AppEvent(OpenedContainerEvent(OpenedContainerEventType::SelectedContainer, Some(SelectedContainer(target)))))
+                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(SelectedContainer(target)))))
                         .expect("Failed to send event");
                 },
                 Close => {
-                    self.event_sender.send(Event::AppEvent(OpenedContainerEvent(Close, None)))
+                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(Close, None)))
                         .expect("Failed to send event");
                 },
                 _ => {
@@ -107,10 +105,10 @@ impl ContainerChoiceWidgetData {
         }
     }
 
-    pub async fn handle_event(&mut self, event: Event) {
+    pub async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("Handling event: {:?}", event);
         match event {
-            Event::Termion(termion_event) => {
+            UIEvent::Termion(termion_event) => {
                 match termion_event {
                     termion::event::Event::Key(key) => {
                         match key {
@@ -209,15 +207,6 @@ impl StatefulWidget for ContainerChoiceWidget {
             }
             line_index += 1;
         }
-
-        //             //let usage_description = build_command_usage_descriptions(&self.commands);
-        //             //let usage_text = build_paragraph(usage_description.clone());
-        //             //let text_area = Rect::new(window_area.x.clone() + 1, window_area.y.clone() + window_area.height.clone() - 1, usage_description.len().try_into().unwrap(), 1);
-        //             //frame.render_widget(usage_text.clone(), text_area);
-        //
-        //             // From right hand to left hand side draw the info text
-        //             let page_count = build_page_count(&self.item_list_selection, window_area.clone());
-        //             frame.render_widget(page_count.0, page_count.1);
 
     }
 }

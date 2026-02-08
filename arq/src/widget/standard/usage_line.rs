@@ -1,8 +1,8 @@
+use crate::engine::event::container::OpenedContainerEventType;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Style, Widget};
 use termion::event::Key;
-use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::util::describe_key;
 
 #[derive(Eq)]

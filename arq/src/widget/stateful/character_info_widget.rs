@@ -1,8 +1,8 @@
+use crate::engine::event::ui::UIEvent;
 use crate::engine::command::util::CurrentContainersData;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::Position;
-use crate::ui::event::Event;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::view::character_info_view::Tab;
 use crate::widget::stateful::container_widget::ContainerWidget;
@@ -43,7 +43,7 @@ pub struct CharacterInfoWidgetData {
     pub tab_choice: TabChoice,
     pub container : Container,
     pub ui_areas: UIAreas,
-    pub event_sender: mpsc::UnboundedSender<Event>,
+    pub event_sender: mpsc::UnboundedSender<UIEvent>,
     pub containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
 }
 
@@ -51,7 +51,7 @@ impl CharacterInfoWidgetData {
     pub fn new(
         inventory_container: Container, 
         ui_areas: UIAreas,
-        container_event_sender: UnboundedSender<Event>
+        container_event_sender: UnboundedSender<UIEvent>
     ) -> CharacterInfoWidgetData {
         let items = inventory_container.to_cloned_item_list();
         
@@ -71,7 +71,7 @@ impl CharacterInfoWidgetData {
         }
     }
 
-    pub async fn handle_event(&mut self, event: Event) {
+    pub async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("Handling event: {:?}", event);
         if let Some(current_container_data) =  self.containers_data.get_current_data_mut() {
             current_container_data.handle_event(event).await;

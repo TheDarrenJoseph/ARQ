@@ -1,3 +1,4 @@
+use crate::engine::event::container::OpenedContainerEventType;
 use std::io::Error;
 
 use ratatui::layout::Rect;
@@ -9,7 +10,6 @@ use ratatui::CompletedFrame;
 use termion::event::Key;
 
 use crate::character::Character;
-use crate::engine::command::open_command::OpenedContainerEventType;
 use crate::error::errors::ErrorWrapper;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
