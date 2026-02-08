@@ -38,7 +38,7 @@ impl <'b, B : ratatui::backend::Backend> View<bool> for SettingsMenuView<'_, B> 
         return Ok(InputResult { generic_input_result: GenericInputResult { done: true, requires_view_refresh: true }, view_specific_result: None});
     }
 
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let menu_view = &mut self.menu;
         let terminal = &mut self.terminal_manager.terminal;
         let widgets = &menu_view.widgets;

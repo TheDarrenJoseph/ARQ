@@ -56,7 +56,7 @@ impl <'b, B : ratatui::backend::Backend> View<GameOverChoice> for GameOver<'_, B
         return Ok(input_result);
     }
 
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let paragraph = Paragraph::new(self.message.clone())
             .block(Block::default().borders(Borders::NONE))
             .style(Style::default()).alignment(Alignment::Center).wrap(Wrap { trim: true });

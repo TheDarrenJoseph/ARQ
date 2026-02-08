@@ -79,7 +79,7 @@ impl<B : ratatui::backend::Backend> View<bool> for MapView<'_, B> {
     // 2. Map view area - View co-ords (The position/size of the map view relative to the entire terminal frame), this could start at 1,1 for example (accounting for borders)
     // 3. Map display area - Map co-ords (The position/size of the map 'viewfinder', the area that you can actually see the map through)
     // 3.1 The map display area is what will move with the character throughout larger maps
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let map_display_area = self.map_view_areas.map_display_area;
         let frame_size = map_display_area.to_rect();
         

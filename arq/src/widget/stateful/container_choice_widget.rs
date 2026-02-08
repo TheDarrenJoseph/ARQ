@@ -13,7 +13,6 @@ use ratatui::widgets::{Block, Borders, Clear};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use uuid::Uuid;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -21,9 +20,7 @@ use crate::map::position::Area;
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::ui::UIEvent;
 use crate::view::framehandler::util::tabling::Column;
-use crate::widget::build_buffer;
 use crate::widget::standard::usage_line::UsageCommand;
-use crate::widget::stateful::console_input_widget::ConsoleInputState;
 
 fn build_column_text(column: &Column, container: &Container) -> String {
     let item = container.get_self_item();
@@ -163,7 +160,7 @@ impl StatefulWidget for ContainerChoiceWidget {
         ui_area.start_position.y += 1;
 
         let window_rect = ui_area.to_rect();
-        let line_count = data.item_list_selection.page_line_count;
+        let _line_count = data.item_list_selection.page_line_count;
 
         let clear = Clear::default();
         clear.render(area, buf);
@@ -181,12 +178,12 @@ impl StatefulWidget for ContainerChoiceWidget {
         let headings_area = Rect::new(window_rect.x.clone() + 1, window_rect.y.clone() + 1, window_rect.width.clone() - 4, 2);
         headings_paragraph.render(headings_area, buf);
 
-        let items = data.item_list_selection.get_items();
+        let _items = data.item_list_selection.get_items();
 
         let mut line_index = 0;
         let _start_index= data.item_list_selection.get_start_index();
         let start_index = 0;
-        let end_of_page_representive_index = data.item_list_selection.get_end_of_page_index();
+        let _end_of_page_representive_index = data.item_list_selection.get_end_of_page_index();
 
         for choice in &data.choices {
             let item_index = start_index.clone() + line_index.clone();

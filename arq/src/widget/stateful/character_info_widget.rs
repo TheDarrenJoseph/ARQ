@@ -81,7 +81,7 @@ impl CharacterInfoWidgetData {
         // Plus the tabs for each section of the character info view
         let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
         let line_count = main_area.area.height - 4;
-        let item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
+        let _item_list_selection =  ItemListSelection::new(items.clone(), line_count.into());
         
         CharacterInfoWidgetData {
             tab_choice: TabChoice::INVENTORY,

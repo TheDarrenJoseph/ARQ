@@ -17,7 +17,7 @@ impl CellBuilder {
         let symbol = tile_details.symbol.character.to_string();
         let fg = colour_mapper::map_colour(tile_details.symbol.colour);
         let bg = ratatui::style::Color::Black;
-        let modifier = ratatui::style::Modifier::empty();
+        let _modifier = ratatui::style::Modifier::empty();
         
         let mut cell = Cell::default();
         cell.set_symbol(&*symbol);

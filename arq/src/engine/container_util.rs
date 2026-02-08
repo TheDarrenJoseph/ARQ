@@ -7,7 +7,6 @@ use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{DropItems, MoveItems};
 
 pub struct AddToTargetResult {
     pub moved : Vec<Container>,

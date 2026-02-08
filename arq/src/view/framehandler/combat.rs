@@ -47,7 +47,7 @@ impl CombatFrameHandler {
         return choices;
     }
 
-    fn build_console_widgets(&self, ui_areas : &UIAreas) -> ConsoleWidgets {
+    fn build_console_widgets(&self, ui_areas : &UIAreas) -> ConsoleWidgets<'_> {
         let console_area = ui_areas.get_area(UI_AREA_NAME_CONSOLE).unwrap();
 
         let console_area_bordered = BorderedArea::from_area(console_area.area.clone()).unwrap();

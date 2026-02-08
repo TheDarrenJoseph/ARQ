@@ -65,7 +65,7 @@ impl<B : ratatui::backend::Backend> View<StartMenuChoice> for MenuView<'_, B> {
         }
     }
 
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let ui = &mut self.ui;
         verify_display_size::<B>(&mut self.terminal_manager);
 

@@ -1,4 +1,3 @@
-use std::fmt::Debug;
 use termion::event::Key;
 
 pub mod utils;

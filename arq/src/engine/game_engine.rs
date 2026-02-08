@@ -410,7 +410,7 @@ impl <B : Backend + Send> GameEngine<B> {
     
     async fn handle_action(&mut self, action: Action, input: Option<Key>) -> Result<Option<GameOverChoice>, ErrorWrapper> {
         let level = self.levels.get_level_mut();
-        let ui_wrapper = &mut self.ui_wrapper;
+        let _ui_wrapper = &mut self.ui_wrapper;
         
         match action {
             Action::Escape => {
@@ -436,7 +436,7 @@ impl <B : Backend + Send> GameEngine<B> {
                 if let Some(key) = input {
                     let key_bindings = &mut self.settings.key_bindings.command_specific_key_bindings.inventory_key_bindings;
                     let bindings = key_bindings.get_bindings();
-                    let input = bindings.get(&key);
+                    let _input = bindings.get(&key);
                     //command.handle_input(input)?;
                 }
                 Ok(None)

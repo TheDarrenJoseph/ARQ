@@ -21,7 +21,7 @@ impl MapWidget {
         MapWidget { map_view_areas }
     }
     
-    fn find_container<'a>(&'a self, map: &'a Map, global_position: Position) -> Option<(Position, &Container)> {
+    fn find_container<'a>(&'a self, map: &'a Map, global_position: Position) -> Option<(Position, &'a Container)> {
         let containers = &map.containers;
 
         if containers.contains_key(&global_position) {

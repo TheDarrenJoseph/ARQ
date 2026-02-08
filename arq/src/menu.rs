@@ -12,7 +12,7 @@ pub struct Menu {
 }
 
 pub trait ToList {
-    fn to_list(&self) -> List;
+    fn to_list(&self) -> List<'_>;
 }
 
 pub trait Selection {
@@ -22,7 +22,7 @@ pub trait Selection {
 }
 
 impl ToList for Menu {
-    fn to_list(&self) -> List {
+    fn to_list(&self) -> List<'_> {
         let menu_items: Vec<ListItem> = self.menu_titles.iter().cloned().map(ListItem::new).collect();
         let mut list = List::new(menu_items)
             .block(Block::default()

@@ -6,7 +6,6 @@ use crate::engine::event::container::OpenContainerRequest;
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::container::OpenedContainerEventType;
-use crate::view::framehandler::container::ContainerFrameHandlerInputResult::TakeItems;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
@@ -25,7 +24,6 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 use crate::engine::event::ui::UIEvent;
-use crate::ui::bindings::action_bindings::Action::Escape;
 use crate::widget::standard::usage_line::UsageCommand;
 
 #[derive(Debug, Clone)]
@@ -98,7 +96,7 @@ impl ContainerWidgetData {
             match container_event_type {
                 OpenedContainerEventType::Close => {
                     // As a priority - close will cancel any selection in progress to allow resetting it
-                    if (self.item_list_selection.is_selecting()) {
+                    if self.item_list_selection.is_selecting()  {
                         self.item_list_selection.cancel_selection();
                     } else {
                         // If there is no state to modify, the escape intention is to close the window
@@ -231,7 +229,7 @@ impl ContainerWidgetData {
                 let source_container_id = self.container.get_self_item().get_id();
                 if source_container_id == response.source.get_self_item().get_id() {
                     let is_target_container = response.target_container.as_ref().map_or_else(|| false, |t| t.id_equals(&self.container));
-                    if (is_target_container) {
+                    if is_target_container  {
                         // Update the current container details to the updated target
                         self.container = response.target_container.unwrap();
                     } else {

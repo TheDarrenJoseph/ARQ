@@ -103,7 +103,7 @@ impl <B : Backend> UIWrapper<B> {
         Ok(menu_view.begin()?)
     }
 
-    pub(crate) fn draw_info(&mut self) -> std::io::Result<CompletedFrame> {
+    pub(crate) fn draw_info(&mut self) -> std::io::Result<CompletedFrame<'_>> {
         let ui = &mut self.ui;
         self.terminal_manager.terminal.draw(move |frame| { ui.draw_info(frame) })
     }
@@ -166,7 +166,7 @@ impl <B : Backend> UIWrapper<B> {
     }
 
     pub(crate) fn draw_map_view(&mut self, level: &mut Level) -> Result<(), ErrorWrapper> {
-        let now = Instant::now();
+        let _now = Instant::now();
         verify_display_size(&mut self.terminal_manager);
 
         // Add the UI usage hint to the console buffer

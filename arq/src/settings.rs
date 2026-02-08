@@ -1,4 +1,3 @@
-use crate::global_flags::GLOBALS;
 use crate::ui::bindings::action_bindings::build_default_action_keybindings;
 use crate::ui::bindings::input_bindings::{AllKeyBindings, CommandSpecificKeyBindings};
 use crate::ui::bindings::inventory_bindings::InventoryKeyBindings;
@@ -111,7 +110,7 @@ fn get_map_seed(settings_json: &serde_json::Value) -> String {
     // INITIAL_MAP_SEED allows setting the map seed ahead of time, useful for debugging
     let initial_map_seed : Option<String> = settings_json.get("INITIAL_MAP_SEED").map(|v| String::from(v.as_str().unwrap()));
 
-    if (initial_map_seed.is_some()) {
+    if initial_map_seed.is_some()  {
         initial_map_seed.unwrap()
     } else {
         // Generate a new random seed

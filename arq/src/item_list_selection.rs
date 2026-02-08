@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 use std::convert::TryInto;
-use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 
 #[derive(Debug, Clone)]

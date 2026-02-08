@@ -33,7 +33,7 @@ impl <'b, B : ratatui::backend::Backend> View<()> for DialogView<'_, B>  {
         })
     }
 
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let message = self.message.clone();
         let _ui = &mut self.ui;
         self.terminal_manager.clear_screen().expect("The screen should have been cleared");

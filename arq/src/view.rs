@@ -37,7 +37,7 @@ pub mod menu_view;
  */
 pub trait View<T> {
     fn begin(&mut self) -> Result<InputResult<T>, ErrorWrapper>;
-    fn draw(&mut self, area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper>;
+    fn draw(&mut self, area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper>;
 }
 
 pub trait InputHandler<T> {

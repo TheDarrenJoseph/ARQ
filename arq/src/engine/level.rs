@@ -60,7 +60,7 @@ impl Levels {
         self._current_level.clone()
     }
 
-    pub fn build_map_generator(&mut self) -> MapGenerator {
+    pub fn build_map_generator(&mut self) -> MapGenerator<'_> {
         let map_area = build_rectangular_area(Position { x: 0, y: 0 }, MAP_SIZE_X, MAP_SIZE_Y);
         let rng = &mut self.rng;
         build_generator(rng, map_area)

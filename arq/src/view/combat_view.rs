@@ -75,7 +75,7 @@ impl <B : ratatui::backend::Backend> View<Battle> for CombatView<'_, B>  {
         return Ok(self.build_done_result());
     }
 
-    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame, ErrorWrapper> {
+    fn draw(&mut self, _area: Option<Area>) -> Result<CompletedFrame<'_>, ErrorWrapper> {
         let battle = &mut self.battle;
         let _player = battle.characters.get_player_mut();
         let _npcs = battle.characters.get_npcs();
@@ -124,7 +124,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for CombatView<'_, COM>
                 let selection = &self.frame_handler.selection;
                 let _option_chosen = selection.options.get(selection.index as usize).unwrap();
 
-                let data = CombatCallbackData { choice: CombatTurnChoice::ATTACK(WeaponSlot::PRIMARY), result: None };
+                let _data = CombatCallbackData { choice: CombatTurnChoice::ATTACK(WeaponSlot::PRIMARY), result: None };
                 //self.trigger_callback(data);
 
                 // TODO send-recieve battle turn option

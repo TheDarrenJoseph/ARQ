@@ -2,7 +2,6 @@ use crate::engine::event::container::MoveItemsRequest;
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
 use crate::engine::event::container::OpenedContainerEventType;
-use std::collections::VecDeque;
 use crate::engine::command::open_command::{OpenCommandChannels};
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::level::Level;
@@ -23,7 +22,6 @@ use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidget
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
 use termion::event::Key;
-use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::container_util;
@@ -230,7 +228,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     }
                 }
             },
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(mut data)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(data)))) => {
                 let result = container_util::move_player_items(data, level);
                 match result {
                     Ok(response) => {
@@ -259,7 +257,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             UIEvent::AppEvent(
                 OpenedContainerEvent(
                     OpenedContainerEventType::MoveItemsToContainerChoice,
-                    Some(OpenedContainerEventData::MoveItemsToContainerChoice(mut data))
+                    Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))
                 )
             ) => {
                 let container_choice_widget = ContainerChoiceWidget::new();
@@ -302,7 +300,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
         // Spawn a thread to handle the UI events
         let mut event_handler = TerminalEventHandler::new();
-        let event_thread_data = event_handler.spawn_thread();
+        let _event_thread_data = event_handler.spawn_thread();
 
         let mut running = true;
         while running {

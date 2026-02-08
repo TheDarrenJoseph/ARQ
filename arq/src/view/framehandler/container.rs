@@ -9,7 +9,6 @@ use crate::global_flags::ENTER_KEY;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::map::position::Position;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
@@ -20,7 +19,6 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders};
 use termion::event::Key;
-use uuid::Uuid;
 
 /*
     This frame handler is meant to display containers (Chests, Floor items, Dead bodies) in a tabular display

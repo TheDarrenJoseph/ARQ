@@ -1,5 +1,4 @@
 use std::io;
-use std::slice::IterMut;
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
@@ -17,7 +16,6 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use termion::event::Key;
 use termion::input::TermRead;
-use crate::widget::stateful::container_choice_widget::ContainerChoiceWidget;
 
 pub struct UI {
     pub render_additional: bool,
@@ -290,7 +288,7 @@ impl Draw for UI {
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
             let ui_layout = self.ui_layout.as_mut().unwrap();
-            let ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
+            let _ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
             for widget in self.stateful_widgets.iter_mut() {
                 match widget {
                     StatefulWidgetType::Container(container_widget) => {
@@ -311,7 +309,7 @@ impl Draw for UI {
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
             let ui_layout = self.ui_layout.as_mut().unwrap();
-            let ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
+            let _ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
             for widget in self.stateful_widgets.iter_mut() {
                 match widget {
                     StatefulWidgetType::CharacterInfo(charcter_info_widget) => {
