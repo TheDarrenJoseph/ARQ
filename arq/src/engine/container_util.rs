@@ -1,3 +1,4 @@
+use crate::engine::event::container::*;
 use log::{error, info};
 use std::io;
 
@@ -7,7 +8,6 @@ use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::view::framehandler::container::ContainerFrameHandlerInputResult::{DropItems, MoveItems};
-use crate::view::framehandler::container::{ContainerFrameHandlerInputResult, DropItemsRequest, DropItemsResponse, MoveItemsRequest, MoveItemsResponse, TakeItemsRequest, TakeItemsResponse};
 
 pub struct AddToTargetResult {
     pub moved : Vec<Container>,
@@ -389,7 +389,8 @@ pub fn build_container_choices(source: &Container, parent: &mut Container) -> Re
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use crate::engine::event::container::MoveItemsRequest;
+use std::collections::HashMap;
 
     use uuid::Uuid;
 
@@ -402,7 +403,6 @@ mod tests {
     use crate::map::tile::TileType;
     use crate::map::Tiles;
     use crate::view::framehandler::container::ContainerFrameHandlerInputResult::MoveItems;
-    use crate::view::framehandler::container::MoveItemsRequest;
 
     fn build_test_level(container_position: Position, area_container: Container) -> Level {
         let tile_library = crate::map::tile::build_library();

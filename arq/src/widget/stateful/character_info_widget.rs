@@ -4,7 +4,6 @@ use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::Position;
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
-use crate::view::character_info_view::Tab;
 use crate::widget::stateful::container_widget::ContainerWidget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -21,6 +20,28 @@ pub enum TabChoice {
     EQUIPMENT,
     CHARACTER
 }
+
+#[derive(Clone)]
+pub struct Tab {
+    tab_choice: TabChoice,
+    title: String
+}
+
+impl Tab {
+    // Returns the 1st tab
+    pub fn first() -> Tab {
+        Tab { tab_choice: TabChoice::INVENTORY, title: String::from("Inventory") }
+    }
+
+    // Returns all possible tabs in order
+    pub fn values() -> Vec<Tab> {
+        let inventory_tab = Tab { tab_choice: TabChoice::INVENTORY, title: String::from("Inventory") };
+        let equipment_tab = Tab { tab_choice: TabChoice::EQUIPMENT, title: String::from("Equipment") };
+        let character_tab = Tab { tab_choice: TabChoice::CHARACTER, title: String::from("Character") };
+        vec![inventory_tab, equipment_tab, character_tab]
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct CharacterInfoWidget {

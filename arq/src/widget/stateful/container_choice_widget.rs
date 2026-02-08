@@ -1,3 +1,4 @@
+use crate::engine::event::container::ContainerTarget;
 use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
 use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
 use crate::engine::event::container::OpenedContainerEventType;
@@ -19,7 +20,6 @@ use crate::map::objects::items::Item;
 use crate::map::position::Area;
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::ui::UIEvent;
-use crate::view::framehandler::container::{ContainerTarget, MoveItemsRequest, MoveItemsToContainerRequest};
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::build_buffer;
 use crate::widget::standard::usage_line::UsageCommand;

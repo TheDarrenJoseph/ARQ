@@ -15,7 +15,6 @@ use crate::ui::ui_util::{build_paragraph_multi, check_display_size};
 
 pub mod framehandler;
 pub mod util;
-pub mod character_info_view;
 pub mod map_view;
 pub mod settings_menu_view;
 pub mod game_over_view;

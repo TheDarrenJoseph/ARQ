@@ -1,5 +1,5 @@
+use crate::engine::event::container::MoveToContainerChoiceData;
 use crate::error::errors::ErrorWrapper;
-use crate::view::framehandler::container::MoveToContainerChoiceData;
 use crate::view::framehandler::container_choice::ContainerChoiceFrameHandler;
 
 pub mod widget_menu;

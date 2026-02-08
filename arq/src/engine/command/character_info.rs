@@ -1,3 +1,4 @@
+use crate::engine::event::container::MoveItemsRequest;
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
 use crate::engine::event::container::OpenedContainerEventType;
@@ -28,7 +29,6 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::container_util;
 use crate::engine::container_util::move_player_items;
 use crate::map::objects::items::Item;
-use crate::view::framehandler::container::{MoveItemsRequest, MoveItemsToContainerRequest};
 use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
