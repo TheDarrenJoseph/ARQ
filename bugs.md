@@ -35,6 +35,18 @@ is there more consolidation we could do for the high-level generic inventory typ
 
 Hint: need to change what's happening to the item list here as it's likely getting rebuilt wrongly when the items are removed from the selection post-move
 
+## [TODO] BUG-4 - Moving items from a nested inventory container to the parent doesn't work
+1. GIVEN you're in the player inventory screen
+2. AND you've opened 2 nested containers (i.e Bag and then Carton)
+3. WHEN using the container choice move to move an item to the parent (i.e Bag)
+4. THEN after moving, nothing happens
+
+Relevant logs:
+```text
+2026-02-08 19:55:59 - INFO: [move_player_items] Attempting to move player items to a target container (inside inventory)...
+2026-02-08 19:55:59 - ERROR: Error while moving items to another container: [container_util::move_items] Cannot move items. No target item provided
+```
+
 ##
 ## PLAY-1 - The container choice view is never shown as an option / prompted
 

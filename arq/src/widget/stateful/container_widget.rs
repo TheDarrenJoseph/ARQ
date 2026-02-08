@@ -278,10 +278,7 @@ impl ContainerWidgetData {
             },
             UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceResult, Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(response)))) => {
                 self.handle_move_items_to_choice_response(response)
-            },
-            // OpenedContainerEventType::MoveItemsToContainerChoiceResult => {
-            //
-            //                 }
+            }
             _ => {}
         }
     }
