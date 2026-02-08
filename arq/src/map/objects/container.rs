@@ -74,6 +74,10 @@ impl Container {
         self.item.get_id() == other.get_self_item().get_id()
     }
 
+    pub fn id_equals_uuid(&self, other_id: Uuid) -> bool {
+        self.item.get_id() == other_id
+    }
+
     pub fn get_contents(&self) -> &Vec<Container> {
         &self.contents
     }

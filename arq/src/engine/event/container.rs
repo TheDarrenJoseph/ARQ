@@ -27,7 +27,7 @@ pub enum OpenedContainerEventType {
 }
 
 // Specifying the request types used for a specific OpenedContainerEventType
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OpenedContainerEventData {
     OpenContainer(OpenContainerRequest),
     TakeItems(TakeItemsRequest),

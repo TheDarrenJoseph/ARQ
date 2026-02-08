@@ -27,7 +27,11 @@ impl CurrentContainersData {
         self.container_ids.push(container_id);
         self.widget_data_by_id.insert(container_id, widget_data);
     }
-    
+
+    pub fn get_data_mut(&mut self, id: Uuid) -> Option<&mut ContainerWidgetData> {
+        self.widget_data_by_id.get_mut(&id)
+    }
+
     pub fn get_current_data_mut(&mut self) -> Option<&mut ContainerWidgetData> {
         if let Some(current_container_id) = self.current_container_id {
             self.widget_data_by_id.get_mut(&current_container_id)

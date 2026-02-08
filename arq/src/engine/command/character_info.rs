@@ -80,14 +80,20 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 // Grab all the items selected in the current container widget (before the container choice was presented)
                 let current_container_widget_data : ContainerWidgetData = widget_data_by_id.get(&current_container_id).unwrap().clone();
 
-                let source_container = current_container_widget_data.container;
+                let source_container = current_container_widget_data.container.clone();
                 let items_selected = current_container_widget_data.item_list_selection.get_selected_items();
-                let target_container = source_container.find_by_id(&target.target_container_id).cloned();
+
+                let player_inventory =level.get_player_mut().unwrap().get_inventory();
+                let target_container = if (player_inventory.id_equals_uuid(target.target_container_id)) {
+                    Some(player_inventory)
+                } else {
+                    source_container.find_by_id(&target.target_container_id)
+                };
 
                 let mut to_move: Vec<Item>  = Vec::new();
                 items_selected.iter().for_each(|item|to_move.push(item.clone()));
 
-                let data = MoveItemsRequest { source: source_container, to_move, target_container: target_container, target_item: None, position: None };
+                let data = MoveItemsRequest { source: current_container_widget_data.container.clone(), to_move, target_container: target_container.cloned(), target_item: None, position: None };
 
                 let result = move_player_items(data, level);
                 match result {
@@ -316,9 +322,11 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
                     // If we have a container choice data set, it takes priority
                     // Handle any events specific to choosing a container
+                    let choice_event = e.clone();
                     if let Some(choice_data) = &mut widget_data.containers_data.container_choice_data {
                         debug!("Handling Character Info UI Event (container choice)");
-                     choice_data.handle_event(e).await;
+                     choice_data.handle_event(choice_event).await;
+                        
                     } else {
                         debug!("Handling Character Info UI Event (container)");
                         widget_data.handle_event(e).await;

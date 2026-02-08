@@ -118,6 +118,10 @@ impl Character {
         self.position = position;
     }
 
+    pub fn get_inventory(&mut self) -> &Container {
+        return &self.inventory;
+    }
+    
     pub fn get_inventory_mut(&mut self) -> &mut Container {
         return &mut self.inventory;
     }

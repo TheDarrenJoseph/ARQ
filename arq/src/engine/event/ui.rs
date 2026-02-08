@@ -44,7 +44,7 @@ pub struct EventTask {
     sender: mpsc::UnboundedSender<UIEvent>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UIEvent {
     /// An event that is emitted on a regular schedule.
     ///
@@ -57,7 +57,7 @@ pub enum UIEvent {
     AppEvent(AppEventType)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AppEventType {
     OpenedContainerEvent(OpenedContainerEventType, Option<OpenedContainerEventData>)
 }

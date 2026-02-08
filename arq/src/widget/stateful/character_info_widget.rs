@@ -13,6 +13,8 @@ use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::engine::event::container::{OpenedContainerEventData, OpenedContainerEventType};
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {
@@ -94,10 +96,31 @@ impl CharacterInfoWidgetData {
 
     pub async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("Handling event: {:?}", event);
+
+        match event {
+            UIEvent::AppEvent(
+                OpenedContainerEvent(
+                    OpenedContainerEventType::MoveItemsToContainerChoiceResult,
+                    Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(ref response))
+                )
+            ) => {
+                // If the target is the current (i.e Player Inventory) then make sure to handle it here first
+                if let Some(target_container) = &response.target_container {
+                    if (target_container.id_equals(&self.container)) {
+                        let topmost_container_event = event.clone();
+                        let topmost_container_id = self.containers_data.container_ids[0];
+                        if let Some(topmost_container_data) = self.containers_data.get_data_mut(topmost_container_id) {
+                            topmost_container_data.handle_event(topmost_container_event).await;
+                        }
+                    }
+                }
+            },
+            _ => {}
+        }
+
         if let Some(current_container_data) =  self.containers_data.get_current_data_mut() {
             current_container_data.handle_event(event).await;
         }
-        // TODO any event handling for this parent widget
     }
 
 }
