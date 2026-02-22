@@ -290,13 +290,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     // for any containers we might want to move items to
                     if let Some(map) = &level.map {
                         let level_containers = &map.containers;
-
-                        let mut nearby_positions : Vec<Position> = Vec::new();
-                        nearby_positions.push(player_position.clone());
-                        player_pos.get_neighbors().iter().for_each(|p| { nearby_positions.push(p.clone()); });
-
-                        let mut nearby_container_choices : Vec<Container> = Vec::new();
-                        for nearby_pos in nearby_positions {
+                        for nearby_pos in player_pos.get_neighbors() {
                             if let Some(ncc) = level_containers.get(&nearby_pos) {
                                 let neighbor_container_name = ncc.get_self_item().get_name().clone();
                                 choices
@@ -306,8 +300,24 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                             position: nearby_pos,
                                             location_name: format!("{} ({})", neighbor_container_name, player_pos.describe_neighbor(nearby_pos)),
                                         }
-                                    )
+                                    );
 
+                                let child_containers : Vec<Container> = if ncc.is_true_container() {
+                                    ncc.get_contents().iter().filter(|c| c.is_true_container()).cloned().collect()
+                                } else {
+                                    Vec::new()
+                                };
+                                for child_container in child_containers {
+                                    let child_container_name = ncc.get_self_item().get_name().clone();
+                                    choices
+                                        .push(
+                                            ContainerChoice {
+                                                container: child_container.clone(),
+                                                position: nearby_pos,
+                                                location_name: format!("{} ({})", child_container_name, neighbor_container_name),
+                                            }
+                                        )
+                                }
                             }
                         }
                     }
