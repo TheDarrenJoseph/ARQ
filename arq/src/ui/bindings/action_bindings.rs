@@ -1,6 +1,6 @@
 use crate::map::position::Side;
 use crate::map::position::Side::{BOTTOM, LEFT, RIGHT, TOP};
-use crate::ui::bindings::action_bindings::Action::{DevBeginCombat, Escape, LookAround, MovePlayer, OpenNearby, ShowInventory};
+use crate::ui::bindings::action_bindings::Action::{DevBeginCombat, Escape, LookAround, MovePlayer, OpenNearby, ShowCharacterInfo};
 use crate::ui::bindings::input_bindings::KeyBindings;
 use std::collections::HashMap;
 use termion::event::Key;
@@ -9,7 +9,7 @@ use termion::event::Key;
  */
 #[derive(Debug, Clone)]
 pub enum Action {
-    ShowInventory,
+    ShowCharacterInfo, // Displays inventory and other character info
     DevBeginCombat, // For development of combat view
     LookAround,
     OpenNearby,
@@ -26,7 +26,7 @@ pub fn build_default_action_keybindings() -> ActionKeyBindings {
     let mut bindings = HashMap::new();
     bindings.insert(Key::Esc, Escape);
     bindings.insert(Key::Char('c'), DevBeginCombat);
-    bindings.insert(Key::Char('i'), ShowInventory);
+    bindings.insert(Key::Char('i'), ShowCharacterInfo);
     bindings.insert(Key::Char('k'), LookAround);
     bindings.insert(Key::Char('o'), OpenNearby);
     

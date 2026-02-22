@@ -8,7 +8,7 @@ use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::container::OpenedContainerEventType;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
-use crate::map::objects::items::Item;
+use crate::map::objects::items::{Item, ItemType};
 use crate::map::position::Area;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
@@ -37,10 +37,7 @@ impl ContainerWidget {
     pub(crate) fn new(container_id: Uuid) -> ContainerWidget {
         ContainerWidget {
             container_id,
-            columns: vec![
-                Column {name : "NAME".to_string(), size: 30},
-                Column {name : "STORAGE (Kg)".to_string(), size: 12}
-            ],
+            columns: build_columns(),
             row_count: 1,
         }
     }
@@ -314,6 +311,50 @@ impl ContainerWidgetData {
 
 }
 
+fn build_columns() -> Vec<Column> {
+    vec![
+        Column {name : "NAME".to_string(), size: 30},
+        Column {name : "WEIGHT (Kg)".to_string(), size: 12},
+        Column {name : "VALUE".to_string(), size: 12}
+    ]
+}
+
+fn build_item_column_text(column: &Column, item: &Item) -> String {
+    match column.name.as_str() {
+        "NAME" => {
+            if item.is_equipped() {
+              format!("{} ({})", item.get_name(), item.get_equipment_slot().unwrap())
+            } else {
+              item.get_name()
+            }
+        },
+        "WEIGHT (Kg)" => {
+            item.get_weight().to_string()
+        },
+        "VALUE" => {
+             item.get_value().to_string()
+        },
+        _ => { "".to_string() }
+    }
+}
+
+fn build_container_column_text(column: &Column, container: &Container) -> String {
+    let self_item =  container.get_self_item();
+    match column.name.as_str() {
+        "NAME" => {
+            self_item.get_name()
+        },
+        "WEIGHT (Kg)" => {
+            container.get_weight_total().to_string()
+        },
+        "VALUE" => {
+            container.get_loot_value().to_string()
+        },
+        _ => { "".to_string() }
+    }
+}
+
+
 impl StatefulWidget for ContainerWidget {
     type State = ContainerWidgetData;
 
@@ -359,8 +400,14 @@ impl StatefulWidget for ContainerWidget {
                 let selected = item_list_selection.is_selected(item_index);
 
                 for column in &self.columns {
-                    let text = crate::view::framehandler::container::build_column_text(column, item);
-                    let mut column_text = build_paragraph(text);
+
+                    let column_text = if c.is_true_container() {
+                        build_container_column_text(column, c)
+                    }  else {
+                        build_item_column_text(column, item)
+                    };
+
+                    let mut column_text = build_paragraph(column_text);
                     if current_index.clone() && selected.clone() {
                         column_text = column_text.style(Style::default().fg(Color::Green).add_modifier(Modifier::REVERSED));
                     } else if current_index {

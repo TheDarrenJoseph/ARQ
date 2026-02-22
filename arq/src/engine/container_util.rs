@@ -401,7 +401,6 @@ use std::collections::HashMap;
     use crate::map::position::{build_square_area, Position};
     use crate::map::tile::TileType;
     use crate::map::Tiles;
-    use crate::view::framehandler::container::ContainerFrameHandlerInputResult::MoveItems;
 
     fn build_test_level(container_position: Position, area_container: Container) -> Level {
         let tile_library = crate::map::tile::build_library();

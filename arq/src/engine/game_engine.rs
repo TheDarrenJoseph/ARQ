@@ -423,7 +423,7 @@ impl <B : Backend + Send> GameEngine<B> {
             Action::DevBeginCombat => {
                 Ok(self.begin_combat()?)
             },
-            Action::ShowInventory => {
+            Action::ShowCharacterInfo => {
                 let mut command = CharacterInfoCommand {
                     level,
                     ui: &mut self.ui_wrapper.ui,
@@ -440,7 +440,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     //command.handle_input(input)?;
                 }
                 Ok(None)
-            },
+            }
             Action::LookAround => {
                 let key_bindings = self.settings.key_bindings.command_specific_key_bindings.look_key_bindings.clone();
                 let mut command = LookCommand {

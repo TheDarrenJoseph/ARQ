@@ -271,15 +271,43 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let stateful_widgets = ui.get_stateful_widgets_mut();
                 stateful_widgets.push(StatefulWidgetType::ContainerChoice(container_choice_widget));
 
-                let inventory = level.characters.get_player_mut().unwrap().get_inventory_mut();
-                let container_choices = container_util::build_container_choices(&data.source, inventory);
-                let choices = container_choices.unwrap();
-                let container_choice_data = build_container_choice_widget_data(
-                    choices,
-                    ui_areas.clone(),
-                    child_container_sender
-                );
-                containers_data.container_choice_data = Some(container_choice_data);
+                let player_mut = level.characters.get_player_mut();
+
+                if let Some(player) = player_mut {
+                    let inventory = player.get_inventory_mut();
+
+                    let container_choices = container_util::build_container_choices(&data.source, inventory);
+                    let mut choices = container_choices.unwrap();
+
+                    let player_pos = player.get_global_position();
+
+                    // Check the player's current position and neighbors
+                    // for any containers we might want to move items to
+                    if let Some(map) = &level.map {
+                        let level_containers = &map.containers;
+
+                        let mut nearby_positions : Vec<Position> = Vec::new();
+                        nearby_positions.push(player_position.clone());
+                        player_pos.get_neighbors().iter().for_each(|p| { nearby_positions.push(p.clone()); });
+
+                        let mut nearby_container_choices : Vec<Container> = Vec::new();
+                        for nearby_pos in nearby_positions {
+                            if let Some(ncc) = level_containers.get(&nearby_pos) {
+                                nearby_container_choices.push(ncc.clone());
+                            }
+                        }
+                        nearby_container_choices.iter().for_each(|ncc| {choices.push(ncc.clone())})
+                    }
+
+                    let container_choice_data = build_container_choice_widget_data(
+                        choices,
+                        ui_areas.clone(),
+                        child_container_sender
+                    );
+                    containers_data.container_choice_data = Some(container_choice_data);
+                }
+
+
             },
             _ => {}
         }
