@@ -27,7 +27,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::container_util;
 use crate::engine::container_util::move_player_items;
 use crate::map::objects::items::Item;
-use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
+use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -276,7 +276,12 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 if let Some(player) = player_mut {
                     let inventory = player.get_inventory_mut();
 
-                    let container_choices = container_util::build_container_choices(&data.source, inventory);
+                    let container_choices =
+                        container_util::build_container_choices(
+                            &data.source,
+                            inventory,
+                            player_position
+                        );
                     let mut choices = container_choices.unwrap();
 
                     let player_pos = player.get_global_position();
@@ -293,10 +298,18 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                         let mut nearby_container_choices : Vec<Container> = Vec::new();
                         for nearby_pos in nearby_positions {
                             if let Some(ncc) = level_containers.get(&nearby_pos) {
-                                nearby_container_choices.push(ncc.clone());
+                                let neighbor_container_name = ncc.get_self_item().get_name().clone();
+                                choices
+                                    .push(
+                                        ContainerChoice {
+                                            container: ncc.clone(),
+                                            position: nearby_pos,
+                                            location_name: format!("{} ({})", neighbor_container_name, player_pos.describe_neighbor(nearby_pos)),
+                                        }
+                                    )
+
                             }
                         }
-                        nearby_container_choices.iter().for_each(|ncc| {choices.push(ncc.clone())})
                     }
 
                     let container_choice_data = build_container_choice_widget_data(
@@ -516,7 +529,7 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
 }
 
 
-fn build_container_choice_widget_data(choices: Vec<Container>, ui_areas: UIAreas, container_event_sender: UnboundedSender<UIEvent>) -> ContainerChoiceWidgetData {
+fn build_container_choice_widget_data(choices: Vec<ContainerChoice>, ui_areas: UIAreas, container_event_sender: UnboundedSender<UIEvent>) -> ContainerChoiceWidgetData {
     let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
     let widget_ui_area = build_container_widget_area(&main_area);
 

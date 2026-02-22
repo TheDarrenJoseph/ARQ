@@ -5,7 +5,7 @@ use crate::engine::event::container::OpenedContainerEventType;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::tabling::build_headings;
 use log::info;
-use ratatui::prelude::Widget;
+use ratatui::prelude::{Widget};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, StatefulWidget, Style};
@@ -16,21 +16,40 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::map::position::Area;
+use crate::map::position::{Area, Position};
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::ui::UIEvent;
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::standard::usage_line::UsageCommand;
 
-fn build_column_text(column: &Column, container: &Container) -> String {
-    let item = container.get_self_item();
+
+#[derive(Debug, Clone)]
+pub struct ContainerChoice {
+    pub container : Container,
+    pub position: Position,
+    pub location_name: String
+}
+
+fn build_columns() -> Vec<Column> {
+    vec![
+        Column {name : "NAME".to_string(), size: 30},
+        Column {name : "STORAGE (Kg)".to_string(), size: 12},
+        Column {name : "LOCATION".to_string(), size: 36}
+    ]
+}
+
+fn build_column_text(column: &Column, choice: &ContainerChoice) -> String {
+    let item = choice.container.get_self_item();
     match column.name.as_str() {
         "NAME" => {
             item.get_name()
         },
         "STORAGE (Kg)" => {
-            format!("{}/{}", container.get_weight_total(), container.get_weight_limit())
-        }
+            format!("{}/{}", choice.container.get_weight_total(), choice.container.get_weight_limit())
+        },
+        "LOCATION" => {
+            choice.location_name.clone()
+        },
         _ => { "".to_string() }
     }
 }
@@ -43,17 +62,14 @@ pub struct ContainerChoiceWidget {
 impl ContainerChoiceWidget {
     pub(crate) fn new() -> ContainerChoiceWidget {
         ContainerChoiceWidget {
-            columns: vec![
-                Column {name : "NAME".to_string(), size: 30},
-                Column {name : "STORAGE (Kg)".to_string(), size: 12}
-            ]
+            columns: build_columns()
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ContainerChoiceWidgetData {
-    pub choices: Vec<Container>,
+    pub choices: Vec<ContainerChoice>,
     pub item_list_selection : ItemListSelection,
     pub ui_area: Area,
     pub usage_commands: Vec<UsageCommand>,
@@ -62,7 +78,7 @@ pub struct ContainerChoiceWidgetData {
 
 impl ContainerChoiceWidgetData {
     pub fn new(
-        choices: Vec<Container>,
+        choices: Vec<ContainerChoice>,
         ui_area: Area,
         line_count: i32,
         sender: UnboundedSender<UIEvent>
@@ -209,10 +225,10 @@ impl StatefulWidget for ContainerChoiceWidget {
 }
 
 
-fn convert_to_item_list(choices : Vec<Container>) -> Vec<Item> {
+fn convert_to_item_list(choices : Vec<ContainerChoice>) -> Vec<Item> {
     let mut items = Vec::new();
     for c in choices {
-        items.push(c.get_self_item().clone());
+        items.push(c.container.get_self_item().clone());
     }
     items
 }

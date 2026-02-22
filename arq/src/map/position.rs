@@ -48,7 +48,30 @@ impl Position {
         positions
     }
 
+    pub fn describe_neighbor(&self, position: Position) -> String {
+        if (position.x == self.x - 1 && position.y == self.y) {
+            return String::from("Left")
+        }
 
+        if (position.x == self.x + 1 && position.y == self.y) {
+            return String::from("Right")
+        }
+
+        if (position.x == self.x  && position.y == self.y - 1) {
+            return String::from("Top")
+        }
+
+        if (position.x == self.x  && position.y == self.y + 1) {
+            return String::from("Bottom")
+        }
+
+        if (position.x == self.x  && position.y == self.y) {
+            return String::from("Current")
+        }
+
+        return "Unknown".to_string()
+    }
+    
     pub fn equals(&self, position: Position) -> bool {
         return self.x == position.x && self.y == position.y;
     }

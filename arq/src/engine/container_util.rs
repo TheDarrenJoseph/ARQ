@@ -7,6 +7,8 @@ use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
+use crate::map::position::Position;
+use crate::widget::stateful::container_choice_widget::ContainerChoice;
 
 pub struct AddToTargetResult {
     pub moved : Vec<Container>,
@@ -373,15 +375,22 @@ fn move_items(data: MoveItemsRequest, level : &mut Level) -> Result<MoveItemsRes
     }
 }
 
-pub fn build_container_choices(source: &Container, parent: &mut Container) -> Result<Vec<Container>, io::Error> {
-    let mut sub_containers = parent.find_and_clone_subcontainers();
+pub fn build_container_choices(source: &Container, parent: &mut Container, parent_position: Position) -> Result<Vec<ContainerChoice>, io::Error> {
+    let mut sub_containers = parent.find_subcontainer_choices(parent_position);
+
     let mut idx = 0;
     for c in &sub_containers {
-        log::info!("{} - Available container: {}", idx, c.get_self_item().get_name());
+        log::info!("{} - Available container: {}", idx, c.container.get_self_item().get_name());
         idx +=1;
     }
     if !source.id_equals(parent) {
-        sub_containers.push(parent.clone())
+        sub_containers.push(
+            ContainerChoice {
+                container: parent.clone(),
+                position: parent_position.clone(),
+                location_name: parent.get_self_item().get_name()
+            }
+        )
     }
     return Ok(sub_containers);
 }

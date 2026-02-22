@@ -6,6 +6,8 @@ use crate::error::errors::ErrorWrapper;
 use uuid::Uuid;
 
 use crate::map::objects::items::{Item, ItemType};
+use crate::map::position::Position;
+use crate::widget::stateful::container_choice_widget::ContainerChoice;
 
 #[derive(Clone, Eq)]
 #[derive(PartialEq)]
@@ -102,17 +104,24 @@ impl Container {
     }
 
     /*
-    * Returns a copy of each subcontainer
+    * Returns a ContainerChoice copy of each subcontainer
     */
-    pub fn find_and_clone_subcontainers(&mut self) -> Vec<Container> {
+    pub fn find_subcontainer_choices(&mut self, position: Position) -> Vec<ContainerChoice> {
+        let container_name =  self.get_self_item().get_name();
         let mut containers = Vec::new();
         for c in &mut self.contents {
             if c.container_type == ContainerType::OBJECT {
-                let sc = c.find_and_clone_subcontainers();
+                let sc = c.find_subcontainer_choices(position);
                 for s in sc {
                     containers.push(s.clone());
                 }
-                containers.push(c.clone());
+                containers.push(
+                    ContainerChoice {
+                        container: c.clone(),
+                        position: position.clone(),
+                        location_name: container_name.clone()
+                    }
+                );
             }
         }
         containers
