@@ -88,11 +88,13 @@ pub struct MoveToContainerChoiceData {
 
 #[derive(Clone, Debug)]
 pub struct MoveItemsRequest {
-    pub source: Container,
+    pub source_container: Container,
     pub to_move: Vec<Item>,
     pub target_container: Option<Container>,
-    pub target_item: Option<Item>,
-    pub position: Option<Position>
+    // for moving items to a specific position
+    pub target_position_item: Option<Item>,
+    pub source_position: Option<Position>,
+    pub target_position: Option<Position>
 }
 
 #[derive(Clone, Debug)]
@@ -100,8 +102,24 @@ pub struct MoveItemsResponse {
     pub source: Container,
     pub unmoved: Vec<Item>,
     pub target_container: Option<Container>,
-    pub target_item: Option<Item>,
     pub position: Option<Position>,
+    pub message: String
+}
+
+#[derive(Clone, Debug)]
+pub struct MoveItemsBetweenRequest {
+    pub source_container: Container,
+    pub source_position: Position,
+    pub target_container: Container,
+    pub target_position: Position,
+    pub to_move: Vec<Item>,
+}
+
+#[derive(Clone, Debug)]
+pub struct MoveItemBetweenResponse {
+    pub request: MoveItemsBetweenRequest,
+    pub success: bool,
+    pub unmoved: Vec<Item>,
     pub message: String
 }
 

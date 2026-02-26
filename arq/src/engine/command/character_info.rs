@@ -93,7 +93,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let mut to_move: Vec<Item>  = Vec::new();
                 items_selected.iter().for_each(|item|to_move.push(item.clone()));
 
-                let data = MoveItemsRequest { source: current_container_widget_data.container.clone(), to_move, target_container: target_container.cloned(), target_item: None, position: None };
+                let data = MoveItemsRequest { source_container: current_container_widget_data.container.clone(), to_move, target_container: target_container.cloned(), target_position_item: None, source_position: None, target_position: None };
 
                 let result = move_player_items(data, level);
                 match result {

@@ -139,11 +139,12 @@ impl ContainerWidgetData {
                     let target_item = self.item_list_selection.get_focused_item().map(|i| i.clone());
 
                     let data = MoveItemsRequest {
-                        source: self.container.clone(),
+                        source_container: self.container.clone(),
                         to_move: selected_items,
-                        position: None,
+                        source_position: None,
+                        target_position: None,
                         target_container,
-                        target_item
+                        target_position_item: target_item,
                     };
                     self.event_sender.send(
                         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(data))))
