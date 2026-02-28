@@ -1,4 +1,4 @@
-use crate::engine::event::container::{MoveItemsResponse, MoveItemsToContainerRequest};
+use crate::engine::event::container::{MoveItemsResponse, ContainerChoicesRequest, MoveItemsResponseV2};
 use crate::engine::event::container::DropItemsRequest;
 use crate::engine::event::container::MoveItemsRequest;
 use crate::engine::event::container::TakeItemsRequest;
@@ -159,7 +159,7 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::MoveItemsToContainerChoice => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                    let data = MoveItemsToContainerRequest { source: self.container.clone(), to_move: selected_items, position: None };
+                    let data = ContainerChoicesRequest { source: self.container.clone(), to_move: selected_items, position: None };
                     self.event_sender.send(
                         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoice, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))))
                     ).expect("Error sending event");
@@ -190,24 +190,24 @@ impl ContainerWidgetData {
         }
     }
 
-    pub fn handle_move_items_to_choice_response(&mut self, response: MoveItemsResponse) {
+    pub fn handle_move_items_to_choice_response(&mut self, response: MoveItemsResponseV2) {
+
+        let source = response.request.source;
+        let target = response.request.target;
+
         // Check for items being moved FROM this container
         let source_container_id = self.container.get_self_item().get_id();
-        if source_container_id == response.source.get_self_item().get_id() {
-            let is_not_target_container = !response.target_container.as_ref().map_or_else(|| false, |t| t.id_equals(&self.container));
-            if (is_not_target_container) {
-                // Update the current container details to the updated source
-                self.container = response.source;
-                self.item_list_selection.cancel_selection();
-                self.rebuild_selection();
-            }
-        }
 
-        // If items are moved TO this container, update this container to match the updated container
-        let is_target_container = response.target_container.as_ref().map_or_else(|| false, |t| t.id_equals(&self.container));
-        if is_target_container {
+        let is_not_target = !source.matches(&target);
+
+        if (is_not_target) {
+            // Update the current container details to the updated source
+            self.container = source.get_container().clone();
+            self.item_list_selection.cancel_selection();
+            self.rebuild_selection();
+        } else {
             // Update the current container details to the updated target
-            self.container = response.target_container.unwrap();
+            self.container = target.get_container().clone();
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
         }

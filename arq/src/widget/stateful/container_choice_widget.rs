@@ -1,5 +1,6 @@
-use crate::engine::event::container::ContainerTarget;
-use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
+use uuid::Uuid;
+use crate::engine::event::container::{ContainerScope, PlayerInventoryContainer, WorldContainer};
+use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
 use crate::engine::event::container::OpenedContainerEventType;
 use crate::ui::ui_util::build_paragraph;
@@ -22,11 +23,16 @@ use crate::engine::event::ui::UIEvent;
 use crate::view::framehandler::util::tabling::Column;
 use crate::widget::standard::usage_line::UsageCommand;
 
+#[derive(Clone, Debug)]
+pub enum ContainerChoiceScope {
+    PlayerInventory,
+    WorldContainer
+}
+
 
 #[derive(Debug, Clone)]
 pub struct ContainerChoice {
-    pub container : Container,
-    pub position: Position,
+    pub container_scope: ContainerScope,
     pub location_name: String
 }
 
@@ -39,13 +45,12 @@ fn build_columns() -> Vec<Column> {
 }
 
 fn build_column_text(column: &Column, choice: &ContainerChoice) -> String {
-    let item = choice.container.get_self_item();
-    match column.name.as_str() {
+    match column.name.as_str()  {
         "NAME" => {
-            item.get_name()
+            choice.container_scope.build_container_choice_column_text(column)
         },
         "STORAGE (Kg)" => {
-            format!("{}/{}", choice.container.get_weight_total(), choice.container.get_weight_limit())
+            choice.container_scope.build_container_choice_column_text(column)
         },
         "LOCATION" => {
             choice.location_name.clone()
@@ -69,6 +74,7 @@ impl ContainerChoiceWidget {
 
 #[derive(Debug, Clone)]
 pub struct ContainerChoiceWidgetData {
+    pub scope: ContainerChoiceScope,
     pub choices: Vec<ContainerChoice>,
     pub item_list_selection : ItemListSelection,
     pub ui_area: Area,
@@ -86,6 +92,7 @@ impl ContainerChoiceWidgetData {
         let choice_items = convert_to_item_list(choices.clone());
         let item_list_selection =  ItemListSelection::new(choice_items, line_count.into());
         ContainerChoiceWidgetData {
+            scope: ContainerChoiceScope::PlayerInventory,
             choices,
             item_list_selection,
             ui_area,
@@ -101,10 +108,14 @@ impl ContainerChoiceWidgetData {
         if let Some(container_event_type) = &usage_command.opened_container_event_type {
             match container_event_type {
                 OpenedContainerEventType::MoveItemsToContainerChoiceSelection => {
-                    let target = ContainerTarget {
-                        target_container_id: self.item_list_selection.get_focused_item().unwrap().get_id()
+                    let target = match self.scope {
+                        _ => {
+                            let focused_item = self.item_list_selection.get_focused_item().unwrap();
+                            let chosen_choice = self.choices.iter().find(|c| c.container_scope.matches_item(focused_item));
+                            chosen_choice.unwrap().container_scope.clone()
+                        }
                     };
-                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(SelectedContainer(target)))))
+                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))))
                         .expect("Failed to send event");
                 },
                 Close => {
@@ -228,7 +239,7 @@ impl StatefulWidget for ContainerChoiceWidget {
 fn convert_to_item_list(choices : Vec<ContainerChoice>) -> Vec<Item> {
     let mut items = Vec::new();
     for c in choices {
-        items.push(c.container.get_self_item().clone());
+        items.push(c.container_scope.get_self_item().clone());
     }
     items
 }

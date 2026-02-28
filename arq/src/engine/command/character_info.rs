@@ -1,6 +1,7 @@
-use crate::engine::event::container::MoveItemsRequest;
+use crate::engine::container_util::move_items;
+use crate::engine::event::container::{ContainerScope, MoveItemsRequest, MoveItemsRequestV2, PlayerInventoryContainer, WorldContainer};
 use crate::engine::event::container::OpenedContainerEventData;
-use crate::engine::event::container::OpenedContainerEventData::SelectedContainer;
+use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::engine::event::container::OpenedContainerEventType;
 use crate::engine::command::open_command::{OpenCommandChannels};
 use crate::engine::command::util::CurrentContainersData;
@@ -74,7 +75,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 containers_data.container_choice_data = None;
             },
             // If we've picked a selection, we should also close the widget
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(SelectedContainer(target)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
                 log::info!("Handling SelectedContainer event");
 
                 // Grab all the items selected in the current container widget (before the container choice was presented)
@@ -84,18 +85,17 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let items_selected = current_container_widget_data.item_list_selection.get_selected_items();
 
                 let player_inventory =level.get_player_mut().unwrap().get_inventory();
-                let target_container = if (player_inventory.id_equals_uuid(target.target_container_id)) {
-                    Some(player_inventory)
-                } else {
-                    source_container.find_by_id(&target.target_container_id)
-                };
 
                 let mut to_move: Vec<Item>  = Vec::new();
                 items_selected.iter().for_each(|item|to_move.push(item.clone()));
 
-                let data = MoveItemsRequest { source_container: current_container_widget_data.container.clone(), to_move, target_container: target_container.cloned(), target_position_item: None, source_position: None, target_position: None };
+                let data = MoveItemsRequestV2 {
+                    source: ContainerScope::PlayerInventory(PlayerInventoryContainer { container: source_container.clone() }),
+                    target: target,
+                    to_move: to_move
+                };
 
-                let result = move_player_items(data, level);
+                let result = move_items(data, level);
                 match result {
                     Ok(response) => {
                         ui.set_console_buffer(response.message.clone());
@@ -274,12 +274,16 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let player_mut = level.characters.get_player_mut();
 
                 if let Some(player) = player_mut {
-                    let inventory = player.get_inventory_mut();
+                    let inventory = player.get_inventory();
 
                     let container_choices =
                         container_util::build_container_choices(
                             &data.source,
-                            inventory,
+                            ContainerScope::PlayerInventory(
+                                PlayerInventoryContainer {
+                                    container: inventory.clone()
+                                }
+                            ),
                             player_position
                         );
                     let mut choices = container_choices.unwrap();
@@ -293,11 +297,16 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                         for nearby_pos in player_pos.get_neighbors() {
                             if let Some(ncc) = level_containers.get(&nearby_pos) {
                                 let neighbor_container_name = ncc.get_self_item().get_name().clone();
+
                                 choices
                                     .push(
                                         ContainerChoice {
-                                            container: ncc.clone(),
-                                            position: nearby_pos,
+                                            container_scope: ContainerScope::WorldContainer(
+                                                WorldContainer {
+                                                    container: ncc.clone(),
+                                                    position: nearby_pos.clone(),
+                                                }
+                                            ),
                                             location_name: format!("{} ({})", neighbor_container_name, player_pos.describe_neighbor(nearby_pos)),
                                         }
                                     );
@@ -312,8 +321,12 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                     choices
                                         .push(
                                             ContainerChoice {
-                                                container: child_container.clone(),
-                                                position: nearby_pos,
+                                                container_scope: ContainerScope::WorldContainer(
+                                                    WorldContainer {
+                                                        container: child_container.clone(),
+                                                        position: nearby_pos.clone(),
+                                                    }
+                                                ),
                                                 location_name: format!("{} ({})", child_container_name, neighbor_container_name),
                                             }
                                         )

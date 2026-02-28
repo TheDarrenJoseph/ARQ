@@ -4,7 +4,7 @@ use std::io::{Error, ErrorKind};
 
 use crate::error::errors::ErrorWrapper;
 use uuid::Uuid;
-
+use crate::engine::event::container::{ContainerScope, PlayerInventoryContainer, WorldContainer};
 use crate::map::objects::items::{Item, ItemType};
 use crate::map::position::Position;
 use crate::widget::stateful::container_choice_widget::ContainerChoice;
@@ -45,7 +45,7 @@ impl Container {
     pub fn wrap(item: Item) -> Container {
         Container { item, container_type: ContainerType::ITEM, weight_limit: 0, contents: Vec::new() }
     }
-    
+
     pub fn is_moveable_container(&self) -> bool {
         let container_type_valid = self.container_type == ContainerType::OBJECT;
         let item_type_valid = self.item.item_type == ItemType::CONTAINER;
@@ -106,22 +106,38 @@ impl Container {
     /*
     * Returns a ContainerChoice copy of each subcontainer
     */
-    pub fn find_subcontainer_choices(&mut self, position: Position) -> Vec<ContainerChoice> {
+    pub fn find_subcontainer_choices(&self, scope: ContainerScope, position: Position) -> Vec<ContainerChoice> {
         let container_name =  self.get_self_item().get_name();
         let mut containers = Vec::new();
-        for c in &mut self.contents {
+        for c in &self.contents {
             if c.container_type == ContainerType::OBJECT {
-                let sc = c.find_subcontainer_choices(position);
+                let sc = c.find_subcontainer_choices(scope.clone(), position);
                 for s in sc {
                     containers.push(s.clone());
                 }
-                containers.push(
+
+                let container_choice = if scope.is_world_scope() {
                     ContainerChoice {
-                        container: c.clone(),
-                        position: position.clone(),
-                        location_name: container_name.clone()
+                        container_scope: ContainerScope::WorldContainer(
+                            WorldContainer {
+                                container: c.clone(),
+                                position: position.clone(),
+                            }
+                        ),
+                        location_name: c.get_self_item().get_name(),
                     }
-                );
+                } else {
+                    ContainerChoice {
+                        container_scope: ContainerScope::PlayerInventory(
+                            PlayerInventoryContainer {
+                                container: c.clone(),
+                            }
+                        ),
+                        location_name: c.get_self_item().get_name(),
+                    }
+                };
+
+                containers.push(container_choice);
             }
         }
         containers

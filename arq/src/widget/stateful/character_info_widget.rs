@@ -13,7 +13,7 @@ use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::event::container::{OpenedContainerEventData, OpenedContainerEventType};
+use crate::engine::event::container::{ContainerScope, OpenedContainerEventData, OpenedContainerEventType};
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -105,23 +105,32 @@ impl CharacterInfoWidgetData {
                     Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(ref response))
                 )
             ) => {
-                // If the target is the top-most (i.e Player Inventory) then make sure to handle it here first
-                if let Some(target_container) = &response.target_container {
-                    let target_container_id = target_container.get_self_item().get_id();
-                    if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
-                        let target_event = event.clone();
-                        target_data.handle_event(target_event).await;
-                    }
-
-                    let source_container_id = response.source.get_self_item().get_id();
-                    if let Some(source_data) =self.containers_data.get_data_mut(source_container_id) {
-                        let source_event = event.clone();
-                        source_data.handle_event(source_event).await;
-                    }
-
-                    // We're done if we've handled both target and source
-                    return;
+                // If the target is in the current containers data (in Inventory) then make sure to handle it here first
+                match &response.request.target {
+                    ContainerScope::PlayerInventory(pic_target) => {
+                        let target_container_id = pic_target.container.get_self_item().get_id();
+                        if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
+                            let target_event = event.clone();
+                            target_data.handle_event(target_event).await;
+                        }
+                    },
+                    _ => {}
                 }
+
+                match &response.request.source {
+                    ContainerScope::PlayerInventory(pic_source) => {
+                        let target_container_id = pic_source.container.get_self_item().get_id();
+                        if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
+                            let target_event = event.clone();
+                            target_data.handle_event(target_event).await;
+                        }
+                    },
+                    _ => {}
+                }
+
+                // We're done if we've handled both target and source
+                return;
+
             },
             _ => {}
         }
