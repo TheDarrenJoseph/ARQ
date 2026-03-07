@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::engine::event::container::{ContainerScope, PlayerInventoryContainer, WorldContainer};
+use crate::engine::event::container::{SourceContainerScope, PlayerInventoryContainer, WorldContainer, TargetContainerScope};
 use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
 use crate::engine::event::container::OpenedContainerEventType;
@@ -32,7 +32,7 @@ pub enum ContainerChoiceScope {
 
 #[derive(Debug, Clone)]
 pub struct ContainerChoice {
-    pub container_scope: ContainerScope,
+    pub container_scope: TargetContainerScope,
     pub location_name: String
 }
 

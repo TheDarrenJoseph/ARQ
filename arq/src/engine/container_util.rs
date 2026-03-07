@@ -204,14 +204,14 @@ pub fn player_drop_items(data: DropItemsRequest, level: &mut Level) -> Result<Dr
     return Ok(response);
 }
 
-fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_result: CopyResult) {
+fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_result: CopyResult) -> Container {
     let source_container : &mut Container;
     match request.source {
-        ContainerScope::WorldContainer(wc) => {
+        SourceContainerScope::WorldContainer(wc) => {
             let map =  level.map.as_mut().unwrap();
             source_container = find_container_mut(map, wc.position, &wc.container).expect("Failed to find World Container source");
         },
-        ContainerScope::PlayerInventory(_) => {
+        SourceContainerScope::PlayerInventory(_) => {
             let player = level.get_player_mut().unwrap();
             source_container = player.get_inventory_mut();
         }
@@ -226,6 +226,8 @@ fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_
             child_source.remove_matching_items(copy_result.copied.clone());
         }
     }
+
+    return source_container.clone();
 }
 
 fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Container) -> Result<&'a mut Container, ErrorWrapper> {
@@ -250,73 +252,88 @@ fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Cont
 /*
     Moves items within root, from the source container
  */
-fn move_items_within(root : &mut Container, source : Item, request: MoveItemsRequest) -> Option<MoveItemsResponse> {
-    // Find a mutable reference to the target container if provided
-    let root_target_result =  request.target_container
-        .map_or_else(
-            || { None },
-            // Find the target container within the root container
-            |target| { root.find_mut(target.get_self_item()) }
-        );
+// fn move_items_within(root : &mut Container, source : Item, request: MoveItemsWithinSourceRequest) -> Option<MoveItemsResponse> {
+//     // Find a mutable reference to the target container if provided
+//     let root_target_result =  request.target_container
+//         .map_or_else(
+//             || { None },
+//             // Find the target container within the root container
+//             |target| { root.find_mut(target.get_self_item()) }
+//         );
+//
+//     if let Some(target) = root_target_result {
+//         let to_move_items = request.to_move.clone();
+//
+//         // We can't move items in-place, so first we copy..
+//         // Copy items from the source into the target
+//
+//         let to_copy = find_copying_items(request.source_container, to_move_items);
+//         let copy_result = copy_container_items(to_copy, target);
+//         if !copy_result.copied.is_empty() || !copy_result.uncopied.is_empty() {
+//
+//             // Find the source container within the root container
+//             if let Some(ref mut source_container) = root.find_mut(&source) {
+//                 source_container.remove_matching_items(copy_result.copied.clone());
+//                 // If the target contains our source, we need to replace the source there too
+//                 let mut updated_target = copy_result.updated_target;
+//                 if let Some(ut) = &mut updated_target {
+//                     if let Some(found) = ut.find_mut(source_container.get_self_item()) {
+//                        found.remove_matching_items(copy_result.copied.clone());
+//                     }
+//                 }
+//
+//                 // Now both target and source are updated, return a response to indicate what's moved
+//                 let moved = copy_result.copied;
+//                 let unmoved = copy_result.uncopied;
+//                 log::info!("Returning MoveItems response with {} moved, {} unmoved items", moved.len(), unmoved.len());
+//
+//                 // Return a response to communicate the changes made
+//                 // As the real upstream source will not have been changed here due to only a single mutable ref
+//                 let data = MoveItemsResponse {
+//                     source: source_container.clone(),
+//                     unmoved,
+//                     target_container: updated_target,
+//                     position: request.source_position,
+//                     message: format!("Moved {} of {} items", moved.len(), request.to_move.len())
+//                 };
+//                 return Some(data);
+//             } else {
+//                 log::error!("Failed to move items. Failed to find source container.");
+//             }
+//         } else {
+//             log::error!("Failed to move items. {} moved, {} unmoved items", copy_result.copied.len(), copy_result.uncopied.len());
+//         }
+//     } else {
+//         log::error!("Failed to move items. Couldn't find target container in source container.");
+//         return None;
+//     }
+//     None
+// }
 
-    if let Some(target) = root_target_result {
-        let to_move_items = request.to_move.clone();
+// Moving items to a specific position within the source_container
+fn move_items_to_source_position(mut request: MoveItemsRequestV2) -> Option<MoveItemsResponseV2> {
+    let request_result_copy = request.clone();
 
-        // We can't move items in-place, so first we copy..
-        // Copy items from the source into the target
-
-        let to_copy = find_copying_items(request.source_container, to_move_items);
-        let copy_result = copy_container_items(to_copy, target);
-        if !copy_result.copied.is_empty() || !copy_result.uncopied.is_empty() {
-
-            // Find the source container within the root container
-            if let Some(ref mut source_container) = root.find_mut(&source) {
-                source_container.remove_matching_items(copy_result.copied.clone());
-                // If the target contains our source, we need to replace the source there too
-                let mut updated_target = copy_result.updated_target;
-                if let Some(ut) = &mut updated_target {
-                    if let Some(found) = ut.find_mut(source_container.get_self_item()) {
-                       found.remove_matching_items(copy_result.copied.clone());
-                    }
-                }
-
-                // Now both target and source are updated, return a response to indicate what's moved
-                let moved = copy_result.copied;
-                let unmoved = copy_result.uncopied;
-                log::info!("Returning MoveItems response with {} moved, {} unmoved items", moved.len(), unmoved.len());
-
-                // Return a response to communicate the changes made
-                // As the real upstream source will not have been changed here due to only a single mutable ref
-                let data = MoveItemsResponse {
-                    source: source_container.clone(),
-                    unmoved,
-                    target_container: updated_target,
-                    position: request.source_position,
-                    message: format!("Moved {} of {} items", moved.len(), request.to_move.len())
-                };
-                return Some(data);
-            } else {
-                log::error!("Failed to move items. Failed to find source container.");
-            }
-        } else {
-            log::error!("Failed to move items. {} moved, {} unmoved items", copy_result.copied.len(), copy_result.uncopied.len());
-        }
+    let mut source_container;
+    let mut source_position = None;
+    if let SourceContainerScope::WorldContainer(wc) = request.source {
+        source_container = wc.container.clone();
+        source_position = Some(wc.position.clone());
+    } else if let SourceContainerScope::PlayerInventory(pic) = request.source {
+        source_container = pic.container.clone();
     } else {
-        log::error!("Failed to move items. Couldn't find target container in source container.");
+        log::error!("Failed to move items to source position. Failed to find source container.");
         return None;
     }
-    None
-}
 
-fn move_to_item_spot(source_container : &mut Container, mut request: MoveItemsRequest) -> Option<MoveItemsResponse> {
-    if let Some(target_item) = request.target_position_item {
-        if let Some(pos) = source_container.item_position(&target_item) {
+    if let TargetContainerScope::PlayerInventoryItemPosition(piip) = request.target {
+        if let Some(pos) = source_container.item_position(&piip.target_position_item) {
             let mut moved: Vec<Container> = Vec::new();
             let mut unmoved = Vec::new();
             let mut moving = Vec::new();
 
             for item in &request.to_move {
-                if let Some(container_item) = request.source_container.find_mut(&item) {
+                if let Some(container_item) = source_container.find_mut(&item) {
                     moving.push(container_item.clone());
                     moved.push(container_item.clone());
                 } else {
@@ -324,65 +341,123 @@ fn move_to_item_spot(source_container : &mut Container, mut request: MoveItemsRe
                 }
             }
 
+            // Update the source and target
             source_container.remove_matching_items(moving.clone());
             let target_pos = if pos >= moving.len() { pos - moving.len() } else { pos };
             source_container.insert(target_pos, moving.clone());
-            let data = MoveItemsResponse {
-                source: source_container.clone(),
-                unmoved,
-                target_container: None,
-                position: request.source_position,
+
+            let data = MoveItemsResponseV2 {
+                request: request_result_copy,
+                success: true,
+                updated_scopes: UpdatedScopes {
+                    // If we're moving to a player item position, then we're still in the player inventory
+                    source: SourceContainerScope::PlayerInventory(
+                        PlayerInventoryContainer {
+                            container: source_container.clone()
+                        }
+                    ),
+                    target: TargetContainerScope::PlayerInventoryItemPosition(
+                        PlayerInventoryItemPosition {
+                            target_position_item: piip.target_position_item.clone()
+                        }
+                    )
+                },
+                unmoved: unmoved,
+                message: format!("Moved {} of {} items", moved.len(), request.to_move.len())
+            };
+            return Some(data);
+        }
+    } else if let TargetContainerScope::WorldContainerItemPosition(wcip) = request.target {
+        if let Some(pos) = source_container.item_position(&wcip.target_position_item) {
+            let mut moved: Vec<Container> = Vec::new();
+            let mut unmoved = Vec::new();
+            let mut moving = Vec::new();
+
+            for item in &request.to_move {
+                if let Some(container_item) = source_container.find_mut(&item) {
+                    moving.push(container_item.clone());
+                    moved.push(container_item.clone());
+                } else {
+                    unmoved.push(item.clone());
+                }
+            }
+
+            // Update the source and target
+            source_container.remove_matching_items(moving.clone());
+            let target_pos = if pos >= moving.len() { pos - moving.len() } else { pos };
+            source_container.insert(target_pos, moving.clone());
+
+            let data = MoveItemsResponseV2 {
+                request: request_result_copy,
+                success: true,
+                updated_scopes: UpdatedScopes {
+                    // If we're moving to a player item position, then we're still in the player inventory
+                    source: SourceContainerScope::WorldContainer(
+                        WorldContainer {
+                            container: source_container.clone(),
+                            position: source_position.unwrap(),
+                        }
+                    ),
+                    target: TargetContainerScope::WorldContainerItemPosition(
+                        WorldContainerItemPosition {
+                            target_position_item: wcip.target_position_item.clone(),
+                            position: wcip.position.clone(),
+                        }
+                    )
+                },
+                unmoved: unmoved,
                 message: format!("Moved {} of {} items", moved.len(), request.to_move.len())
             };
             return Some(data);
         }
     }
+
     None
 }
 
 // Moves items between player inventory containers / into world container
-pub fn move_player_items(data: MoveItemsRequest, level : &mut Level) -> Result<MoveItemsResponse, ErrorWrapper> {
-    return if let Some(_) = data.source_position {
-        Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Cannot move player items to a specific position / world container combo (Not implemented).")))
-    } else {
-        log::info!("[move_player_items] Attempting to move player items to a target container (inside inventory)...");
-        let player: &mut Character = level.characters.get_player_mut().unwrap();
-        let inventory: &mut Container = player.get_inventory_mut();
-        let source_container;
-        let source_item;
-        let target_inventory = data.target_container.as_ref().map_or_else(|| false, |c| inventory.id_equals(&c));
-        let target_in_source = data.target_container.as_ref().map_or_else(|| false, |c| data.source_container.find(c.get_self_item()).is_some());
-        if inventory.id_equals(&data.source_container) || target_inventory || !target_in_source {
-            source_container = Some(inventory);
-            source_item = Some(data.source_container.get_self_item().clone());
-        } else {
-            source_container = inventory.find_mut(data.source_container.get_self_item());
-            source_item = source_container.as_ref().map(|s| s.get_self_item().clone());
-        }
-
-        if let Some(source) = source_container {
-            if let Some(_) = data.target_container {
-                if let Some(source_item) = source_item {
-                    log::info!("Attempting move to container..");
-                    return move_items_within(source, source_item, data).ok_or(
-                        ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container"))
-                    )
-                } else {
-                    return Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container. Failed to find source item")));
-                }
-            } else if let Some(_) = data.target_position_item {
-                log::info!("Attempting move to item spot..");
-                return move_to_item_spot(source, data).ok_or(
-                    ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to item spot in container"))
-                )
-            } else {
-                return Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. No target item provided")));
-            }
-        } else {
-            Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. Failed to find source container")))
-        }
-    }
-}
+// pub fn move_player_items(data: MoveItemsRequest, level : &mut Level) -> Result<MoveItemsResponse, ErrorWrapper> {
+//     return if let Some(_) = data.source_position {
+//         Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Cannot move player items to a specific position / world container combo (Not implemented).")))
+//     } else {
+//         log::info!("[move_player_items] Attempting to move player items to a target container (inside inventory)...");
+//         let player: &mut Character = level.characters.get_player_mut().unwrap();
+//         let inventory: &mut Container = player.get_inventory_mut();
+//         let source_container;
+//         let source_item;
+//         let target_inventory = data.target_container.as_ref().map_or_else(|| false, |c| inventory.id_equals(&c));
+//         let target_in_source = data.target_container.as_ref().map_or_else(|| false, |c| data.source_container.find(c.get_self_item()).is_some());
+//         if inventory.id_equals(&data.source_container) || target_inventory || !target_in_source {
+//             source_container = Some(inventory);
+//             source_item = Some(data.source_container.get_self_item().clone());
+//         } else {
+//             source_container = inventory.find_mut(data.source_container.get_self_item());
+//             source_item = source_container.as_ref().map(|s| s.get_self_item().clone());
+//         }
+//
+//         if let Some(source) = source_container {
+//             if let Some(_) = data.target_container {
+//                 if let Some(source_item) = source_item {
+//                     log::info!("Attempting move to container..");
+//                     return move_items_within(source, source_item, data).ok_or(
+//                         ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container"))
+//                     )
+//                 } else {
+//                     return Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container. Failed to find source item")));
+//                 }
+//             } else if let Some(_) = data.target_position_item {
+//                 log::info!("Attempting move to item spot..");
+//                 return move_to_item_spot(source, data).ok_or(
+//                     ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to item spot in container"))
+//                 )
+//             } else {
+//                 return Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. No target item provided")));
+//             }
+//         } else {
+//             Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. Failed to find source container")))
+//         }
+//     }
+// }
 
 
 pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<MoveItemsResponseV2, ErrorWrapper> {
@@ -395,45 +470,115 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
         let target = request.target.clone();
         let to_mvoe = request.to_move.clone();
 
-        if (source.get_container().id_equals(&target.get_container())) {
-            // This would be done via a move_items_within call instead
-            return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
-        }
 
-        let source_container = source.get_container().clone();
-        let live_target : &mut Container;
-        match target {
-            ContainerScope::WorldContainer(target) => {
-                live_target = level
-                    .get_map_mut().unwrap()
-                    .find_container(&target.container, target.position)
-                    .expect("Failed to find target container on the map");
-            },
-            ContainerScope::PlayerInventory(target) => {
-                live_target = level.get_player_mut().unwrap().get_inventory_mut();
+        if (target.is_container_target()) {
+            if (source.get_container().id_equals(&target.get_container().unwrap())) {
+                return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
             }
         }
 
-        let to_copy = find_copying_items(source_container, request.to_move.clone());
-        let copy_result = copy_container_items(to_copy, live_target);
-        let moved = copy_result.copied.clone();
-        let unmoved = copy_result.uncopied.clone();
-        update_source_container(level, request.clone(), copy_result);
+        let source_container = source.get_container().clone();
 
-        log::info!("Returning MoveItemBetweenResponse with {} moved, {} unmoved items", moved.len(), unmoved.len());
-        return Ok(MoveItemsResponseV2 {
-            request: request_result_copy,
-            success: true,
-            unmoved: unmoved.clone(),
-            message: format!("Moved {}/{} items", moved.len(), unmoved.len())
-        })
+        if (target.is_container_target()) {
+            let live_target: &mut Container;
+            match target {
+                TargetContainerScope::WorldContainer(target) => {
+                    live_target = level
+                        .get_map_mut().unwrap()
+                        .find_container(&target.container, target.position)
+                        .expect("Failed to find target container on the map");
+                },
+                TargetContainerScope::PlayerInventory(target) => {
+                    live_target =
+                        level.get_player_mut().unwrap().get_inventory_mut()
+                },
+                _ => {
+                    return Err(ErrorWrapper::new_internal(String::from("Unsupported operation")));
+                }
+            }
+
+            let to_copy = find_copying_items(source_container, request.to_move.clone());
+            let copy_result = copy_container_items(to_copy, live_target);
+            let updated_target = live_target.clone();
+
+            let moved = copy_result.copied.clone();
+            let unmoved = copy_result.uncopied.clone();
+            let updated_source = update_source_container(level, request.clone(), copy_result);
+
+            let updated_source_scope;
+            if (request.source.is_world_scope()) {
+                if let SourceContainerScope::WorldContainer(wc) = request.source {
+                    updated_source_scope = SourceContainerScope::WorldContainer(
+                        WorldContainer {
+                            container: updated_source.clone(),
+                            position: wc.position.clone()
+                        }
+                    )
+                } else {
+                    return Err(ErrorWrapper::new_internal(String::from("Couldn't convert source to SourceContainerScope::WorldContainer")));
+                }
+            } else {
+                if let SourceContainerScope::PlayerInventory(pic) = request.source {
+                    updated_source_scope = SourceContainerScope::PlayerInventory(
+                        PlayerInventoryContainer {
+                            container: updated_source.clone()
+                        }
+                    )
+                } else {
+                    return Err(ErrorWrapper::new_internal(String::from("Couldn't convert source to SourceContainerScope::WorldContainer")));
+                }
+            }
+
+            let updated_target_scope;
+            if (request.target.is_world_scope()) {
+                if let TargetContainerScope::WorldContainer(wc) = request.target {
+                    updated_target_scope = TargetContainerScope::WorldContainer(
+                        WorldContainer {
+                            container: updated_target,
+                            position: wc.position.clone()
+                        }
+                    )
+                } else {
+                    return Err(ErrorWrapper::new_internal(String::from("Couldn't convert target")));
+                }
+            } else {
+                if let TargetContainerScope::PlayerInventory(pic) = request.target {
+                    updated_target_scope = TargetContainerScope::PlayerInventory(
+                        PlayerInventoryContainer {
+                            container: updated_target.clone()
+                        }
+                    )
+                } else {
+                    return Err(ErrorWrapper::new_internal(String::from("Couldn't convert target")));
+                }
+            }
+
+            log::info!("Returning MoveItemBetweenResponse with {} moved, {} unmoved items", moved.len(), unmoved.len());
+            return Ok(MoveItemsResponseV2 {
+                request: request_result_copy,
+                success: true,
+                updated_scopes: UpdatedScopes {
+                    source: updated_source_scope,
+                    target: updated_target_scope
+                },
+                unmoved: unmoved.clone(),
+                message: format!("Moved {}/{} items", moved.len(), unmoved.len())
+            })
+        } else {
+            let move_response = move_items_to_source_position(request);
+            if (move_response.is_none()) {
+                return Err(ErrorWrapper::new_internal(String::from("Failed to move items to source position")));
+            } else {
+                return Ok(move_response.unwrap());
+            }
+        }
     } else {
         return Err(ErrorWrapper::new_internal(String::from("Cannot move items. No map available.")));
     }
 }
 
-pub fn build_container_choices(source: &Container, parent_scope: ContainerScope, parent_position: Position) -> Result<Vec<ContainerChoice>, io::Error> {
-    let parent_container = parent_scope.get_container();
+pub fn build_container_choices(source: &Container, parent_scope: TargetContainerScope, parent_position: Position) -> Result<Vec<ContainerChoice>, io::Error> {
+    let parent_container = parent_scope.get_container().unwrap();
     let parent_item_name = parent_scope.get_self_item().get_name();
     let mut sub_containers = parent_container.find_subcontainer_choices(parent_scope.clone(), parent_position);
     // Add the parent too
@@ -455,14 +600,14 @@ pub fn build_container_choices(source: &Container, parent_scope: ContainerScope,
 
 #[cfg(test)]
 mod tests {
-    use crate::engine::event::container::MoveItemsRequest;
+    use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope};
 use std::collections::HashMap;
 
     use uuid::Uuid;
 
     use crate::character::builder::character_builder::{CharacterBuilder, CharacterPattern};
     use crate::character::characters::Characters;
-    use crate::engine::container_util::{move_items, move_player_items};
+    use crate::engine::container_util::{move_items};
     use crate::engine::level::Level;
     use crate::map::objects::container::{Container, ContainerType};
     use crate::map::position::{build_square_area, Position};
@@ -519,150 +664,172 @@ use std::collections::HashMap;
         return  Level { map: Some(map) , characters: Characters::new( Some(player), Vec::new())  };
     }
 
-    // #[test]
-    // fn test_move_items_into_container() {
-    //     // GIVEN a valid map
-    //     // that holds a source container containing 3 containers
-    //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let to_move = vec![container1.get_self_item().clone()];
-    //     source_container.push(vec![container1, container2, container3]);
-    //     assert_eq!(3, source_container.get_total_count());
-    //
-    //     let source = source_container.clone();
-    //     let container_pos =  Position { x: 1, y: 1};
-    //     let target = source_container.get(2).clone();
-    //     let target_item = target.get_self_item().clone();
-    //     let mut level = build_test_level(container_pos, source_container);
-    //
-    //     // WHEN we call to move container 1 into container 3
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: Some(container_pos),
-    //         target_position: None
-    //     };
-    //     let data_expected = data.clone();
-    //     let result = move_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     // THEN we expect a valid result
-    //     if let Ok(response) = result {
-    //         // AND the source/targets should be returned with no outstanding to_move data
-    //         assert!(data_expected.source_container.id_equals(&response.source));
-    //         assert!(data_expected.target_container.unwrap().id_equals(&response.target_container.unwrap()));
-    //         assert!(response.unmoved.is_empty());
-    //
-    //         // AND The map 'source' container will have the items removed
-    //         let map_container = level.get_map_mut().unwrap().find_container(&data_expected.source_container, container_pos);
-    //         if let Some(c) = map_container {
-    //             // There should be 2 items in to root container's top level
-    //             assert_eq!(2, c.get_top_level_count());
-    //             // AND The 'target' container will contain the new items
-    //             if let Some(container_item) = c.find(&target_item) {
-    //                 assert_eq!(1, container_item.get_total_count());
-    //             }
-    //             return; // pass
-    //         }
-    //     }
-    //     assert!(false);
-    // }
-    //
-    // #[test]
-    // fn test_move_items_into_container_from_lower_to_parent() {
-    //     // GIVEN a valid map
-    //
-    //     // AND a chest that contains a nested bag and carton
-    //     let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //     let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //     let carton_id = carton.get_self_item().get_id();
-    //
-    //     // AND each of them contain some other items
-    //     let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     chest.push(vec![item1, item2, item3]);
-    //
-    //     let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item4_id = item4.get_self_item().get_id();
-    //     let item5_id = item5.get_self_item().get_id();
-    //     let item6_id = item6.get_self_item().get_id();
-    //
-    //     bag.push(vec![item4, item5, item6]);
-    //
-    //     let item7 = Container::new(Uuid::new_v4(), "Test Item 7".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item8 = Container::new(Uuid::new_v4(), "Test Item 8".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item9 = Container::new(Uuid::new_v4(), "Test Item 9".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item7_id = item7.get_self_item().get_id();
-    //     let item8_id = item8.get_self_item().get_id();
-    //
-    //     let to_move = vec![item7.get_self_item().clone(), item8.get_self_item().clone()];
-    //     carton.push(vec![item7, item8, item9]);
-    //     assert_eq!(3, carton.get_top_level_count());
-    //
-    //     let source = carton.clone();
-    //     let _source_clone = source.clone();
-    //     let expected_source = source.clone();
-    //     let target = bag.clone();
-    //     let expected_target = target.clone();
-    //     bag.push(vec![carton]);
-    //     assert_eq!(4, bag.get_top_level_count());
-    //
-    //     chest.push(vec![bag]);
-    //     assert_eq!(4, chest.get_top_level_count());
-    //
-    //     let container_pos = Position { x: 1, y: 1 };
-    //     let mut level = build_test_level(container_pos, chest);
-    //
-    //     // WHEN we call to move items from the lowest container (Carton / item 7 and 8) into the parent (Bag)
-    //     let data = MoveItemsRequest {
-    //         source_container: source, to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: Some(container_pos),
-    //         target_position: None
-    //     };
-    //     let result = move_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     // THEN we expect a result that confirms this
-    //     if let Ok(response) = result {
-    //         assert_eq!(0, response.unmoved.len());
-    //         assert_eq!(expected_target.get_self_item(), response.target_container.unwrap().get_self_item());
-    //         assert_eq!(expected_source.get_self_item(), response.source.get_self_item());
-    //
-    //         // AND the map will be updated to reflect this
-    //         // Carton
-    //         let source_updated = level.get_map_mut().unwrap().find_container(&expected_source, container_pos);
-    //         assert_eq!(1, source_updated.unwrap().get_top_level_count());
-    //
-    //         let mut target_updated = level.get_map_mut().unwrap().find_container(&expected_target, container_pos);
-    //         assert_eq!(6, target_updated.as_ref().unwrap().get_top_level_count());
-    //
-    //         let target_contents = target_updated.as_mut().unwrap().get_contents();
-    //         assert_eq!(item4_id, target_contents.get(0).unwrap().get_self_item().get_id());
-    //         assert_eq!(item5_id, target_contents.get(1).unwrap().get_self_item().get_id());
-    //         assert_eq!(item6_id, target_contents.get(2).unwrap().get_self_item().get_id());
-    //         assert_eq!(carton_id, target_contents.get(3).unwrap().get_self_item().get_id());
-    //         assert_eq!(item7_id, target_contents.get(4).unwrap().get_self_item().get_id());
-    //         assert_eq!(item8_id, target_contents.get(5).unwrap().get_self_item().get_id());
-    //         return;
-    //     }
-    //     assert!(false);
-    // }
+    #[test]
+    fn test_move_items_within_container() {
+        // GIVEN a source container containing 3 containers
+        let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        source_container.push(vec![container1.clone(), container2.clone(), container3.clone()]);
+        assert_eq!(3, source_container.get_total_count());
+
+        // And we want to move Container 1 into Container 3
+        let to_move = vec![container1.get_self_item().clone()];
+        let source = source_container.clone();
+        let container_pos =  Position { x: 1, y: 1};
+        let target_item = container3.get_self_item().clone();
+
+        // AND all of this is present in a level
+        let mut level = build_test_level(container_pos.clone(), source_container.clone());
+
+        // WHEN we call to move container 1 into container 3
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: source_container.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainer(
+                WorldContainer {
+                    container: container3.clone(),
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a result to return
+        assert!(result.is_ok());
+
+        // THEN we expect a valid result
+        if let Ok(response) = result {
+            assert_eq!(true, response.success);
+            assert!(response.unmoved.is_empty());
+
+            // And the 'target' (Container 3) container will have the item now
+            let target_container = &request.target.get_container().unwrap();
+            let updated_target = level.get_map_mut().unwrap().find_container(target_container, container_pos);
+            if let Some(c) = updated_target {
+                // There should be 1 item in container
+                assert_eq!(1, c.get_total_count());
+                // And it should be our Container 1
+                let top_item = &c.get_contents()[0];
+                assert_eq!(top_item.get_self_item_id(), container1.get_self_item_id());
+                return; // pass
+            }
+
+            // AND The map 'source' container will have the item removed
+            let updated_source = level.get_map_mut().unwrap().find_container(&request.source.get_container(), container_pos);
+            if let Some(c) = updated_source {
+                // There should be 2 items in to root container's top level
+                assert_eq!(2, c.get_top_level_count());
+                // AND The 'target' container will contain the new items
+                if let Some(container_item) = c.find(&target_item) {
+                    assert_eq!(1, container_item.get_total_count());
+                }
+                return; // pass
+            }
+        }
+        assert!(false);
+    }
+
+
+    #[test]
+    fn test_move_items_within_from_lower_to_parent() {
+        // GIVEN a valid map
+
+        // AND a chest that contains a nested bag and carton
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
+        let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
+        let carton_id = carton.get_self_item().get_id();
+
+        // AND each of them contain some other items
+        let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        chest.push(vec![item1.clone(), item2.clone(), item3.clone()]);
+
+        let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        bag.push(vec![item4.clone(), item5.clone(), item6.clone()]);
+
+        let item7 = Container::new(Uuid::new_v4(), "Test Item 7".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item8 = Container::new(Uuid::new_v4(), "Test Item 8".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        let item9 = Container::new(Uuid::new_v4(), "Test Item 9".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
+        carton.push(vec![item7.clone(), item8.clone(), item9.clone()]);
+
+        bag.push(vec![carton.clone()]);
+        assert_eq!(4, bag.get_top_level_count());
+
+        chest.push(vec![bag.clone()]);
+        assert_eq!(4, chest.get_top_level_count());
+
+
+        // Our container Hierarchy should now be
+        //  Chest -> Bag -> Carton
+
+        // AND all of this is stored in a test level
+        let container_pos = Position { x: 1, y: 1 };
+        let mut level = build_test_level(container_pos, chest);
+
+        // WHEN we call to move items from the lowest container (Carton's item 7 and 8)
+        // into the parent container (Bag)
+        let to_move = vec![item7.get_self_item().clone(), item8.get_self_item().clone()];
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: carton.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainer(
+                WorldContainer {
+                    container: bag.clone(),
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a result to return
+        assert!(result.is_ok());
+
+        // THEN we expect a result that confirms this
+        if let Ok(response) = result {
+            assert_eq!(true, response.success);
+            assert_eq!(0, response.unmoved.len());
+
+            let source = request.source.clone();
+            let target = request.target.clone();
+
+            // AND the map will be updated to reflect this
+            // Find the Carton
+            let source_updated = level.get_map_mut().unwrap().find_container(source.get_container(), container_pos);
+            assert_eq!(1, source_updated.unwrap().get_top_level_count());
+
+            // Find the bag
+            let target_container = &request.target.get_container().unwrap();
+            let mut target_updated = level.get_map_mut().unwrap().find_container(target_container, container_pos);
+            assert_eq!(6, target_updated.as_ref().unwrap().get_top_level_count());
+
+            let target_contents = target_updated.as_mut().unwrap().get_contents();
+            assert_eq!(item4.get_self_item_id(), target_contents.get(0).unwrap().get_self_item_id());
+            assert_eq!(item5.get_self_item_id(), target_contents.get(1).unwrap().get_self_item_id());
+            assert_eq!(item6.get_self_item_id(), target_contents.get(2).unwrap().get_self_item_id());
+            assert_eq!(carton.get_self_item_id(), target_contents.get(3).unwrap().get_self_item_id());
+            assert_eq!(item7.get_self_item_id(), target_contents.get(4).unwrap().get_self_item_id());
+            assert_eq!(item8.get_self_item_id(), target_contents.get(5).unwrap().get_self_item_id());
+            return;
+        }
+        assert!(false);
+    }
     //
     // #[test]
     // fn test_move_items_bottom() {

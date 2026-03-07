@@ -16,9 +16,12 @@ pub enum OpenedContainerEventType {
     // Character Inventory Specific Events
     DropItems,
     DropItemsResult,
+    // This move items only contains the selected items and target container
+    // And is further handled by the command layer
     MoveItems,
     MoveItemsResult,
     // Part of the moving items to container event chain
+    // This is used to call from the widget to the command only
     MoveItemsToContainerChoice,
     // Having selected a specific container to move items into
     MoveItemsToContainerChoiceSelection,
@@ -36,11 +39,12 @@ pub enum OpenedContainerEventData {
     TakeItemsResult(TakeItemsResponse),
     DropItems(DropItemsRequest),
     DropItemsResult(DropItemsResponse),
-    MoveItems(MoveItemsRequest),
-    MoveItemsResult(MoveItemsResponse),
+    // For moving items around in a single source container
+    MoveItemsWithinSource(MoveItemsWithinSourceRequest),
+    MoveItemsWithSourceResult(MoveItemsResponseV2),
     // Request to start Container Choices
     MoveItemsToContainerChoice(ContainerChoicesRequest),
-    MoveItemsToContainerChoiceSelection(ContainerScope),
+    MoveItemsToContainerChoiceSelection(TargetContainerScope),
     MoveItemsToContainerChoiceResult(MoveItemsResponseV2),
 }
 
@@ -90,14 +94,12 @@ pub struct MoveToContainerChoiceData {
 }
 
 #[derive(Clone, Debug)]
-pub struct MoveItemsRequest {
+pub struct MoveItemsWithinSourceRequest {
     pub source_container: Container,
     pub to_move: Vec<Item>,
     pub target_container: Option<Container>,
     // for moving items to a specific position
-    pub target_position_item: Option<Item>,
-    pub source_position: Option<Position>,
-    pub target_position: Option<Position>
+    pub target_position_item: Option<Item>
 }
 
 #[derive(Clone, Debug)]
@@ -120,20 +122,41 @@ pub struct WorldContainer {
     pub position: Position,
 }
 
+// For moving items to a particular spot in a container
 #[derive(Clone, Debug)]
-pub enum ContainerScope {
+pub struct PlayerInventoryItemPosition {
+    pub target_position_item: Item
+}
+
+// For moving items to a particular spot in a container
+#[derive(Clone, Debug)]
+pub struct WorldContainerItemPosition {
+    pub target_position_item: Item,
+    pub position: Position,
+}
+
+#[derive(Clone, Debug)]
+pub enum SourceContainerScope {
     PlayerInventory(PlayerInventoryContainer),
     WorldContainer(WorldContainer)
 }
 
-impl ContainerScope {
+#[derive(Clone, Debug)]
+pub enum TargetContainerScope {
+    PlayerInventory(PlayerInventoryContainer),
+    PlayerInventoryItemPosition(PlayerInventoryItemPosition),
+    WorldContainer(WorldContainer),
+    WorldContainerItemPosition(WorldContainerItemPosition)
+}
+
+impl SourceContainerScope {
 
     pub fn get_self_item(&self) -> &Item {
         match self {
-            ContainerScope::PlayerInventory(other_pic) => {
+            SourceContainerScope::PlayerInventory(other_pic) => {
                 &other_pic.container.get_self_item()
             },
-            ContainerScope::WorldContainer(other_wc) => {
+            SourceContainerScope::WorldContainer(other_wc) => {
                 &other_wc.container.get_self_item()
             }
         }
@@ -141,10 +164,10 @@ impl ContainerScope {
 
     pub fn get_container(&self) -> &Container {
         match self {
-            ContainerScope::PlayerInventory(other_pic) => {
+            SourceContainerScope::PlayerInventory(other_pic) => {
                 &other_pic.container
             },
-            ContainerScope::WorldContainer(other_wc) => {
+            SourceContainerScope::WorldContainer(other_wc) => {
                 &other_wc.container
             }
         }
@@ -152,10 +175,10 @@ impl ContainerScope {
 
     pub fn is_player_scope(&self) -> bool {
         match self {
-            ContainerScope::PlayerInventory(pic) => {
+            SourceContainerScope::PlayerInventory(pic) => {
                true
             },
-            ContainerScope::WorldContainer(wc) => {
+            SourceContainerScope::WorldContainer(wc) => {
                false
             }
         }
@@ -163,44 +186,188 @@ impl ContainerScope {
 
     pub fn is_world_scope(&self) -> bool {
         match self {
-            ContainerScope::PlayerInventory(pic) => {
+            SourceContainerScope::PlayerInventory(pic) => {
                 false
             },
-            ContainerScope::WorldContainer(wc) => {
+            SourceContainerScope::WorldContainer(wc) => {
                 true
             }
         }
     }
 
-    pub fn matches(&self, other: &ContainerScope) -> bool {
+    pub fn matches(&self, other: &SourceContainerScope) -> bool {
         match other {
-            ContainerScope::PlayerInventory(other_pic) => {
+            SourceContainerScope::PlayerInventory(other_pic) => {
                 self.matches_item(other_pic.container.get_self_item())
             },
-            ContainerScope::WorldContainer(other_wc) => {
+            SourceContainerScope::WorldContainer(other_wc) => {
                 self.matches_item(other_wc.container.get_self_item())
             }
         }
     }
+
+    pub fn matches_target(&self, other: &TargetContainerScope) -> bool {
+        match other {
+            TargetContainerScope::PlayerInventory(other_pic) => {
+                self.matches_item(other_pic.container.get_self_item())
+            },
+            TargetContainerScope::WorldContainer(other_wc) => {
+                self.matches_item(other_wc.container.get_self_item())
+            },
+            _ => {
+                false
+            }
+        }
+    }
+
     pub fn matches_item(&self, item: &Item) -> bool {
         match self {
-            ContainerScope::PlayerInventory(pic) => {
+            SourceContainerScope::PlayerInventory(pic) => {
                 pic.container.id_equals_uuid(item.get_id())
             },
-            ContainerScope::WorldContainer(wc) => {
+            SourceContainerScope::WorldContainer(wc) => {
                 wc.container.id_equals_uuid(item.get_id())
             }
+        }
+    }
+}
+
+impl TargetContainerScope {
+
+    pub fn get_self_item(&self) -> &Item {
+        match self {
+            TargetContainerScope::PlayerInventory(other_pic) => {
+                &other_pic.container.get_self_item()
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                &piip.target_position_item
+            },
+            TargetContainerScope::WorldContainer(other_wc) => {
+                &other_wc.container.get_self_item()
+            },
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                &wcip.target_position_item
+            },
+        }
+    }
+
+    pub fn get_container(&self) -> Option<Container> {
+        match self {
+            TargetContainerScope::PlayerInventory(other_pic) => {
+                Some(other_pic.container.clone())
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                None
+            },
+            TargetContainerScope::WorldContainer(other_wc) => {
+                Some(other_wc.container.clone())
+            }
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                None
+            }
+        }
+    }
+
+    pub fn is_container_target(&self) -> bool {
+        match self {
+            TargetContainerScope::PlayerInventory(other_pic) => {
+                true
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                false
+            },
+            TargetContainerScope::WorldContainer(other_wc) => {
+                true
+            }
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                false
+            }
+        }
+    }
+
+    pub fn is_item_target(&self) -> bool {
+        match self {
+            TargetContainerScope::PlayerInventory(other_pic) => {
+                false
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                true
+            },
+            TargetContainerScope::WorldContainer(other_wc) => {
+                false
+            }
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                true
+            }
+        }
+    }
+
+    pub fn is_player_scope(&self) -> bool {
+        match self {
+            TargetContainerScope::PlayerInventory(pic) => {
+                true
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                true
+            },
+            TargetContainerScope::WorldContainer(wc) => {
+                false
+            }
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                false
+            }
+        }
+    }
+
+    pub fn is_world_scope(&self) -> bool {
+        match self {
+            TargetContainerScope::PlayerInventory(pic) => {
+                false
+            },
+            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+                false
+            },
+            TargetContainerScope::WorldContainer(wc) => {
+                true
+            }
+            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+                true
+            }
+        }
+    }
+
+    pub fn matches_source(&self, other: &SourceContainerScope) -> bool {
+        match other {
+            SourceContainerScope::PlayerInventory(other_pic) => {
+                self.matches_item(other_pic.container.get_self_item())
+            },
+            SourceContainerScope::WorldContainer(other_wc) => {
+                self.matches_item(other_wc.container.get_self_item())
+            }
+        }
+    }
+
+    pub fn matches_item(&self, item: &Item) -> bool {
+        match self {
+            TargetContainerScope::PlayerInventory(pic) => {
+                pic.container.id_equals_uuid(item.get_id())
+            },
+            TargetContainerScope::WorldContainer(wc) => {
+                wc.container.id_equals_uuid(item.get_id())
+            },
+            _ => { false }
         }
     }
 
     pub fn build_container_choice_column_text(&self, column: &Column) -> String {
         let container = match self {
-            ContainerScope::PlayerInventory(pic) => {
+            TargetContainerScope::PlayerInventory(pic) => {
                 &pic.container
             },
-            ContainerScope::WorldContainer(wc) => {
+            TargetContainerScope::WorldContainer(wc) => {
                 &wc.container
-            }
+            },
+            _ => { return String::from("N/a"); }
         };
 
         match column.name.as_str() {
@@ -217,15 +384,22 @@ impl ContainerScope {
 
 #[derive(Clone, Debug)]
 pub struct MoveItemsRequestV2 {
-    pub source: ContainerScope,
-    pub target: ContainerScope,
+    pub source: SourceContainerScope,
+    pub target: TargetContainerScope,
     pub to_move: Vec<Item>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UpdatedScopes {
+    pub source: SourceContainerScope,
+    pub target: TargetContainerScope,
 }
 
 #[derive(Clone, Debug)]
 pub struct MoveItemsResponseV2 {
     pub request: MoveItemsRequestV2,
     pub success: bool,
+    pub updated_scopes: UpdatedScopes,
     pub unmoved: Vec<Item>,
     pub message: String
 }

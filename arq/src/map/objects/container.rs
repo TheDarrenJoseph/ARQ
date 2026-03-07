@@ -4,7 +4,7 @@ use std::io::{Error, ErrorKind};
 
 use crate::error::errors::ErrorWrapper;
 use uuid::Uuid;
-use crate::engine::event::container::{ContainerScope, PlayerInventoryContainer, WorldContainer};
+use crate::engine::event::container::{SourceContainerScope, PlayerInventoryContainer, WorldContainer, TargetContainerScope};
 use crate::map::objects::items::{Item, ItemType};
 use crate::map::position::Position;
 use crate::widget::stateful::container_choice_widget::ContainerChoice;
@@ -68,6 +68,10 @@ impl Container {
         &self.item
     }
 
+    pub fn get_self_item_id(&self) -> Uuid {
+        self.item.get_id().clone()
+    }
+
     pub fn get_self_item_mut(&mut self) -> &mut Item {
         &mut self.item
     }
@@ -106,7 +110,7 @@ impl Container {
     /*
     * Returns a ContainerChoice copy of each subcontainer
     */
-    pub fn find_subcontainer_choices(&self, scope: ContainerScope, position: Position) -> Vec<ContainerChoice> {
+    pub fn find_subcontainer_choices(&self, scope: TargetContainerScope, position: Position) -> Vec<ContainerChoice> {
         let container_name =  self.get_self_item().get_name();
         let mut containers = Vec::new();
         for c in &self.contents {
@@ -118,7 +122,7 @@ impl Container {
 
                 let container_choice = if scope.is_world_scope() {
                     ContainerChoice {
-                        container_scope: ContainerScope::WorldContainer(
+                        container_scope: TargetContainerScope::WorldContainer(
                             WorldContainer {
                                 container: c.clone(),
                                 position: position.clone(),
@@ -128,7 +132,7 @@ impl Container {
                     }
                 } else {
                     ContainerChoice {
-                        container_scope: ContainerScope::PlayerInventory(
+                        container_scope: TargetContainerScope::PlayerInventory(
                             PlayerInventoryContainer {
                                 container: c.clone(),
                             }

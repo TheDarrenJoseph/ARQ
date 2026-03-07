@@ -1,5 +1,6 @@
+use crate::engine::event::container::TargetContainerScope;
 use crate::engine::container_util::move_items;
-use crate::engine::event::container::{ContainerScope, MoveItemsRequest, MoveItemsRequestV2, PlayerInventoryContainer, WorldContainer};
+use crate::engine::event::container::{SourceContainerScope, MoveItemsRequestV2, PlayerInventoryContainer, PlayerInventoryItemPosition, WorldContainer};
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::engine::event::container::OpenedContainerEventType;
@@ -26,7 +27,6 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use crate::engine::container_util;
-use crate::engine::container_util::move_player_items;
 use crate::map::objects::items::Item;
 use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
 
@@ -90,7 +90,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 items_selected.iter().for_each(|item|to_move.push(item.clone()));
 
                 let data = MoveItemsRequestV2 {
-                    source: ContainerScope::PlayerInventory(PlayerInventoryContainer { container: source_container.clone() }),
+                    source: SourceContainerScope::PlayerInventory(PlayerInventoryContainer { container: source_container.clone() }),
                     target: target,
                     to_move: to_move
                 };
@@ -228,14 +228,32 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                 ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
                             },
                             _ => {
-                                error!("Error while taking items: {:?}", error_wrapper);
+                                error!("Error while dropping items: {:?}", error_wrapper);
                             }
                         }
                     }
                 }
             },
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(data)))) => {
-                let result = container_util::move_player_items(data, level);
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItemsWithinSource(data)))) => {
+
+
+                // We're either moving items into a container inside the inventory, or a specific item position
+                let data = if let Some(target_container) = (data.target_container) {
+                    MoveItemsRequestV2 {
+                        source: SourceContainerScope::PlayerInventory(PlayerInventoryContainer { container: data.source_container.clone() }),
+                        target: TargetContainerScope::PlayerInventory(PlayerInventoryContainer { container: target_container.clone() }),
+                        to_move: data.to_move.clone()
+                    }
+                } else {
+                    let target_position_item = data.target_position_item.unwrap();
+                    MoveItemsRequestV2 {
+                        source: SourceContainerScope::PlayerInventory(PlayerInventoryContainer { container: data.source_container.clone() }),
+                        target: TargetContainerScope::PlayerInventoryItemPosition(PlayerInventoryItemPosition { target_position_item: target_position_item.clone() }),
+                        to_move: data.to_move.clone()
+                    }
+                };
+
+                let result = container_util::move_items(data, level);
                 match result {
                     Ok(response) => {
                         ui.set_console_buffer(response.message.clone());
@@ -243,7 +261,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                             UIEvent::AppEvent(
                                 OpenedContainerEvent(
                                     OpenedContainerEventType::MoveItemsResult,
-                                    Some(OpenedContainerEventData::MoveItemsResult(response))
+                                    Some(OpenedContainerEventData::MoveItemsWithSourceResult(response))
                                 )
                             )
                         ).unwrap();
@@ -254,7 +272,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                 ui.set_console_buffer(error_wrapper.displayable_message.unwrap());
                             },
                             _ => {
-                                error!("Error while taking items: {:?}", error_wrapper);
+                                error!("Error while moving items: {:?}", error_wrapper);
                             }
                         }
                     }
@@ -279,7 +297,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     let container_choices =
                         container_util::build_container_choices(
                             &data.source,
-                            ContainerScope::PlayerInventory(
+                            TargetContainerScope::PlayerInventory(
                                 PlayerInventoryContainer {
                                     container: inventory.clone()
                                 }
@@ -301,7 +319,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                 choices
                                     .push(
                                         ContainerChoice {
-                                            container_scope: ContainerScope::WorldContainer(
+                                            container_scope: TargetContainerScope::WorldContainer(
                                                 WorldContainer {
                                                     container: ncc.clone(),
                                                     position: nearby_pos.clone(),
@@ -321,7 +339,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                                     choices
                                         .push(
                                             ContainerChoice {
-                                                container_scope: ContainerScope::WorldContainer(
+                                                container_scope: TargetContainerScope::WorldContainer(
                                                     WorldContainer {
                                                         container: child_container.clone(),
                                                         position: nearby_pos.clone(),

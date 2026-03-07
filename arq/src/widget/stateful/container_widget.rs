@@ -1,6 +1,6 @@
 use crate::engine::event::container::{MoveItemsResponse, ContainerChoicesRequest, MoveItemsResponseV2};
 use crate::engine::event::container::DropItemsRequest;
-use crate::engine::event::container::MoveItemsRequest;
+use crate::engine::event::container::MoveItemsWithinSourceRequest;
 use crate::engine::event::container::TakeItemsRequest;
 use crate::engine::event::container::OpenContainerRequest;
 use crate::engine::event::container::OpenedContainerEventData;
@@ -138,16 +138,14 @@ impl ContainerWidgetData {
                     let target_container = self.get_focused_container().map(|c| c.clone());
                     let target_item = self.item_list_selection.get_focused_item().map(|i| i.clone());
 
-                    let data = MoveItemsRequest {
+                    let data = MoveItemsWithinSourceRequest {
                         source_container: self.container.clone(),
                         to_move: selected_items,
-                        source_position: None,
-                        target_position: None,
                         target_container,
                         target_position_item: target_item,
                     };
                     self.event_sender.send(
-                        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItems(data))))
+                        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItemsWithinSource(data))))
                     ).expect("Error sending event");
                 },
                 OpenedContainerEventType::DropItems => {
@@ -171,20 +169,30 @@ impl ContainerWidgetData {
         }
     }
 
-    pub fn handle_move_items_response(&mut self, response: MoveItemsResponse) {
+    pub fn handle_move_items_response(&mut self, response: MoveItemsResponseV2) {
         // Only listen to messages relevant to the container we are displaying
-        let source_container_id = self.container.get_self_item().get_id();
-        if source_container_id == response.source.get_self_item().get_id() {
-            // If items are moved TO this container, update this container to match the updated container
-            let is_target_container = response.target_container.as_ref().map_or_else(|| false, |t| t.id_equals(&self.container));
-            if is_target_container  {
-                // Update the current container details to the updated target
-                self.container = response.target_container.unwrap();
-            } else {
+        let current_container_id = self.container.get_self_item().get_id();
+        let updated_source_id = response.request.source.get_self_item().get_id();
+        if current_container_id == updated_source_id {
+            let target = response.request.target;
+            let source = response.request.source;
+
+            if let Some(target_container) =  target.get_container() {
+                if (target_container.id_equals(&self.container)) {
+                    let updated_container = response.updated_scopes.target.get_container().unwrap();
+                    // Update the current container details to the updated target
+                    self.container = updated_container;
+                }
+            }
+
+            // If this is the source them items have been moved FROM this container
+            if (source.get_container().id_equals(&self.container)) {
+                let updated_container = response.updated_scopes.source.get_container();
                 // Otherwise, items have been moved FROM this container
                 // Update the current container details to the updated source
-                self.container = response.source;
+                self.container = updated_container.clone();
             }
+
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
         }
@@ -196,18 +204,14 @@ impl ContainerWidgetData {
         let target = response.request.target;
 
         // Check for items being moved FROM this container
-        let source_container_id = self.container.get_self_item().get_id();
-
-        let is_not_target = !source.matches(&target);
-
-        if (is_not_target) {
-            // Update the current container details to the updated source
-            self.container = source.get_container().clone();
+        if (source.matches_target(&target)) {
+            // Update the current container details to the updated target
+            self.container = target.get_container().unwrap().clone();
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
         } else {
-            // Update the current container details to the updated target
-            self.container = target.get_container().clone();
+            // Update the current container details to the updated source
+            self.container = source.get_container().clone();
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
         }
@@ -264,7 +268,7 @@ impl ContainerWidgetData {
                     self.retain_selected_items(take_items_response.untaken);
                 }
             },
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsResult, Some(OpenedContainerEventData::MoveItemsResult(response)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsResult, Some(OpenedContainerEventData::MoveItemsWithSourceResult(response)))) => {
                 self.handle_move_items_response(response)
             }
             UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItemsResult, Some(OpenedContainerEventData::DropItemsResult(drop_items_response)))) => {

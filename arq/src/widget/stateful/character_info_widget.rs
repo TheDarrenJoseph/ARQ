@@ -13,7 +13,7 @@ use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::event::container::{ContainerScope, OpenedContainerEventData, OpenedContainerEventType};
+use crate::engine::event::container::{SourceContainerScope, OpenedContainerEventData, OpenedContainerEventType, TargetContainerScope};
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -107,7 +107,7 @@ impl CharacterInfoWidgetData {
             ) => {
                 // If the target is in the current containers data (in Inventory) then make sure to handle it here first
                 match &response.request.target {
-                    ContainerScope::PlayerInventory(pic_target) => {
+                    TargetContainerScope::PlayerInventory(pic_target) => {
                         let target_container_id = pic_target.container.get_self_item().get_id();
                         if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
                             let target_event = event.clone();
@@ -118,7 +118,7 @@ impl CharacterInfoWidgetData {
                 }
 
                 match &response.request.source {
-                    ContainerScope::PlayerInventory(pic_source) => {
+                    SourceContainerScope::PlayerInventory(pic_source) => {
                         let target_container_id = pic_source.container.get_self_item().get_id();
                         if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
                             let target_event = event.clone();
