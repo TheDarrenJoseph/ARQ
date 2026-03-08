@@ -28,9 +28,9 @@ pub struct CharacterPattern {
 }
 
 pub fn build_dev_player_inventory() -> Container {
-    let mut container = Container::new(Uuid::new_v4(), "Player's Inventory".to_owned(), '$', 50.0, 1, ContainerType::AREA, 150);
+    let mut container = Container::new(Uuid::new_v4(), "Player's Inventory".to_owned(), '$', 50.0, 1, ContainerType::AREA, 1000000);
     let bronze_bar = Item::new_with_form(Uuid::new_v4(), "Bronze Bar".to_owned(), MaterialType::BRONZE, ItemForm::BAR, 'X', 1.0, 50);
-    let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), '$', 5.0, 50, ContainerType::OBJECT, 50);
+    let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), '$', 5.0, 50, ContainerType::OBJECT, 600);
     let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), '$', 1.0, 50, ContainerType::OBJECT, 5);
     let tin_bar = Item::new_with_form(Uuid::new_v4(), "Tin Bar".to_owned(), MaterialType::TIN, ItemForm::BAR,'X', 1.0, 50);
 

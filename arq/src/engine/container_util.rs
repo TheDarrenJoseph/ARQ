@@ -40,11 +40,14 @@ fn copy_container_items(to_copy: Vec<Container>, target: &mut Container) -> Copy
     let mut uncopied = Vec::new();
     for container_item in to_copy {
         if target.can_fit_container_item(&container_item) {
-            match target.add(container_item.clone()) {
+            let add_clone = container_item.clone();
+            let result_clone = container_item.clone();
+            match target.add(add_clone) {
                 Ok(()) => {
-                    copied.push(container_item.clone());
+                    copied.push(result_clone);
                 },
                 Err(e) => {
+                    uncopied.push(container_item);
                     error!("Couldn't add the item to the target container: {}", e)
                 }
             }
@@ -236,12 +239,15 @@ fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Cont
         return if (pos_container.id_equals(&container)) {
             Ok(pos_container)
         } else {
-          let child_container = pos_container.get_contents_mut().iter_mut().find(|c| c.id_equals(&container));
-          if let Some(c) = child_container {
-              Ok(c)
-          } else {
-              Err(ErrorWrapper::new_internal(String::from("Failed to find container on the map after searching position and children")))
+          // Search each child container for an ID match
+          for child_container in pos_container.get_contents_mut().iter_mut() {
+              let found_container = child_container.find_mut(container.get_self_item());
+              if let Some(c) = found_container {
+                  return Ok(c)
+              }
           }
+
+          Err(ErrorWrapper::new_internal(String::from("Failed to find container on the map after searching position and children")))
         };
     } else {
         Err(ErrorWrapper::new_internal(String::from("Failed to find any container on the map at position")))
@@ -498,7 +504,8 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
             }
 
             let to_copy = find_copying_items(source_container, request.to_move.clone());
-            let copy_result = copy_container_items(to_copy, live_target);
+            let copy_result = copy_container_items(to_copy.clone(), live_target);
+            log::info!("(Move) Copied {}/{} requested items", copy_result.copied.len(), request.to_move.len());
             let updated_target = live_target.clone();
 
             let moved = copy_result.copied.clone();
@@ -598,6 +605,18 @@ pub fn build_container_choices(source: &Container, parent_scope: TargetContainer
     return Ok(sub_containers);
 }
 
+// Major test scenarios
+// A1. Within a WorldContainer - Moving items/containers into another container
+// A2. Within a WorldContainer - Moving items/containers from child to parent
+// A3. Within a WorldContainer - Moving items/containers into a specific item spot
+
+// B1. Within PlayerInventory - Moving items/containers into another container
+// B2. Within PlayerInventory - Moving items/containers from child to parent
+// B3. Within PlayerInventory - Moving items/containers into a specific item spot
+
+// C1. Moving items/container from the PlayerInventory to World Container
+// C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
+
 #[cfg(test)]
 mod tests {
     use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope};
@@ -610,6 +629,7 @@ use std::collections::HashMap;
     use crate::engine::container_util::{move_items};
     use crate::engine::level::Level;
     use crate::map::objects::container::{Container, ContainerType};
+    use crate::map::objects::items::Item;
     use crate::map::position::{build_square_area, Position};
     use crate::map::tile::TileType;
     use crate::map::Tiles;
@@ -665,35 +685,46 @@ use std::collections::HashMap;
     }
 
     #[test]
-    fn test_move_items_within_container() {
-        // GIVEN a source container containing 3 containers
-        let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-        source_container.push(vec![container1.clone(), container2.clone(), container3.clone()]);
-        assert_eq!(3, source_container.get_total_count());
+    #[allow(non_snake_case)]
+    // A1. Within a WorldContainer - Moving items/containers into another container
+    fn MoveItems_A1() {
+        // GIVEN a World Container Chest containing 2 containers and 2 items
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        let item1 = Container::wrap(Item::with_defaults(String::from("Test Item 1"), 1.0, 600));
+        let item2 = Container::wrap(Item::with_defaults(String::from("Test Item 2"), 1.0, 600));
 
-        // And we want to move Container 1 into Container 3
-        let to_move = vec![container1.get_self_item().clone()];
-        let source = source_container.clone();
+        chest.push(vec![
+            container1.clone(),
+            container2.clone(),
+            item1.clone(),
+            item2.clone()
+        ]);
+        assert_eq!(4, chest.get_total_count());
+
+        // And we want to move Container 1 and Item 1 into Container 2
+        let to_move = vec![
+            container1.get_self_item().clone(),
+            item1.get_self_item().clone()
+        ];
+        let source = chest.clone();
         let container_pos =  Position { x: 1, y: 1};
-        let target_item = container3.get_self_item().clone();
 
         // AND all of this is present in a level
-        let mut level = build_test_level(container_pos.clone(), source_container.clone());
+        let mut level = build_test_level(container_pos.clone(), chest.clone());
 
-        // WHEN we call to move container 1 into container 3
+        // WHEN we call to these into container 2
         let request = MoveItemsRequestV2 {
             source: SourceContainerScope::WorldContainer(
                 WorldContainer {
-                    container: source_container.clone(),
+                    container: chest.clone(),
                     position: container_pos
                 }
             ),
             target: TargetContainerScope::WorldContainer(
                 WorldContainer {
-                    container: container3.clone(),
+                    container: container2.clone(),
                     position: container_pos
                 }
             ),
@@ -710,16 +741,18 @@ use std::collections::HashMap;
             assert_eq!(true, response.success);
             assert!(response.unmoved.is_empty());
 
-            // And the 'target' (Container 3) container will have the item now
+            // And the 'target' (Container 2) container will have the item now
             let target_container = &request.target.get_container().unwrap();
             let updated_target = level.get_map_mut().unwrap().find_container(target_container, container_pos);
             if let Some(c) = updated_target {
-                // There should be 1 item in container
-                assert_eq!(1, c.get_total_count());
-                // And it should be our Container 1
-                let top_item = &c.get_contents()[0];
-                assert_eq!(top_item.get_self_item_id(), container1.get_self_item_id());
-                return; // pass
+                // There should be 2 items in container
+                assert_eq!(2, c.get_total_count());
+                // And it should be our Container 1 and Test Item 1
+                let first_item = c.get_contents()[0].clone();
+                assert_eq!(first_item, container1);
+
+                let second_item = c.get_contents()[1].clone();
+                assert_eq!(second_item, item1);
             }
 
             // AND The map 'source' container will have the item removed
@@ -727,60 +760,63 @@ use std::collections::HashMap;
             if let Some(c) = updated_source {
                 // There should be 2 items in to root container's top level
                 assert_eq!(2, c.get_top_level_count());
-                // AND The 'target' container will contain the new items
-                if let Some(container_item) = c.find(&target_item) {
-                    assert_eq!(1, container_item.get_total_count());
-                }
+
+                // AND these should be Container 2 and Test Item 2
+                // And it should be our Container 1 and Test Item 1
+                let first_item = c.get_contents()[0].get_self_item().clone();
+                assert_eq!(first_item, container2.get_self_item().clone());
+
+                let second_item = c.get_contents()[1].get_self_item().clone();
+                assert_eq!(second_item, item2.get_self_item().clone());
                 return; // pass
             }
         }
         assert!(false);
     }
 
-
     #[test]
-    fn test_move_items_within_from_lower_to_parent() {
+    #[allow(non_snake_case)]
+    // A2. Within a WorldContainer - Moving items/containers from child to parent
+    fn MoveItems_A2() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
-        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-        let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-        let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-        let carton_id = carton.get_self_item().get_id();
-
-        // AND each of them contain some other items
-        let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        chest.push(vec![item1.clone(), item2.clone(), item3.clone()]);
-
-        let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        bag.push(vec![item4.clone(), item5.clone(), item6.clone()]);
-
-        let item7 = Container::new(Uuid::new_v4(), "Test Item 7".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item8 = Container::new(Uuid::new_v4(), "Test Item 8".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        let item9 = Container::new(Uuid::new_v4(), "Test Item 9".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-        carton.push(vec![item7.clone(), item8.clone(), item9.clone()]);
-
-        bag.push(vec![carton.clone()]);
-        assert_eq!(4, bag.get_top_level_count());
-
-        chest.push(vec![bag.clone()]);
-        assert_eq!(4, chest.get_top_level_count());
-
-
         // Our container Hierarchy should now be
         //  Chest -> Bag -> Carton
+        // Chest contents: [Test Item 1, Test Container 1]
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 1000000);
+        // AND each of them contain some other items
+        let item1 = Container::wrap(Item::with_defaults(String::from("Test Item 1"), 1.0, 100));
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        chest.push(vec![item1.clone(), container1.clone()]);
+
+        // Bag contents: [Test Item 2, Test Container 2]
+        let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 600);
+        let item2 = Container::wrap(Item::with_defaults(String::from("Test Item 2"), 1.0, 100));
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        bag.push(vec![item2.clone(), container2.clone()]);
+
+        // Carton contents: [Test Item 3, Test Container 3]
+        let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 50);
+        let item3 = Container::wrap(Item::with_defaults(String::from("Test Item 3"), 1.0, 100));
+        // The container has to be small enough to fit in the Bag
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        carton.push(vec![item3.clone(), container3.clone()]);
+
+        bag.push(vec![carton.clone()]);
+        assert_eq!(3, bag.get_top_level_count());
+
+        chest.push(vec![bag.clone()]);
+        assert_eq!(3, chest.get_top_level_count());
 
         // AND all of this is stored in a test level
         let container_pos = Position { x: 1, y: 1 };
         let mut level = build_test_level(container_pos, chest);
 
-        // WHEN we call to move items from the lowest container (Carton's item 7 and 8)
-        // into the parent container (Bag)
-        let to_move = vec![item7.get_self_item().clone(), item8.get_self_item().clone()];
+        // WHEN we call to move items
+        // - from the lowest container (Carton's Test Iem 3 and Test Container 3)
+        // - into the parent container (Bag)
+        let to_move = vec![item3.get_self_item().clone(), container3.get_self_item().clone()];
         let request = MoveItemsRequestV2 {
             source: SourceContainerScope::WorldContainer(
                 WorldContainer {
@@ -806,33 +842,43 @@ use std::collections::HashMap;
             assert_eq!(true, response.success);
             assert_eq!(0, response.unmoved.len());
 
-            let source = request.source.clone();
-            let target = request.target.clone();
+            // And the response should return a copy of the updated source container
+            assert_eq!(response.updated_scopes.source.get_self_item().get_id(), carton.get_self_item().get_id());
+            // the carton should now be empty
+            assert_eq!(0, response.updated_scopes.source.get_container().get_top_level_count());
 
             // AND the map will be updated to reflect this
             // Find the Carton
-            let source_updated = level.get_map_mut().unwrap().find_container(source.get_container(), container_pos);
-            assert_eq!(1, source_updated.unwrap().get_top_level_count());
+            let source_updated = level.get_map_mut().unwrap().find_container(&carton, container_pos);
+            // the carton should now be empty
+            assert_eq!(0, source_updated.unwrap().get_top_level_count());
 
-            // Find the bag
+            // Find the bag, which should contain:
+            // 1. Test Item 2
+            // 2. Test Container 2
+            // 3. the now Empty Carton
+            // 4. Test Item 3
+            // 5. Test Container 3
             let target_container = &request.target.get_container().unwrap();
             let mut target_updated = level.get_map_mut().unwrap().find_container(target_container, container_pos);
-            assert_eq!(6, target_updated.as_ref().unwrap().get_top_level_count());
+            assert_eq!(5, target_updated.as_ref().unwrap().get_top_level_count());
 
             let target_contents = target_updated.as_mut().unwrap().get_contents();
-            assert_eq!(item4.get_self_item_id(), target_contents.get(0).unwrap().get_self_item_id());
-            assert_eq!(item5.get_self_item_id(), target_contents.get(1).unwrap().get_self_item_id());
-            assert_eq!(item6.get_self_item_id(), target_contents.get(2).unwrap().get_self_item_id());
-            assert_eq!(carton.get_self_item_id(), target_contents.get(3).unwrap().get_self_item_id());
-            assert_eq!(item7.get_self_item_id(), target_contents.get(4).unwrap().get_self_item_id());
-            assert_eq!(item8.get_self_item_id(), target_contents.get(5).unwrap().get_self_item_id());
+            assert_eq!(item2.get_self_item_id(), target_contents.get(0).unwrap().get_self_item_id());
+            assert_eq!(container2.get_self_item_id(), target_contents.get(1).unwrap().get_self_item_id());
+            assert_eq!(carton.get_self_item_id(), target_contents.get(2).unwrap().get_self_item_id());
+            assert_eq!(item3.get_self_item_id(), target_contents.get(3).unwrap().get_self_item_id());
+            assert_eq!(container3.get_self_item_id(), target_contents.get(4).unwrap().get_self_item_id());
             return;
         }
         assert!(false);
     }
+
     //
     // #[test]
-    // fn test_move_items_bottom() {
+    // #[allow(non_snake_case)]
+    // // A3. Within a WorldContainer - Moving items/containers into a specific item spot
+    // fn MoveItems_A3() {
     //     // GIVEN a valid map
     //     // that holds a source container containing 6 containers (Each with a unique name)
     //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);

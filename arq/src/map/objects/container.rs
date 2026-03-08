@@ -406,12 +406,8 @@ impl Container {
             match container.container_type {
                 ContainerType::ITEM | ContainerType::OBJECT => {
                     let total_weight = self.get_contents_weight_total();
-                    let adding_weight_limit = container.weight_limit as f32;
-                    let max_weight_limit = total_weight + adding_weight_limit;
-
-                    let within_potential_weight_limit = max_weight_limit <= self.weight_limit as f32;
                     let potential_weight = total_weight.clone() + container.get_weight_total();
-                    return if within_potential_weight_limit && potential_weight <= self.weight_limit as f32 {
+                    return if potential_weight <= self.weight_limit as f32 {
                         self.contents.push(container);
                         Ok(())
                     } else {
