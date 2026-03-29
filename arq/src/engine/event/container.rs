@@ -404,6 +404,12 @@ pub struct MoveItemsResponseV2 {
     pub message: String
 }
 
+impl MoveItemsResponseV2 {
+    pub fn all_items_moved(&self) -> bool {
+        self.unmoved.is_empty()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ContainerChoicesRequest {
     pub source: Container,
