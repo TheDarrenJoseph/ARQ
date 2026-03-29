@@ -168,6 +168,9 @@ impl Level {
         }
         side_position
     }
+    pub fn get_player(&self) -> Option<&Character> {
+        self.characters.get_player()
+    }
 
     pub fn get_player_mut(&mut self) -> Option<&mut Character> {
         self.characters.get_player_mut()

@@ -478,15 +478,13 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
         let target = request.target.clone();
         let to_mvoe = request.to_move.clone();
 
-
-        if (target.is_container_target()) {
-            if (source.get_container().id_equals(&target.get_container().unwrap())) {
-                return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
-            }
+        // Source cannot be the target when moving to another container
+        if (target.is_targeting_another_container() && source.get_container().id_equals(&target.get_container().unwrap())) {
+            return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
         }
 
         let source_container = source.get_container().clone();
-        if (target.is_container_target()) {
+        if (target.is_targeting_another_container()) {
             let live_target: &mut Container;
             match target {
                 TargetContainerScope::WorldContainer(target) => {
@@ -496,8 +494,13 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                         .expect("Failed to find target container on the map");
                 },
                 TargetContainerScope::PlayerInventory(target) => {
-                    live_target =
-                        level.get_player_mut().unwrap().get_inventory_mut()
+                    let live_player_inventory =
+                        level.get_player_mut().unwrap().get_inventory_mut();
+
+                    let live_target_match = live_player_inventory.get_contents_mut().iter_mut().find(|c| c.get_self_item().get_id() == target.container.get_self_item().get_id())
+                        .expect("Failed to find target container in the Player's Inventory");
+
+                    live_target = live_target_match;
                 },
                 _ => {
                     return Err(ErrorWrapper::new_internal(String::from("Unsupported operation")));
@@ -646,7 +649,7 @@ pub fn build_container_choices(source: &Container, parent_scope: TargetContainer
 
 #[cfg(test)]
 mod tests {
-    use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope, WorldContainerItemPosition};
+    use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope, WorldContainerItemPosition, PlayerInventoryContainer, PlayerInventoryItemPosition};
 use std::collections::HashMap;
 
     use uuid::Uuid;
@@ -982,6 +985,139 @@ use std::collections::HashMap;
         // Fail if we don't hit our logic
         assert!(false)
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B1. Within PlayerInventory - Moving items/containers into another container
+    fn MoveItems_B1() {
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+        assert_eq!("Bag", player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+
+        let bag = player_inventory_contents.get(0).unwrap().clone();
+        let bag_contents = bag.get_contents();
+        assert_eq!(2, bag_contents.len());
+        assert_eq!("Carton", bag_contents.get(0).unwrap().get_self_item().get_name());
+        assert_eq!("Bronze Bar", bag_contents.get(1).unwrap().get_self_item().get_name());
+
+        assert_eq!("Test Item 1", player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+        assert_eq!("Test Item 2", player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+        assert_eq!("Test Item 3", player_inventory_contents.get(3).unwrap().get_self_item().get_name());
+
+        // AND so on until item 60
+        assert_eq!("Test Item 60", player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+        assert_eq!("Steel Arming Sword", player_inventory_contents.get(61).unwrap().get_self_item().get_name());
+
+        // WHEN we call to move test items 1,2,and 3 into the Bag
+        let test_item_1 = player_inventory_contents.get(1).unwrap().clone();
+        let test_item_2 = player_inventory_contents.get(2).unwrap().clone();
+        let test_item_3 = player_inventory_contents.get(3).unwrap().clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: bag.clone()
+                }
+            ),
+            to_move: vec![
+                test_item_1.get_self_item().clone(),
+                test_item_2.get_self_item().clone(),
+                test_item_3.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a result to return
+        assert!(result.is_ok());
+
+        // AND we expect a valid result
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the source will have been updated, with test items 1-3 moved out
+            let updated_source_contents = response.updated_scopes.source.get_container().get_contents();
+            assert_eq!(59, updated_source_contents.len());
+            // The top items are now Bag and then items 4-60
+            assert_eq!("Bag", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 4", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 5", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 6", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", updated_source_contents.get(57).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_source_contents.get(58).unwrap().get_self_item().get_name());
+
+            // AND the real Player's inventory (the source) should be updated as well
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            // The top items are now Bag and then items 4-60
+            assert_eq!("Bag", real_player_inventory.get(0).get_self_item().get_name());
+            assert_eq!("Test Item 4", real_player_inventory.get(1).get_self_item().get_name());
+            assert_eq!("Test Item 5", real_player_inventory.get(2).get_self_item().get_name());
+            assert_eq!("Test Item 6", real_player_inventory.get(3).get_self_item().get_name());
+            assert_eq!("Test Item 60", real_player_inventory.get(57).get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_player_inventory.get(58).get_self_item().get_name());
+
+
+            // AND the real Bag within the Player's inventory should match the response above
+            let real_updated_bag_contents = real_player_inventory.get_contents().iter().find(|c| c.get_self_item().get_id() == request.target.get_container().unwrap().get_self_item().get_id())
+                .expect("Failed to find target container in the Player's Inventory")
+                .get_contents();
+            assert_eq!(5, real_updated_bag_contents.len());
+            assert_eq!("Carton", real_updated_bag_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Bronze Bar", real_updated_bag_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 1", real_updated_bag_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", real_updated_bag_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", real_updated_bag_contents.get(4).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B2. Within PlayerInventory - Moving items/containers from child to parent
+    fn MoveItems_B2() {
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B3. Within PlayerInventory - Moving items/containers into a specific item spot
+    fn MoveItems_B3() {
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // C1. Moving items/container from the PlayerInventory to World Container
+    fn MoveItems_C1() {
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
+    fn MoveItems_C2() {
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
     //
     // #[test]
     // fn test_move_items_top() {

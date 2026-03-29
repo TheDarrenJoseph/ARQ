@@ -268,7 +268,7 @@ impl TargetContainerScope {
         }
     }
 
-    pub fn is_container_target(&self) -> bool {
+    pub fn is_targeting_another_container(&self) -> bool {
         match self {
             TargetContainerScope::PlayerInventory(other_pic) => {
                 true
@@ -285,7 +285,7 @@ impl TargetContainerScope {
         }
     }
 
-    pub fn is_item_target(&self) -> bool {
+    pub fn is_targeting_item_position(&self) -> bool {
         match self {
             TargetContainerScope::PlayerInventory(other_pic) => {
                 false
