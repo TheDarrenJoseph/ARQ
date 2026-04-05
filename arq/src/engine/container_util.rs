@@ -1175,11 +1175,9 @@ use std::collections::HashMap;
             assert_eq!("Test Player's Inventory", updated_target.get_self_item().get_name());
             assert_eq!(64, updated_target.get_container().unwrap().get_contents().len());
 
-            // TODO AND The real Player inventory should be updated to match the above
             let real_player_inventory = level.get_player().unwrap().get_inventory();
-            assert_eq!(64, real_player_inventory.get_contents().len());
-
             let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(64, real_player_inventory_contents.len());
 
             // The top items are unchanged (Bag, Test Item 1, 2, etc)
             assert_eq!("Bag", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
@@ -1207,6 +1205,91 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B3. Within PlayerInventory - Moving items/containers into a specific item spot
     fn MoveItems_B3() {
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+
+        let test_item_1 = player_inventory_contents.get(1).unwrap();
+        let test_item_2 = player_inventory_contents.get(2).unwrap();
+
+        assert_eq!("Test Item 1", test_item_1.get_self_item().get_name());
+        assert_eq!("Test Item 2", test_item_2.get_self_item().get_name());
+
+        // WHEN we call to move
+        // Test Item 1 and 2 near the top (in the top-level inventory)
+        // To the bottom item's location
+        let target_position_item = player_inventory_contents.get(61).unwrap().get_self_item();
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventoryItemPosition(
+                PlayerInventoryItemPosition {
+                    target_position_item: target_position_item.clone()
+                }
+            ),
+            to_move: vec![
+                test_item_1.get_self_item().clone(),
+                test_item_2.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the response source should be the Player's inventory
+            let updated_source = response.updated_scopes.source;
+            let updated_source_contents = updated_source.get_container().get_contents();
+            assert!(updated_source.is_player_scope());
+            assert_eq!("Test Player's Inventory", updated_source.get_self_item().get_name());
+            // AND it's size should be unchanged
+            assert_eq!(62, updated_source_contents.len());
+
+            // AND the top of the source should now be Bag, then Test item 3 onwards
+            assert_eq!("Bag", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 4", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 1 and 2 above the last item in the source
+            assert_eq!("Test Item 1", updated_source_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", updated_source_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_source_contents.get(61).unwrap().get_self_item().get_name());
+
+            // AND the updated target should be the item we specified earlier
+            let updated_target = response.updated_scopes.target;
+            assert!(updated_target.is_targeting_item_position());
+            assert_eq!("Steel Arming Sword", updated_target.get_self_item().get_name());
+
+
+            // AND the real player inventory in the level should match this
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(62, real_player_inventory_contents.len());
+            // AND the top of the inventory should now be Bag, then Test item 3 onwards
+            assert_eq!("Bag", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", real_player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 4", real_player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 1 and 2 above the last item in the inventory
+            assert_eq!("Test Item 1", real_player_inventory_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", real_player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_player_inventory_contents.get(61).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
         // Fail if we don't hit our logic
         assert!(false)
     }
