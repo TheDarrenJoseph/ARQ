@@ -214,9 +214,16 @@ fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_
             let map =  level.map.as_mut().unwrap();
             source_container = find_container_mut(map, wc.position, &wc.container).expect("Failed to find World Container source");
         },
-        SourceContainerScope::PlayerInventory(_) => {
+        SourceContainerScope::PlayerInventory(pic) => {
             let player = level.get_player_mut().unwrap();
-            source_container = player.get_inventory_mut();
+
+            if (player.get_inventory().get_self_item_id() == pic.container.get_self_item_id()) {
+                source_container = player.get_inventory_mut();
+            } else {
+                let inventory_mut = player.get_inventory_mut();
+                source_container = inventory_mut.find_mut(pic.container.get_self_item())
+                    .expect("Failed to find Player Inventory Container source (after searching for child containers)");
+            }
         }
     }
 
@@ -496,11 +503,14 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                 TargetContainerScope::PlayerInventory(target) => {
                     let live_player_inventory =
                         level.get_player_mut().unwrap().get_inventory_mut();
-
-                    let live_target_match = live_player_inventory.get_contents_mut().iter_mut().find(|c| c.get_self_item().get_id() == target.container.get_self_item().get_id())
-                        .expect("Failed to find target container in the Player's Inventory");
-
-                    live_target = live_target_match;
+                    // Check if we're targeting the top-most container (The Player inventory)
+                    if (live_player_inventory.get_self_item_id() == target.container.get_self_item_id()) {
+                        live_target = live_player_inventory;
+                    } else {
+                        let live_target_match = live_player_inventory.get_contents_mut().iter_mut().find(|c| c.get_self_item().get_id() == target.container.get_self_item().get_id())
+                            .expect("Failed to find target container in the Player's Inventory");
+                        live_target = live_target_match;
+                    }
                 },
                 _ => {
                     return Err(ErrorWrapper::new_internal(String::from("Unsupported operation")));
@@ -596,9 +606,18 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                 .find_container(&wc.container, wc.position)
                 .expect("Failed to find target container on the map");
         }
-        SourceContainerScope::PlayerInventory(_) => {
-            live_source =
-                level.get_player_mut().unwrap().get_inventory_mut()
+        SourceContainerScope::PlayerInventory(source) => {
+            let live_player_inventory = level.get_player_mut().unwrap().get_inventory_mut();
+            // Check if we're targeting the top-most container (The Player inventory)
+            if (live_player_inventory.get_self_item_id() == source.container.get_self_item_id()) {
+                live_source = live_player_inventory;
+            } else {
+                let live_source_match = live_player_inventory.get_contents_mut()
+                    .iter_mut()
+                    .find(|c| c.get_self_item().get_id() == source.container.get_self_item().get_id())
+                    .expect("Failed to find source container in the Player's Inventory");
+                live_source = live_source_match;
+            }
         },
         _ => {
             return Err(ErrorWrapper::new_internal(String::from("Unsupported operation")));
@@ -712,6 +731,26 @@ use std::collections::HashMap;
         let player =  CharacterBuilder::new(player_pattern_result.unwrap())
             .build(String::from("Test Player"));
         return  Level { map: Some(map) , characters: Characters::new( Some(player), Vec::new())  };
+    }
+
+    fn validate_player_inventory(player_inventory: &Container) {
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+        assert_eq!("Bag", player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+
+        let bag = player_inventory_contents.get(0).unwrap().clone();
+        let bag_contents = bag.get_contents();
+        assert_eq!(2, bag_contents.len());
+        assert_eq!("Carton", bag_contents.get(0).unwrap().get_self_item().get_name());
+        assert_eq!("Bronze Bar", bag_contents.get(1).unwrap().get_self_item().get_name());
+
+        assert_eq!("Test Item 1", player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+        assert_eq!("Test Item 2", player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+        assert_eq!("Test Item 3", player_inventory_contents.get(3).unwrap().get_self_item().get_name());
+
+        // AND so on until item 60
+        assert_eq!("Test Item 60", player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+        assert_eq!("Steel Arming Sword", player_inventory_contents.get(61).unwrap().get_self_item().get_name());
     }
 
     #[test]
@@ -997,23 +1036,9 @@ use std::collections::HashMap;
 
         // AND the player inventory is in the expected state
         let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
         let player_inventory_contents= player_inventory.get_contents();
-        assert_eq!(62, player_inventory_contents.len());
-        assert_eq!("Bag", player_inventory_contents.get(0).unwrap().get_self_item().get_name());
-
         let bag = player_inventory_contents.get(0).unwrap().clone();
-        let bag_contents = bag.get_contents();
-        assert_eq!(2, bag_contents.len());
-        assert_eq!("Carton", bag_contents.get(0).unwrap().get_self_item().get_name());
-        assert_eq!("Bronze Bar", bag_contents.get(1).unwrap().get_self_item().get_name());
-
-        assert_eq!("Test Item 1", player_inventory_contents.get(1).unwrap().get_self_item().get_name());
-        assert_eq!("Test Item 2", player_inventory_contents.get(2).unwrap().get_self_item().get_name());
-        assert_eq!("Test Item 3", player_inventory_contents.get(3).unwrap().get_self_item().get_name());
-
-        // AND so on until item 60
-        assert_eq!("Test Item 60", player_inventory_contents.get(60).unwrap().get_self_item().get_name());
-        assert_eq!("Steel Arming Sword", player_inventory_contents.get(61).unwrap().get_self_item().get_name());
 
         // WHEN we call to move test items 1,2,and 3 into the Bag
         let test_item_1 = player_inventory_contents.get(1).unwrap().clone();
@@ -1090,6 +1115,90 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B2. Within PlayerInventory - Moving items/containers from child to parent
     fn MoveItems_B2() {
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+
+        // AND we have a Bag in the inventory that contains a Carton and Bronze Bar
+        let bag = player_inventory_contents.get(0).unwrap().clone();
+        let bag_contents = bag.get_contents();
+        // Assert source size
+        assert_eq!(2, bag_contents.len());
+        assert_eq!("Carton", bag_contents.get(0).unwrap().get_self_item().get_name());
+        assert_eq!("Bronze Bar", bag_contents.get(1).unwrap().get_self_item().get_name());
+
+        // Assert target size (top-level player inventory size)
+        assert_eq!(62, player_inventory.get_contents().len());
+
+        // WHEN we call to move
+        // the Carton and Bronze Bar
+        // From the Bag into the top-level inventory
+        let carton = bag_contents.get(0).unwrap().clone();
+        let bronze_bar = bag_contents.get(1).unwrap().clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: bag.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            to_move: vec![
+                carton.get_self_item().clone(),
+                bronze_bar.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+            // AND the source Bag will have been updated, with the Carton and Bronze Bar removed
+            let updated_source = response.updated_scopes.source;
+            assert_eq!("Bag", updated_source.get_self_item().get_name());
+            let updated_source_contents = updated_source.get_container().get_contents();
+            // The source (Bag) should now be empty
+            assert_eq!(0, updated_source_contents.len());
+
+            // The target (inventory root) should have 2 more items
+            let updated_target = response.updated_scopes.target;
+            assert_eq!("Test Player's Inventory", updated_target.get_self_item().get_name());
+            assert_eq!(64, updated_target.get_container().unwrap().get_contents().len());
+
+            // TODO AND The real Player inventory should be updated to match the above
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            assert_eq!(64, real_player_inventory.get_contents().len());
+
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+
+            // The top items are unchanged (Bag, Test Item 1, 2, etc)
+            assert_eq!("Bag", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+            // And the real Bag is now empty
+            let bag = real_player_inventory_contents.get(0).unwrap().clone();
+            let bag_contents = bag.get_contents();
+            assert_eq!(0, bag_contents.len());
+            // And everything following that is the test items..
+            assert_eq!("Test Item 1", real_player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", real_player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", real_player_inventory_contents.get(3).unwrap().get_self_item().get_name());
+
+            // And finally, at the bottom of the container are the Carton and Bronze Bar we moved
+            assert_eq!("Carton", real_player_inventory_contents.get(62).unwrap().get_self_item().get_name());
+            assert_eq!("Bronze Bar", real_player_inventory_contents.get(63).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
         // Fail if we don't hit our logic
         assert!(false)
     }
@@ -1426,161 +1535,5 @@ use std::collections::HashMap;
     //     } else {
     //         assert!(false, "Unexpected data type returned");
     //     }
-    // }
-    //
-    // #[test]
-    // fn test_move_player_items_from_lower_to_parent() {
-    //     // GIVEN a player inventory containing a nested container (Bag)
-    //     // AND the Bag contains a Carton
-    //     let mut inventory = Container::new(Uuid::new_v4(), "Player Inventory".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //     let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // AND all of them contain some other items
-    //     let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item7 = Container::new(Uuid::new_v4(), "Test Item 7".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item8 = Container::new(Uuid::new_v4(), "Test Item 8".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item9 = Container::new(Uuid::new_v4(), "Test Item 9".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     // AND we're moving items from the underlying Carton into the parent (Bag)
-    //     let to_move = vec![item8.get_self_item().clone()];
-    //     let carton_item = carton.get_self_item().clone();
-    //     let bag_item = bag.get_self_item().clone();
-    //
-    //     carton.push(vec![item7, item8, item9]);
-    //     bag.push(vec![item4, item5, item6, carton.clone()]);
-    //
-    //     let source = carton.clone();
-    //     inventory.push(vec![item1, item2, item3, bag.clone()]);
-    //
-    //     let target = bag.clone();
-    //
-    //     // 11 total contents (including the Bag contents)
-    //     assert_eq!(11, inventory.get_total_count());
-    //     // Root container has items 1-3 and the bag at the top level
-    //     assert_eq!(4, inventory.get_top_level_count());
-    //
-    //     // AND the level has been setup with the player inventory
-    //     let mut level = build_player_test_level();
-    //     level.characters.get_player_mut().unwrap().set_inventory(inventory);
-    //
-    //     // WHEN we try to move an item from the bag into the root container
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: None,
-    //         target_position: None
-    //     };
-    //     let result = move_player_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     if let Ok(response) = result {
-    //         // with 0 unmoved items
-    //         assert_eq!(0, response.unmoved.len());
-    //
-    //         let updated_inventory = level.characters.get_player_mut().unwrap().get_inventory_mut();
-    //         // AND the player's inventory should not have 4 items in it's content count
-    //         assert_eq!(4, updated_inventory.get_top_level_count());
-    //
-    //         // AND The Bag should have 5 items now
-    //         if let Some(c) = updated_inventory.find(&bag_item) {
-    //             assert_eq!(5, c.get_top_level_count());
-    //         } else {
-    //             assert!(false, "Couldn't find Bag in the updated inventory!");
-    //         }
-    //
-    //         // AND The Carton should have only 2 items now
-    //         if let Some(b) = updated_inventory.find(&carton_item) {
-    //             assert_eq!(2, b.get_top_level_count());
-    //         } else {
-    //             assert!(false, "Couldn't find Carton in the updated inventory!");
-    //         }
-    //     } else {
-    //         assert!(false, "Unexpected data type returned");
-    //     }
-    //
-    // }
-    //
-    // #[test]
-    // fn test_move_player_items_from_lower_to_root() {
-    //     // GIVEN a player inventory containing a nested container (Bag)
-    //     let mut inventory = Container::new(Uuid::new_v4(), "Player Inventory".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // AND both the parent container and bag contains some other items
-    //     let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let to_move = vec![item6.get_self_item().clone()];
-    //
-    //     // AND we're moving items from the underlying bag into the main inventory (root)
-    //     let bag_item = bag.get_self_item().clone();
-    //
-    //     bag.push(vec![item4, item5, item6]);
-    //     let source = bag.clone();
-    //     inventory.push(vec![item1, item2, item3, bag]);
-    //
-    //     let target = inventory.clone();
-    //
-    //     // 7 total contents (including the Bag contents)
-    //     assert_eq!(7, inventory.get_total_count());
-    //     // Root container has items 1-3 and the bag at the top level
-    //     assert_eq!(4, inventory.get_top_level_count());
-    //
-    //     // AND the level has been setup with the player inventory
-    //     let mut level = build_player_test_level();
-    //     level.characters.get_player_mut().unwrap().set_inventory(inventory);
-    //
-    //     // WHEN we try to move an item from the bag into the root container
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: None,
-    //         target_position: None
-    //     };
-    //     let result = move_player_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     if let Ok(response) = result {
-    //         // with 0 unmoved items
-    //         assert_eq!(0, response.unmoved.len());
-    //     } else {
-    //         assert!(false, "Unexpected data type returned");
-    //     }
-    //
-    //     let updated_inventory = level.characters.get_player_mut().unwrap().get_inventory_mut();
-    //     // AND the player's inventory should not have 5 items in it's content count
-    //     assert_eq!(5, updated_inventory.get_top_level_count());
-    //     // AND The bag should have only 2 items now
-    //     if let Some(b) = updated_inventory.find(&bag_item) {
-    //         assert_eq!(2, b.get_top_level_count());
-    //     } else {
-    //         assert!(false, "Couldn't find Bag in the updated inventory!");
-    //     }
-    //
-    // }
-    //
-    // #[test]
-    // fn test_move_items_between() {
-    //
     // }
 }
