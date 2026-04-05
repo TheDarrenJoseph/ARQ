@@ -657,11 +657,21 @@ pub fn build_container_choices(source: &Container, parent_scope: TargetContainer
 // Major test scenarios
 // A1. Within a WorldContainer - Moving items/containers into another container
 // A2. Within a WorldContainer - Moving items/containers from child to parent
-// A3. Within a WorldContainer - Moving items/containers into a specific item spot
+// A3. Within a WorldContainer - Moving items/containers from parent to child
+// A4. Within a WorldContainer - Moving items/containers to the bottom of the container
+// A5. Within a WorldContainer - Moving items/containers to the top of the container
+// A6. Within a WorldContainer - Moving item/container selection to the middle of the container
+// A7. Within a WorldContainer - Moving split item/container selection into another container
+// A8. Within a WorldContainer - Moving split item/container selection to a specific spot
 
 // B1. Within PlayerInventory - Moving items/containers into another container
 // B2. Within PlayerInventory - Moving items/containers from child to parent
-// B3. Within PlayerInventory - Moving items/containers into a specific item spot
+// B3. Within PlayerInventory - Moving items/containers from parent to child
+// B4. Within PlayerInventory - Moving items/containers to the bottom of the container
+// B5. Within a PlayerInventory - Moving items/containers to the top of the container
+// B6. Within a PlayerInventory - Moving item/container selection to the middle of the container
+// B7. Within a PlayerInventory - Moving split item/container selection into another container
+// B8. Within a PlayerInventory - Moving split item/container selection to a specific spot
 
 // C1. Moving items/container from the PlayerInventory to World Container
 // C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
@@ -945,11 +955,18 @@ use std::collections::HashMap;
         assert!(false);
     }
 
+    #[test]
+    #[allow(non_snake_case)]
+    // A3. Within a WorldContainer - Moving items/containers from parent to child
+    fn MoveItems_A3() {
+        // Fail if we don't hit our logic
+        assert!(false);
+    }
 
     #[test]
     #[allow(non_snake_case)]
-    // A3. Within a WorldContainer - Moving items/containers into a specific item spot
-    fn MoveItems_A3() {
+    // A4. Within a WorldContainer - Moving items/containers to the bottom of the container
+    fn MoveItems_A4() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1022,6 +1039,38 @@ use std::collections::HashMap;
         }
 
         // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // A5. Within a WorldContainer - Moving items/containers to the top of the container
+    fn MoveItems_A5() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // A6. Within a WorldContainer - Moving item/container selection to the middle of the container
+    fn MoveItems_A6() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    //A7. Within a WorldContainer - Moving split item/container selection into another container
+    fn MoveItems_A7() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // A8. Within a WorldContainer - Moving split item/container selection to a specific spot
+    fn MoveItems_A8() {
+        // TODO Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1203,8 +1252,16 @@ use std::collections::HashMap;
 
     #[test]
     #[allow(non_snake_case)]
-    // B3. Within PlayerInventory - Moving items/containers into a specific item spot
+    // B3. Within PlayerInventory - Moving items/containers from parent to child
     fn MoveItems_B3() {
+        // Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B4. Within PlayerInventory - Moving items/containers to the bottom of the container
+    fn MoveItems_B4() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1273,7 +1330,6 @@ use std::collections::HashMap;
             assert!(updated_target.is_targeting_item_position());
             assert_eq!("Steel Arming Sword", updated_target.get_self_item().get_name());
 
-
             // AND the real player inventory in the level should match this
             let real_player_inventory = level.get_player().unwrap().get_inventory();
             let real_player_inventory_contents = real_player_inventory.get_contents();
@@ -1294,11 +1350,44 @@ use std::collections::HashMap;
         assert!(false)
     }
 
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B5. Within a PlayerInventory - Moving items/containers to the top of the container
+    fn MoveItems_B5() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B6. Within a PlayerInventory - Moving item/container selection to the middle of the container
+    fn MoveItems_B6() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B7. Within a PlayerInventory - Moving split item/container selection into another container
+    fn MoveItems_B7() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    // B8. Within a PlayerInventory - Moving split item/container selection to a specific spot
+    fn MoveItems_B8() {
+        // TODO Fail if we don't hit our logic
+        assert!(false)
+    }
+
     #[test]
     #[allow(non_snake_case)]
     // C1. Moving items/container from the PlayerInventory to World Container
     fn MoveItems_C1() {
-        // Fail if we don't hit our logic
+        // TODO Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1306,317 +1395,7 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
     fn MoveItems_C2() {
-        // Fail if we don't hit our logic
+        // TODO Fail if we don't hit our logic
         assert!(false)
     }
-
-    //
-    // #[test]
-    // fn test_move_items_top() {
-    //     // GIVEN a valid map
-    //     // that holds a source container containing 6 containers (Each with a unique name)
-    //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // Clone everything before moving
-    //     let to_move = vec![container5.get_self_item().clone(), container6.get_self_item().clone()];
-    //     source_container.push(vec![container1, container2, container3,  container4,  container5, container6], );
-    //     let source_copy = source_container.clone();
-    //     assert_eq!(6, source_container.get_total_count());
-    //
-    //     let source = source_container.clone();
-    //     let container_pos =  Position { x: 1, y: 1};
-    //     let target_item = source_container.get(0).get_self_item().clone();
-    //     let _expected_target = target_item.clone();
-    //     let mut level = build_test_level(container_pos, source_container);
-    //
-    //     // WHEN we call to move container 5 and 6 to the top of the list (Container 1's location)
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: None,
-    //         target_position_item: Some(target_item),
-    //         source_position: Some(container_pos),
-    //         target_position: None
-    //     };
-    //     let data_expected = data.clone();
-    //     let result = move_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     // THEN we expect a valid result
-    //     if let Ok(response) = result {
-    //         // AND the source/targets should be returned with no outstanding to_move data
-    //         assert!(data_expected.source_container.id_equals(&response.source));
-    //         assert_eq!(0, response.unmoved.len());
-    //
-    //         // AND The map 'source' container will have it's items reshuffled
-    //         let map_container = level.get_map_mut().unwrap().find_container(&data_expected.source_container, container_pos);
-    //         if let Some(c) = map_container {
-    //             assert_eq!(6, c.get_total_count());
-    //             let contents = c.get_contents();
-    //             assert_eq!(source_copy.get(4).get_self_item().get_name(), contents[0].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(5).get_self_item().get_name(), contents[1].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(0).get_self_item().get_name(), contents[2].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(1).get_self_item().get_name(), contents[3].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(2).get_self_item().get_name(), contents[4].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(3).get_self_item().get_name(), contents[5].get_self_item().get_name());
-    //             return; // pass
-    //         }
-    //     }
-    //     assert!(false);
-    // }
-    //
-    // #[test]
-    // fn test_move_item_middle() {
-    //     // GIVEN a valid map
-    //     // that holds a source container containing 6 containers (Each with a unique name)
-    //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // Clone everything before moving
-    //     let to_move = vec![container1.get_self_item().clone(), container2.get_self_item().clone()];
-    //     source_container.push(vec![container1, container2, container3,  container4,  container5, container6], );
-    //     let source_copy = source_container.clone();
-    //     assert_eq!(6, source_container.get_total_count());
-    //
-    //     // WHEN we call to move container 1 and 2 to the middle of the list (Container 5's location)
-    //     let source = source_container.clone();
-    //     let container_pos =  Position { x: 1, y: 1};
-    //     let target_item = source_container.get(4).get_self_item().clone();
-    //     let _expected_target = target_item.clone();
-    //     let mut level = build_test_level(container_pos, source_container);
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: None,
-    //         target_position_item: Some(target_item),
-    //         source_position: Some(container_pos),
-    //         target_position: None
-    //     };
-    //     let data_expected = data.clone();
-    //     let result = move_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     // THEN we expect a valid result
-    //     if let Ok(response) = result {
-    //         // AND the source/targets should be returned with no outstanding to_move data
-    //         assert!(data_expected.source_container.id_equals(&response.source));
-    //         assert_eq!(0, response.unmoved.len());
-    //
-    //         // AND The map 'source' container will have it's items reshuffled
-    //         let map_container = level.get_map_mut().unwrap().find_container(&data_expected.source_container, container_pos);
-    //         if let Some(c) = map_container {
-    //             assert_eq!(6, c.get_total_count());
-    //             let contents = c.get_contents();
-    //             assert_eq!(source_copy.get(2).get_self_item().get_name(), contents[0].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(3).get_self_item().get_name(), contents[1].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(0).get_self_item().get_name(), contents[2].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(1).get_self_item().get_name(), contents[3].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(4).get_self_item().get_name(), contents[4].get_self_item().get_name());
-    //             assert_eq!(source_copy.get(5).get_self_item().get_name(), contents[5].get_self_item().get_name());
-    //             return; // pass
-    //         }
-    //     }
-    //     assert!(false);
-    // }
-    //
-    // #[test]
-    // fn test_move_split_items() {
-    //     // GIVEN a valid map
-    //     // that holds a source container containing 6 containers (Each with a unique name)
-    //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // Clone everything before moving
-    //     let to_move = vec![container1.get_self_item().clone(), container6.get_self_item().clone()];
-    //     source_container.push(vec![container1.clone(), container2.clone(), container3.clone(), container4.clone(), container5.clone(), container6.clone()], );
-    //     //let source_container_copy = source_container.clone();
-    //     assert_eq!(6, source_container.get_total_count());
-    //
-    //     // WHEN we call to move "Test Container 1" and "Test Container 6" to container 2's location (index 1)
-    //     let source = source_container.clone();
-    //     let container_pos =  Position { x: 1, y: 1};
-    //     // Target is "Test Container 2"
-    //     let target_item = source_container.get(1).get_self_item().clone();
-    //     let _expected_target = target_item.clone();
-    //     let mut level = build_test_level(container_pos, source_container.clone());
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: None,
-    //         target_position_item: Some(target_item),
-    //         source_position: Some(container_pos),
-    //         target_position: None
-    //     };
-    //     let data_expected = data.clone();
-    //     let result = move_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     if let Ok(response) = result {
-    //         // AND the source/targets should be returned with no outstanding to_move data
-    //         assert!(data_expected.source_container.id_equals(&response.source));
-    //         assert_eq!(0, response.unmoved.len());
-    //
-    //         // AND The map 'source' container will have it's items reshuffled
-    //         let map_container = level.get_map_mut().unwrap().find_container(&data_expected.source_container, container_pos);
-    //         if let Some(c) = map_container {
-    //             assert_eq!(6, c.get_total_count());
-    //             let contents = c.get_contents();
-    //             // AND the order should now match our expectations
-    //             // Test Container 2
-    //             assert_eq!(container2.get_self_item().get_name(), contents[0].get_self_item().get_name());
-    //             // Test Container 1
-    //             assert_eq!(container1.get_self_item().get_name(), contents[1].get_self_item().get_name());
-    //             // Test Container 6
-    //             assert_eq!(container6.get_self_item().get_name(), contents[2].get_self_item().get_name());
-    //             // Test Container 3
-    //             assert_eq!(container3.get_self_item().get_name(), contents[3].get_self_item().get_name());
-    //             // Test Container 4
-    //             assert_eq!(container4.get_self_item().get_name(), contents[4].get_self_item().get_name());
-    //             // Test Container 5
-    //             assert_eq!(container5.get_self_item().get_name(), contents[5].get_self_item().get_name());
-    //             return; // pass
-    //         }
-    //     }
-    //     assert!(false)
-    // }
-    //
-    // #[test]
-    // fn test_move_items_no_position() {
-    //     // GIVEN a valid map
-    //     // that holds a source container containing 3 containers
-    //     let mut source_container = Container::new(Uuid::new_v4(), "Source Container".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let to_move = vec![container1.get_self_item().clone()];
-    //     source_container.push(vec![container1, container2, container3]);
-    //     assert_eq!(3, source_container.get_total_count());
-    //
-    //     let source = source_container.clone();
-    //     let container_pos =  Position { x: 1, y: 1};
-    //     let target = source_container.get(2).clone();
-    //     let _target_item = target.get_self_item().clone();
-    //     let mut level = build_test_level(container_pos, source_container);
-    //
-    //     // WHEN we call to move container 1 into container 3 without a position for the container
-    //     let data = MoveItemsRequest {
-    //         source_container: source,
-    //         to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: None,
-    //         target_position: None
-    //     };
-    //     let _data_expected = data.clone();
-    //     let result = move_items(data, &mut level);
-    //     // THEN we expect an Error to return
-    //     assert!(result.is_err());
-    //     result.expect_err("[container_util::move_items] Cannot move items. No map position provided");
-    // }
-    //
-    // #[test]
-    // fn test_move_player_items_from_parent_to_lower() {
-    //     // GIVEN a player inventory containing a nested container (Bag)
-    //     // AND the Bag contains a Carton
-    //     let mut inventory = Container::new(Uuid::new_v4(), "Player Inventory".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
-    //     let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //     let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 100);
-    //
-    //     // AND all of them contain some other items
-    //     let item1 = Container::new(Uuid::new_v4(), "Test Item 1".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item2 = Container::new(Uuid::new_v4(), "Test Item 2".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item3 = Container::new(Uuid::new_v4(), "Test Item 3".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item4 = Container::new(Uuid::new_v4(), "Test Item 4".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item5 = Container::new(Uuid::new_v4(), "Test Item 5".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item6 = Container::new(Uuid::new_v4(), "Test Item 6".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     let item7 = Container::new(Uuid::new_v4(), "Test Item 7".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item8 = Container::new(Uuid::new_v4(), "Test Item 8".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //     let item9 = Container::new(Uuid::new_v4(), "Test Item 9".to_owned(), 'X', 1.0, 1, ContainerType::ITEM, 0);
-    //
-    //     // AND we're moving items 2 and 3 from the parent into the Bag (first child)
-    //     let to_move = vec![item2.get_self_item().clone(), item3.get_self_item().clone()];
-    //     carton.push(vec![item7, item8, item9]);
-    //     bag.push(vec![item4, item5, item6, carton.clone()]);
-    //
-    //     inventory.push(vec![item1, item2, item3, bag.clone()]);
-    //     let source = inventory.clone();
-    //
-    //     let target = bag.clone();
-    //
-    //     // 11 total contents (including the Bag contents)
-    //     assert_eq!(11, inventory.get_total_count());
-    //     // Root container has items 1-3 and the bag at the top level
-    //     assert_eq!(4, inventory.get_top_level_count());
-    //     assert_eq!(4, bag.get_top_level_count());
-    //     assert_eq!(3, carton.get_top_level_count());
-    //
-    //     // AND the level has been setup with the player inventory
-    //     let mut level = build_player_test_level();
-    //     level.characters.get_player_mut().unwrap().set_inventory(inventory);
-    //
-    //     // WHEN we try to move these
-    //     let data = MoveItemsRequest {
-    //         source_container: source, to_move,
-    //         target_container: Some(target),
-    //         target_position_item: None,
-    //         source_position: None,
-    //         target_position: None
-    //     };
-    //     let result = move_player_items(data, &mut level);
-    //
-    //     // THEN we expect a result to return
-    //     assert!(result.is_ok());
-    //
-    //     if let Ok(response) = result {
-    //         // with 0 unmoved items
-    //         assert_eq!(0, response.unmoved.len());
-    //
-    //         let updated_inventory = level.characters.get_player_mut().unwrap().get_inventory_mut();
-    //         // AND the player's inventory should now have 2 items in it's top level count
-    //         assert_eq!(2, updated_inventory.get_top_level_count());
-    //
-    //         // AND The Bag should have 5 items now
-    //         let bag_item = bag.get_self_item().clone();
-    //         if let Some(c) = updated_inventory.find(&bag_item) {
-    //             assert_eq!(6, c.get_top_level_count());
-    //         } else {
-    //             assert!(false, "Couldn't find Bag in the updated inventory!");
-    //         }
-    //
-    //         // AND The Carton should have 3 items still
-    //         let carton_item = carton.get_self_item().clone();
-    //         if let Some(b) = updated_inventory.find(&carton_item) {
-    //             assert_eq!(3, b.get_top_level_count());
-    //         } else {
-    //             assert!(false, "Couldn't find Carton in the updated inventory!");
-    //         }
-    //
-    //     } else {
-    //         assert!(false, "Unexpected data type returned");
-    //     }
-    // }
 }
