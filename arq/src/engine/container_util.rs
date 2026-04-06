@@ -356,7 +356,8 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
 
             // Update the source and target
             source_container.remove_matching_items(moving.clone());
-            let target_pos = if pos >= moving.len() { pos - moving.len() } else { pos };
+            // Get the position again in the updated sources
+            let target_pos = source_container.item_position(&piip.target_position_item).unwrap();
             source_container.insert(target_pos, moving.clone());
 
             let data = MoveItemsResponseV2 {
@@ -397,7 +398,8 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
 
             // Update the source and target
             source_container.remove_matching_items(moving.clone());
-            let target_pos = if pos >= moving.len() { pos - moving.len() } else { pos };
+            // Get the position again in the updated sources
+            let target_pos = source_container.item_position(&wcip.target_position_item).unwrap();
             source_container.insert(target_pos, moving.clone());
 
             let data = MoveItemsResponseV2 {
@@ -984,12 +986,12 @@ use std::collections::HashMap;
         assert_eq!(6, chest.get_total_count());
 
         let container_pos =  Position { x: 1, y: 1};
-        let target_item = chest.get(5).get_self_item().clone();
-        let _expected_target = target_item.clone();
 
         let mut level = build_test_level(container_pos, chest.clone());
 
         // WHEN we call to move container 1 and 2 to the bottom of the list (Container 6's location)
+        let bottom_item_target = chest.get(5).get_self_item().clone();
+        let _expected_target = bottom_item_target.clone();
         let request = MoveItemsRequestV2 {
             source: SourceContainerScope::WorldContainer(
                 WorldContainer {
@@ -999,7 +1001,7 @@ use std::collections::HashMap;
             ),
             target: TargetContainerScope::WorldContainerItemPosition(
                 WorldContainerItemPosition {
-                    target_position_item: container6.get_self_item().clone(),
+                    target_position_item: bottom_item_target,
                     position: container_pos
                 }
             ),
@@ -1046,7 +1048,76 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // A5. Within a WorldContainer - Moving items/containers to the top of the container
     fn MoveItems_A5() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+
+        // Clone everything before moving
+        let to_move = vec![container5.get_self_item().clone(), container6.get_self_item().clone()];
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        let source_copy = chest.clone();
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        // WHEN we call to move container 5 and 6 to the top of the list (Container 1's location)
+        let top_item_target = chest.get(0).get_self_item().clone();
+        let _expected_target = top_item_target.clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainerItemPosition(
+                WorldContainerItemPosition {
+                    target_position_item: top_item_target,
+                    position: container_pos
+                }
+            ),
+            // Container 5 and 6, cloned earlier
+            to_move: to_move
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a valid result
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the source will have been updated, with container 1 and 2 above the top item
+            let updated_source_contents = response.updated_scopes.source.get_container().get_contents();
+            assert_eq!(6, updated_source_contents.len());
+            assert_eq!("Test Container 5", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 1", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", updated_source_contents.get(5).unwrap().get_self_item().get_name());
+
+            let updated_target = response.updated_scopes.target;
+
+            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            assert_eq!(6, map_source_contents.len());
+            assert_eq!("Test Container 5", map_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", map_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 1", map_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", map_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", map_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", map_source_contents.get(5).unwrap().get_self_item().get_name());
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1054,7 +1125,76 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // A6. Within a WorldContainer - Moving item/container selection to the middle of the container
     fn MoveItems_A6() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+
+        // Clone everything before moving
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        let source_copy = chest.clone();
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        // WHEN we call to move container 1 to the middle of the list (Container 3's location)
+        let to_move = vec![container1.get_self_item().clone()];
+        let middle_item_target = chest.get(2).get_self_item().clone();
+        let _expected_target = middle_item_target.clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainerItemPosition(
+                WorldContainerItemPosition {
+                    target_position_item: middle_item_target,
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a valid result
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the source will have been updated, with container 1 2nd in the list (above the target middle item)
+            let updated_source_contents = response.updated_scopes.source.get_container().get_contents();
+            assert_eq!(6, updated_source_contents.len());
+            assert_eq!("Test Container 2", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 1", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 5", updated_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", updated_source_contents.get(5).unwrap().get_self_item().get_name());
+
+            let updated_target = response.updated_scopes.target;
+
+            // AND the real map source will match this response
+            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            assert_eq!(6, map_source_contents.len());
+            assert_eq!("Test Container 2", map_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 1", map_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", map_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", map_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 5", map_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", map_source_contents.get(5).unwrap().get_self_item().get_name());
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1070,7 +1210,76 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // A8. Within a WorldContainer - Moving split item/container selection to a specific spot
     fn MoveItems_A8() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+
+        // Clone everything before moving
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        let source_copy = chest.clone();
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        // WHEN we call to move container 2 and 5 (completely split selections) to the middle of the list (Container 3's location)
+        let to_move = vec![container2.get_self_item().clone(), container5.get_self_item().clone()];
+        let middle_item_target = chest.get(2).get_self_item().clone();
+        let _expected_target = middle_item_target.clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainerItemPosition(
+                WorldContainerItemPosition {
+                    target_position_item: middle_item_target,
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a valid result
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the source will have been updated, with container 1 2nd in the list (above the target middle item)
+            let updated_source_contents = response.updated_scopes.source.get_container().get_contents();
+            assert_eq!(6, updated_source_contents.len());
+            assert_eq!("Test Container 1", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 5", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", updated_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", updated_source_contents.get(5).unwrap().get_self_item().get_name());
+
+            let updated_target = response.updated_scopes.target;
+
+            // AND the real map source will match this response
+            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            assert_eq!(6, map_source_contents.len());
+            assert_eq!("Test Container 1", map_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", map_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 5", map_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", map_source_contents.get(3).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", map_source_contents.get(4).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", map_source_contents.get(5).unwrap().get_self_item().get_name());
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1275,15 +1484,13 @@ use std::collections::HashMap;
 
         let test_item_1 = player_inventory_contents.get(1).unwrap();
         let test_item_2 = player_inventory_contents.get(2).unwrap();
-
         assert_eq!("Test Item 1", test_item_1.get_self_item().get_name());
         assert_eq!("Test Item 2", test_item_2.get_self_item().get_name());
 
         // WHEN we call to move
         // Test Item 1 and 2 near the top (in the top-level inventory)
         // To the bottom item's location
-        let target_position_item = player_inventory_contents.get(61).unwrap().get_self_item();
-
+        let bottom_position_item = player_inventory_contents.get(61).unwrap().get_self_item();
         let request = MoveItemsRequestV2 {
             source: SourceContainerScope::PlayerInventory(
                 PlayerInventoryContainer {
@@ -1292,7 +1499,7 @@ use std::collections::HashMap;
             ),
             target: TargetContainerScope::PlayerInventoryItemPosition(
                 PlayerInventoryItemPosition {
-                    target_position_item: target_position_item.clone()
+                    target_position_item: bottom_position_item.clone()
                 }
             ),
             to_move: vec![
@@ -1355,7 +1562,91 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B5. Within a PlayerInventory - Moving items/containers to the top of the container
     fn MoveItems_B5() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+
+        // WHEN we call to move
+        // Test Item 59 and 60 near the bottom (in the top-level inventory)
+        // To the top item's location (the Bag)
+        let test_item_59 = player_inventory_contents.get(59).unwrap();
+        let test_item_60 = player_inventory_contents.get(60).unwrap();
+        assert_eq!("Test Item 59", test_item_59.get_self_item().get_name());
+        assert_eq!("Test Item 60", test_item_60.get_self_item().get_name());
+        let top_position_item = player_inventory_contents.get(0).unwrap().get_self_item();
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventoryItemPosition(
+                PlayerInventoryItemPosition {
+                    target_position_item: top_position_item.clone()
+                }
+            ),
+            to_move: vec![
+                test_item_59.get_self_item().clone(),
+                test_item_60.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the response source should be the Player's inventory
+            let updated_source = response.updated_scopes.source;
+            let updated_source_contents = updated_source.get_container().get_contents();
+            assert!(updated_source.is_player_scope());
+            assert_eq!("Test Player's Inventory", updated_source.get_self_item().get_name());
+            // AND it's size should be unchanged
+            assert_eq!(62, updated_source_contents.len());
+
+            // AND the top of the source should now be Test item 59, 60, the Bag, and then Test Item 1 onwards
+            assert_eq!("Test Item 59", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Bag", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 1", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 57, 58, and the Arming sword as the last items in the container
+            assert_eq!("Test Item 57", updated_source_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 58", updated_source_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_source_contents.get(61).unwrap().get_self_item().get_name());
+
+            // AND the updated target should be the item we specified earlier
+            let updated_target = response.updated_scopes.target;
+            assert!(updated_target.is_targeting_item_position());
+            assert_eq!("Bag", updated_target.get_self_item().get_name());
+
+            // AND the real player inventory in the level should match this
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(62, real_player_inventory_contents.len());
+            // AND the top of the inventory should now be Bag, then Test item 3 onwards
+            assert_eq!("Test Item 59", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", real_player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Bag", real_player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 1", real_player_inventory_contents.get(3).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 57, 58, and the Arming sword as the last items in the container
+            assert_eq!("Test Item 57", real_player_inventory_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 58", real_player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_player_inventory_contents.get(61).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1363,7 +1654,98 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B6. Within a PlayerInventory - Moving item/container selection to the middle of the container
     fn MoveItems_B6() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+
+        // WHEN we call to move the first item (Bag) to the middle of the container
+        let bag = player_inventory_contents.get(0).unwrap();
+        assert_eq!("Bag", bag.get_self_item().get_name());
+        let middle_position_item = player_inventory_contents.get(30).unwrap().get_self_item();
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventoryItemPosition(
+                PlayerInventoryItemPosition {
+                    target_position_item: middle_position_item.clone()
+                }
+            ),
+            to_move: vec![
+                bag.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the response source should be the Player's inventory
+            let updated_source = response.updated_scopes.source;
+            let updated_source_contents = updated_source.get_container().get_contents();
+            assert!(updated_source.is_player_scope());
+            assert_eq!("Test Player's Inventory", updated_source.get_self_item().get_name());
+            // AND it's size should be unchanged
+            assert_eq!(62, updated_source_contents.len());
+
+            // AND the top of the source should now be Test item 1, 2, onwards
+            assert_eq!("Test Item 1", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND right in the middle should be the Bag and then Test Item 30 and Test Item 31
+            // As moving moves the Bag above the target (Test Item 30)
+            assert_eq!("Bag", updated_source_contents.get(29).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 30", updated_source_contents.get(30).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 31", updated_source_contents.get(31).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 59, 60, and the Arming sword as the last items in the container
+            assert_eq!("Test Item 59", updated_source_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", updated_source_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_source_contents.get(61).unwrap().get_self_item().get_name());
+
+            // AND the updated target should be the item we specified earlier
+            let updated_target = response.updated_scopes.target;
+            assert!(updated_target.is_targeting_item_position());
+            assert_eq!("Test Item 30", updated_target.get_self_item().get_name());
+
+            // AND the real player inventory in the level should match this
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(62, real_player_inventory_contents.len());
+
+            // AND the top of the inventory should now be Test item 1, 2, onwards
+            assert_eq!("Test Item 1", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", real_player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", real_player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND right in the middle should be the Bag and then Test Item 30 and Test Item 31
+            // As moving moves the Bag above the target (Test Item 30)
+            assert_eq!("Bag", real_player_inventory_contents.get(29).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 30", real_player_inventory_contents.get(30).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 31", real_player_inventory_contents.get(31).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Iem 59, 60, and the Arming sword as the last items in the inventory
+            assert_eq!("Test Item 59", real_player_inventory_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", real_player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_player_inventory_contents.get(61).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1379,7 +1761,108 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B8. Within a PlayerInventory - Moving split item/container selection to a specific spot
     fn MoveItems_B8() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+
+        // WHEN we call to move the first item (Bag) and the last (split selection)
+        // to the middle of the container
+        let bag = player_inventory_contents.get(0).unwrap();
+        assert_eq!("Bag", bag.get_self_item().get_name());
+
+        let steel_arming_sword = player_inventory_contents.get(61).unwrap();
+        assert_eq!("Steel Arming Sword", steel_arming_sword.get_self_item().get_name());
+
+        let middle_position_item = player_inventory_contents.get(30).unwrap().get_self_item();
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventoryItemPosition(
+                PlayerInventoryItemPosition {
+                    target_position_item: middle_position_item.clone()
+                }
+            ),
+            to_move: vec![
+                bag.get_self_item().clone(),
+                steel_arming_sword.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // AND the response source should be the Player's inventory
+            let updated_source = response.updated_scopes.source;
+            let updated_source_contents = updated_source.get_container().get_contents();
+            assert!(updated_source.is_player_scope());
+            assert_eq!("Test Player's Inventory", updated_source.get_self_item().get_name());
+            // AND it's size should be unchanged
+            assert_eq!(62, updated_source_contents.len());
+
+            // AND the top of the source should now be Test item 1, 2, onwards
+            assert_eq!("Test Item 1", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND right in the middle should be:
+            // Test Item 29, the Bag, the Sword, and then Test Item 30 and Test Item 31 onwards
+            assert_eq!("Test Item 29", updated_source_contents.get(28).unwrap().get_self_item().get_name());
+            assert_eq!("Bag", updated_source_contents.get(29).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_source_contents.get(30).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 30", updated_source_contents.get(31).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 31", updated_source_contents.get(32).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Item 58, 59, and 60 at the end (at the last item, the sword, has moved above)
+            assert_eq!("Test Item 58", updated_source_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 59", updated_source_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", updated_source_contents.get(61).unwrap().get_self_item().get_name());
+
+            // AND the updated target should be the item we specified earlier
+            let updated_target = response.updated_scopes.target;
+            assert!(updated_target.is_targeting_item_position());
+            assert_eq!("Test Item 30", updated_target.get_self_item().get_name());
+
+            // AND the real player inventory in the level should match this
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(62, real_player_inventory_contents.len());
+
+            // AND the top of the source should now be Test item 1, 2, onwards
+            assert_eq!("Test Item 1", real_player_inventory_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", real_player_inventory_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 3", real_player_inventory_contents.get(2).unwrap().get_self_item().get_name());
+
+            // AND right in the middle should be:
+            // Test Item 29, the Bag, the Sword, and then Test Item 30 and Test Item 31 onwards
+            assert_eq!("Test Item 29", real_player_inventory_contents.get(28).unwrap().get_self_item().get_name());
+            assert_eq!("Bag", real_player_inventory_contents.get(29).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_player_inventory_contents.get(30).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 30", real_player_inventory_contents.get(31).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 31", real_player_inventory_contents.get(32).unwrap().get_self_item().get_name());
+
+            // AND we should have Test Item 58, 59, and 60 at the end (at the last item, the sword, has moved above)
+            assert_eq!("Test Item 58", real_player_inventory_contents.get(59).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 59", real_player_inventory_contents.get(60).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", real_player_inventory_contents.get(61).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
