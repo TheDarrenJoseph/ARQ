@@ -64,6 +64,10 @@ impl Container {
         return container_type_valid && item_type_valid;
     }
 
+    pub fn get_name(&self) -> String {
+        self.item.get_name().clone()
+    }
+
     pub fn get_self_item(&self) -> &Item {
         &self.item
     }

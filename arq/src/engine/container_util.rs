@@ -518,7 +518,8 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                     if (live_player_inventory.get_self_item_id() == target.container.get_self_item_id()) {
                         live_target = live_player_inventory;
                     } else {
-                        let live_target_match = live_player_inventory.get_contents_mut().iter_mut().find(|c| c.get_self_item().get_id() == target.container.get_self_item().get_id())
+                        let live_target_match = live_player_inventory
+                            .find_mut(target.container.get_self_item())
                             .expect("Failed to find target container in the Player's Inventory");
                         live_target = live_target_match;
                     }
@@ -777,7 +778,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A1. Within a WorldContainer - Moving items/containers into another container
-    fn MoveItems_A1_moving_into_another_container() {
+    fn MoveItems_A1() {
         // GIVEN a World Container Chest containing 2 containers and 2 items
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
         let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
@@ -867,7 +868,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A2. Within a WorldContainer - Moving items/containers from child to parent
-    fn MoveItems_A2_moving_from_child_to_parent() {
+    fn MoveItems_A2() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
@@ -969,7 +970,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A3. Within a WorldContainer - Moving items/containers from parent to child
-    fn MoveItems_A3_moving_from_parent_to_child() {
+    fn MoveItems_A3() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
@@ -1673,6 +1674,83 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B3. Within PlayerInventory - Moving items/containers from parent to child
     fn MoveItems_B3() {
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+
+        // AND we have a Bag in the inventory that contains a Carton and Bronze Bar
+        let bag = player_inventory_contents.get(0).unwrap().clone();
+        let bag_contents = bag.get_contents();
+        // Assert source size
+        assert_eq!(2, bag_contents.len());
+        assert_eq!("Carton", bag_contents.get(0).unwrap().get_self_item().get_name());
+        assert_eq!("Bronze Bar", bag_contents.get(1).unwrap().get_self_item().get_name());
+
+        // AND GIVEN the hierarchy of:
+        // Inventory -> Bag -> Carton
+        // And the Bag contains the Carton and a Bronze Bar
+
+        // WHEN we call to move the Bag's Bronze Bar (2nd item in the Bag) into the Carton
+        let carton = bag_contents.get(0).unwrap().clone();
+        let bronze_bar = bag_contents.get(1).unwrap().clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: bag.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: carton.clone()
+                }
+            ),
+            to_move: vec![
+                bronze_bar.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // -- Validate response source
+            let updated_source = response.updated_scopes.source;
+            assert_eq!("Bag", updated_source.get_self_item().get_name());
+            assert_eq!(1, updated_source.get_container().get_contents().len());
+            assert_eq!("Carton", updated_source.get_container().get_contents().get(0).unwrap().get_name());
+
+            // -- Validate response target
+            let updated_target = response.updated_scopes.target;
+            assert_eq!("Carton", updated_target.get_container().unwrap().get_name());
+            assert_eq!(2, updated_target.get_container().unwrap().get_contents().len());
+            assert_eq!("Tin Bar", updated_target.get_container().unwrap().get(0).get_name());
+            assert_eq!("Bronze Bar", updated_target.get_container().unwrap().get(1).get_name());
+
+            // -- Validate map source (The Bag)
+            let player = level.get_player().unwrap();
+            let real_source = player.get_inventory().find(bag.get_self_item()).expect("Failed to find real source container");
+            assert_eq!("Bag", real_source.get_name());
+            assert_eq!(1, real_source.get_contents().len());
+            assert_eq!("Carton", real_source.get_contents().get(0).unwrap().get_name());
+
+            // -- Validate map target (The Carton)
+            let real_target = player.get_inventory().find(carton.get_self_item()).expect("Failed to find real source container");
+            assert_eq!("Carton", real_target.get_name());
+            assert_eq!(2, real_target.get_contents().len());
+            assert_eq!("Tin Bar", real_target.get(0).get_name());
+            assert_eq!("Bronze Bar", real_target.get(1).get_name());
+
+            return; // pass
+        }
+
         // Fail if we don't hit our logic
         assert!(false)
     }
@@ -1963,7 +2041,105 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // B7. Within a PlayerInventory - Moving split item/container selection into another container
     fn MoveItems_B7() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a player focused test level (which has a player and their inventory)
+        let mut level = build_player_test_level();
+
+        let player = level.characters.get_player().unwrap();
+
+        // AND the player inventory is in the expected state
+        let player_inventory = player.get_inventory();
+        validate_player_inventory(player_inventory);
+        let player_inventory_contents= player_inventory.get_contents();
+        assert_eq!(62, player_inventory_contents.len());
+
+        // WHEN we call to move a split selection of:
+        // 1. The first test item (Bag)
+        // 2. The last item (Steel Arming Sword)
+        // Into the Bag
+        let test_item_1 = player_inventory_contents.get(1).unwrap();
+        assert_eq!("Test Item 1", test_item_1.get_self_item().get_name());
+
+        let steel_arming_sword = player_inventory_contents.get(61).unwrap();
+        assert_eq!("Steel Arming Sword", steel_arming_sword.get_self_item().get_name());
+
+        let bag = player_inventory_contents.get(0).unwrap();
+        assert_eq!("Bag", bag.get_self_item().get_name());
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: player_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: bag.clone()
+                }
+            ),
+            to_move: vec![
+                test_item_1.get_self_item().clone(),
+                steel_arming_sword.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // -- Validate response source
+            let updated_source = response.updated_scopes.source;
+            assert_eq!(60, updated_source.get_container().get_contents().len());
+            assert_eq!("Test Player's Inventory", updated_source.get_self_item().get_name());
+
+            // And the first few items in the inventory will now be:
+            // Bag
+            let bag = updated_source.get_container().get(0);
+            assert_eq!("Bag", bag.get_self_item().get_name());
+            // Test Item 2
+            let test_item_2 = updated_source.get_container().get(1);
+            assert_eq!("Test Item 2", test_item_2.get_self_item().get_name());
+
+            // And the last few items will be there apart from the Sword
+            assert_eq!("Test Item 59", updated_source.get_container().get(58).get_self_item().get_name());
+            assert_eq!("Test Item 60", updated_source.get_container().get(59).get_self_item().get_name());
+
+            // -- Validate response target
+            let updated_target = response.updated_scopes.target;
+            assert_eq!("Bag", updated_target.get_self_item().get_name());
+            assert_eq!(4, updated_target.get_container().unwrap().get_contents().len());
+            let updated_target_contents = updated_target.get_container().unwrap();
+            assert_eq!("Carton", updated_target_contents.get(0).get_self_item().get_name());
+            assert_eq!("Bronze Bar", updated_target_contents.get(1).get_self_item().get_name());
+            assert_eq!("Test Item 1", updated_target_contents.get(2).get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", updated_target_contents.get(3).get_self_item().get_name());
+
+
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            let real_player_inventory_contents = real_player_inventory.get_contents();
+            assert_eq!(60, real_player_inventory_contents.len());
+            // -- Validate real inventory source
+            assert_eq!("Bag", real_player_inventory_contents.get(0).unwrap().get_name());
+            assert_eq!("Test Item 2", real_player_inventory_contents.get(1).unwrap().get_name());
+
+            // And the last few items will be there apart from the Sword
+            assert_eq!("Test Item 59", real_player_inventory_contents.get(58).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 60", real_player_inventory_contents.get(59).unwrap().get_self_item().get_name());
+
+            // -- Validate real inventory target
+            let real_target = real_player_inventory.find(bag.get_self_item()).unwrap();
+            assert_eq!(4, real_target.get_contents().len());
+            assert_eq!("Bag", real_target.get_name());
+            let real_target_contents = real_target.get_contents();
+            assert_eq!("Carton", real_target_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Bronze Bar", real_target_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 1", real_target_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Steel Arming Sword", real_target_contents.get(3).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
         assert!(false)
     }
 
