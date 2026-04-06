@@ -1,6 +1,8 @@
 use crate::error::errors::ErrorType::{DISPLAYABLE, INTERNAL, IO};
 use std::fmt::{Debug, Display, Formatter};
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum ErrorType {
     // For errors that we can display to the player via console, etc
     DISPLAYABLE,

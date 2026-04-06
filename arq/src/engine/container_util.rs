@@ -501,6 +501,10 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
             return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
         }
 
+        if (source.is_world_scope() && target.is_player_scope()) {
+            return Err(ErrorWrapper::new_internal(String::from("Unsupported operation. Moving from world container to Player Inventory is supported by TakeItems instead.")));
+        }
+
         let source_container = source.get_container().clone();
         if (target.is_targeting_another_container()) {
             let live_target: &mut Container;
@@ -690,7 +694,8 @@ pub fn build_container_choices(source: &Container, parent_scope: TargetContainer
 
 #[cfg(test)]
 mod tests {
-    use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope, WorldContainerItemPosition, PlayerInventoryContainer, PlayerInventoryItemPosition};
+    use crate::error::errors::ErrorType;
+use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope, WorldContainerItemPosition, PlayerInventoryContainer, PlayerInventoryItemPosition};
 use std::collections::HashMap;
 
     use uuid::Uuid;
@@ -2256,7 +2261,102 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // C1. Moving items/container from the PlayerInventory to World Container
     fn MoveItems_C1() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        // AND this also has a player inventory
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        let player =level.get_player_mut();
+        let original_inventory = player.unwrap().get_inventory().clone();
+        validate_player_inventory(&original_inventory);
+        assert_eq!(62, original_inventory.get_contents().len());
+        assert_eq!("Bag", original_inventory.get_contents().get(0).unwrap().get_self_item().get_name());
+
+        let test_item_1 = original_inventory.get_contents().get(1).unwrap().clone();
+        let test_item_2 = original_inventory.get_contents().get(2).unwrap().clone();
+        assert_eq!("Test Item 1", test_item_1.get_name());
+        assert_eq!("Test Item 2", test_item_2.get_name());
+
+        // WHEN we call to move Test Item 1 and 2 into the Chest (moving from the Player's Inventory into the nearby Chest)
+
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: original_inventory.clone()
+                }
+            ),
+            target: TargetContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos.clone()
+                }
+            ),
+            to_move: vec![
+                test_item_1.get_self_item().clone(),
+                test_item_2.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a successful result to return
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // -- Validate response source
+            let response_source = response.updated_scopes.source.get_container();
+            let response_source_contents = response_source.get_contents();
+            assert_eq!("Test Player's Inventory", response_source.get_name());
+            assert_eq!(60, response_source_contents.len());
+
+            // -- Validate response target
+            let response_target = response.updated_scopes.target.get_container().unwrap();
+            let response_target_contents = response_target.get_contents();
+            assert_eq!("Chest", response_target.get_name());
+            assert_eq!(8, response_target_contents.len());
+            assert_eq!("Test Container 1", response_target_contents.get(0).unwrap().get_name());
+            assert_eq!("Test Container 2", response_target_contents.get(1).unwrap().get_name());
+            assert_eq!("Test Container 3", response_target_contents.get(2).unwrap().get_name());
+            assert_eq!("Test Container 4", response_target_contents.get(3).unwrap().get_name());
+            assert_eq!("Test Container 5", response_target_contents.get(4).unwrap().get_name());
+            assert_eq!("Test Container 6", response_target_contents.get(5).unwrap().get_name());
+            assert_eq!("Test Item 1", response_target_contents.get(6).unwrap().get_name());
+            assert_eq!("Test Item 2", response_target_contents.get(7).unwrap().get_name());
+
+            // -- Validate real source (Player's inventory)
+            let real_player_inventory = level.get_player().unwrap().get_inventory();
+            assert_eq!("Test Player's Inventory", real_player_inventory.get_name());
+            assert_eq!(60, real_player_inventory.get_contents().len());
+
+            // -- Validate real target (map Chest)
+            let real_target = level.get_map_mut().unwrap().find_container(&response.updated_scopes.target.get_container().unwrap(), container_pos).unwrap();
+            assert_eq!("Chest", real_target.get_name());
+            let real_target_contents = real_target.get_contents();
+            assert_eq!(8, real_target_contents.len());
+            assert_eq!("Test Container 1", real_target_contents.get(0).unwrap().get_name());
+            assert_eq!("Test Container 2", real_target_contents.get(1).unwrap().get_name());
+            assert_eq!("Test Container 3", real_target_contents.get(2).unwrap().get_name());
+            assert_eq!("Test Container 4", real_target_contents.get(3).unwrap().get_name());
+            assert_eq!("Test Container 5", response_target_contents.get(4).unwrap().get_name());
+            assert_eq!("Test Container 6", real_target_contents.get(5).unwrap().get_name());
+            assert_eq!("Test Item 1", real_target_contents.get(6).unwrap().get_name());
+            assert_eq!("Test Item 2", real_target_contents.get(7).unwrap().get_name());
+
+            return; // pass
+
+        }
+
         assert!(false)
     }
 
@@ -2264,6 +2364,62 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     // C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
     fn MoveItems_C2() {
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        // AND this also has a player inventory
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        let player =level.get_player_mut();
+        let original_inventory = player.unwrap().get_inventory().clone();
+        validate_player_inventory(&original_inventory);
+        assert_eq!(62, original_inventory.get_contents().len());
+        assert_eq!("Bag", original_inventory.get_contents().get(0).unwrap().get_self_item().get_name());
+
+        // WHEN we call to move Test Container 1 and 2 from the Chest into the Player's Inventory
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos.clone()
+                }
+            ),
+            target: TargetContainerScope::PlayerInventory(
+                PlayerInventoryContainer {
+                    container: original_inventory.clone()
+                }
+            ),
+            to_move: vec![
+                container1.get_self_item().clone(),
+                container2.get_self_item().clone()
+            ]
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a failure result to return (as this is unsupported as it's covered by Take Items and not Move Items)
+        if let Err(e) = result {
+            assert_eq!(ErrorType::INTERNAL, e.error_type);
+            assert!(e.io_error.is_none());
+            assert!(e.displayable_message.is_none());
+            assert_eq!(
+                "Unsupported operation. Moving from world container to Player Inventory is supported by TakeItems instead.",
+                e.internal_message.unwrap()
+            );
+            
+            return // pass;
+        }
+
         // TODO Fail if we don't hit our logic
         assert!(false)
     }
