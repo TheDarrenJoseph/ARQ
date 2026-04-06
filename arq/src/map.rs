@@ -78,7 +78,7 @@ impl Map {
         self.containers.get(&position)
     }
 
-    pub fn find_container_mut(&mut self, position: Position) -> Option<&mut Container> {
+    pub fn get_container_at_position_mut(&mut self, position: Position) -> Option<&mut Container> {
         self.containers.get_mut(&position)
     }
 
@@ -89,6 +89,14 @@ impl Map {
             log::info!("Replacing old container: {} with new: {}", old.get_self_item().get_name(), new.get_self_item().get_name());
             **old = new;
         }
+    }
+
+    pub fn find_containers(&self, position: Position) -> Vec<&Container> {
+        let mut containers : Vec<&Container> = Vec::new();
+        if let Some(map_c) = self.containers.get(&position) {
+            containers.push(map_c);
+        }
+        containers
     }
 
     pub fn find_containers_mut(&mut self, position: Position) -> Vec<&mut Container> {
@@ -104,7 +112,19 @@ impl Map {
         &mut self.containers
     }
 
-    pub fn find_container(&mut self, target: &Container, pos: Position) -> Option<& mut Container> {
+    pub fn find_container(&self, target: &Container, pos: Position) -> Option<&Container> {
+        for c in self.find_containers(pos) {
+            if c.id_equals(&target) {
+                return Some(c);
+            } else if let Some(subcontainer) = c.find(target.get_self_item()) {
+                return Some(subcontainer);
+            }
+        }
+
+        None
+    }
+
+    pub fn find_container_mut(&mut self, target: &Container, pos: Position) -> Option<& mut Container> {
         for c in self.find_containers_mut(pos) {
             if c.id_equals(&target) {
                 return Some(c);

@@ -59,7 +59,7 @@ impl Container {
     }
 
     pub fn is_true_container(&self) -> bool {
-        let container_type_valid = (self.container_type == ContainerType::OBJECT) | (self.container_type == ContainerType::AREA);;
+        let container_type_valid = (self.container_type == ContainerType::OBJECT) | (self.container_type == ContainerType::AREA);
         let item_type_valid = self.item.item_type == ItemType::CONTAINER;
         return container_type_valid && item_type_valid;
     }
@@ -77,7 +77,10 @@ impl Container {
     }
 
     pub fn id_equals(&self, other: &Container) -> bool {
-        self.item.get_id() == other.get_self_item().get_id()
+        let self_id = self.get_self_item_id().to_string();
+        let other_id = other.get_self_item_id().to_string();
+
+        self_id == other_id
     }
 
     pub fn id_equals_uuid(&self, other_id: Uuid) -> bool {
@@ -311,7 +314,7 @@ impl Container {
     pub fn find_mut(&mut self, target: &Item) -> Option<&mut Container> {
         let target_id = target.get_id();
         for c in self.contents.iter_mut() {
-            if c.get_self_item().get_id() == target_id {
+            if c.get_self_item().id_equals(target) {
                 return Some(c)
             } else {
                 if let Some(subcontainer) = c.find_mut(target) {

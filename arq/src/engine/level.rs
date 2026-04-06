@@ -176,6 +176,10 @@ impl Level {
         self.characters.get_player_mut()
     }
 
+    pub fn get_map(&mut self) -> Option<&Map> {
+        self.map.as_ref()
+    }
+
     pub fn get_map_mut(&mut self) -> Option<&mut Map> {
         self.map.as_mut()
     }

@@ -158,7 +158,10 @@ impl Item {
     }
     pub fn is_equipped(&self) -> bool { self.equipment_slot.is_some() }
     pub fn id_equals(&self, other: &Item) -> bool {
-        self.id == other.id
+        // Use string for easy debugging
+        let self_id = self.id.to_string();
+        let other_id = other.id.to_string();
+        self_id == other_id
     }
 
     pub fn set_equipment_slot(&mut self, slot: Option<EquipmentSlot>) {

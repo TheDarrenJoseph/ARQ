@@ -97,7 +97,7 @@ pub fn player_take_items(data: TakeItemsRequest, level : &mut Level) -> Result<T
 
         if !taken.is_empty() || !untaken.is_empty() {
             if let Some(pos) = data.position {
-                let map_container = level.get_map_mut().unwrap().find_container(&data.source, pos);
+                let map_container = level.get_map_mut().unwrap().find_container_mut(&data.source, pos);
                 if let Some(source_container) = map_container {
                     source_container.remove_matching_items(taken.clone());
                 }
@@ -162,7 +162,7 @@ pub fn player_drop_items(data: DropItemsRequest, level: &mut Level) -> Result<Dr
 
         // Secondly, add the player items to the target container
         if let Some(dropping_container) = dropping_container_item {
-            if let Some(target_container) = level.get_map_mut().unwrap().find_container_mut(target_position) {
+            if let Some(target_container) = level.get_map_mut().unwrap().get_container_at_position_mut(target_position) {
                 if target_container.can_fit_container_item(&dropping_container) {
                     log::info!("container_util::player_drop_items] Dropping item: {} into: {}", item.get_name(), target_container.get_self_item().get_name());
                     match target_container.add(dropping_container.clone()) {
@@ -247,7 +247,16 @@ fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Cont
             Ok(pos_container)
         } else {
           // Search each child container for an ID match
-          for child_container in pos_container.get_contents_mut().iter_mut() {
+          for child_container in pos_container.get_contents_mut()
+              .iter_mut()
+              .filter(|c| c.is_true_container()) {
+
+              // Check the container itself before diving into it
+              if (child_container.id_equals(&container)) {
+                  return Ok(child_container);
+              }
+
+              // Check it's contents otherwise
               let found_container = child_container.find_mut(container.get_self_item());
               if let Some(c) = found_container {
                   return Ok(c)
@@ -499,7 +508,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                 TargetContainerScope::WorldContainer(target) => {
                     live_target = level
                         .get_map_mut().unwrap()
-                        .find_container(&target.container, target.position)
+                        .find_container_mut(&target.container, target.position)
                         .expect("Failed to find target container on the map");
                 },
                 TargetContainerScope::PlayerInventory(target) => {
@@ -605,7 +614,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
         SourceContainerScope::WorldContainer(ref wc) => {
             live_source = level
                 .get_map_mut().unwrap()
-                .find_container(&wc.container, wc.position)
+                .find_container_mut(&wc.container, wc.position)
                 .expect("Failed to find target container on the map");
         }
         SourceContainerScope::PlayerInventory(source) => {
@@ -768,7 +777,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A1. Within a WorldContainer - Moving items/containers into another container
-    fn MoveItems_A1() {
+    fn MoveItems_A1_moving_into_another_container() {
         // GIVEN a World Container Chest containing 2 containers and 2 items
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
         let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
@@ -824,7 +833,7 @@ use std::collections::HashMap;
 
             // And the 'target' (Container 2) container will have the item now
             let target_container = &request.target.get_container().unwrap();
-            let updated_target = level.get_map_mut().unwrap().find_container(target_container, container_pos);
+            let updated_target = level.get_map_mut().unwrap().find_container_mut(target_container, container_pos);
             if let Some(c) = updated_target {
                 // There should be 2 items in container
                 assert_eq!(2, c.get_total_count());
@@ -837,7 +846,7 @@ use std::collections::HashMap;
             }
 
             // AND The map 'source' container will have the item removed
-            let updated_source = level.get_map_mut().unwrap().find_container(&request.source.get_container(), container_pos);
+            let updated_source = level.get_map_mut().unwrap().find_container_mut(&request.source.get_container(), container_pos);
             if let Some(c) = updated_source {
                 // There should be 2 items in to root container's top level
                 assert_eq!(2, c.get_top_level_count());
@@ -858,7 +867,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A2. Within a WorldContainer - Moving items/containers from child to parent
-    fn MoveItems_A2() {
+    fn MoveItems_A2_moving_from_child_to_parent() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
@@ -930,7 +939,7 @@ use std::collections::HashMap;
 
             // AND the map will be updated to reflect this
             // Find the Carton
-            let source_updated = level.get_map_mut().unwrap().find_container(&carton, container_pos);
+            let source_updated = level.get_map_mut().unwrap().find_container_mut(&carton, container_pos);
             // the carton should now be empty
             assert_eq!(0, source_updated.unwrap().get_top_level_count());
 
@@ -941,7 +950,7 @@ use std::collections::HashMap;
             // 4. Test Item 3
             // 5. Test Container 3
             let target_container = &request.target.get_container().unwrap();
-            let mut target_updated = level.get_map_mut().unwrap().find_container(target_container, container_pos);
+            let mut target_updated = level.get_map_mut().unwrap().find_container_mut(target_container, container_pos);
             assert_eq!(5, target_updated.as_ref().unwrap().get_top_level_count());
 
             let target_contents = target_updated.as_mut().unwrap().get_contents();
@@ -960,7 +969,121 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A3. Within a WorldContainer - Moving items/containers from parent to child
-    fn MoveItems_A3() {
+    fn MoveItems_A3_moving_from_parent_to_child() {
+        // GIVEN a valid map
+
+        // AND a chest that contains a nested bag and carton
+        // Our container Hierarchy should now be
+        //  Chest -> Bag -> Carton
+        // Chest contents: [Test Item 1, Test Container 1]
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 1000000);
+        // AND each of them contain some other items
+        let item1 = Container::wrap(Item::with_defaults(String::from("Test Item 1"), 1.0, 100));
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        chest.push(vec![item1.clone(), container1.clone()]);
+
+        // Bag contents: [Test Item 2, Test Container 2]
+        let mut bag = Container::new(Uuid::new_v4(), "Bag".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 600);
+        let item2 = Container::wrap(Item::with_defaults(String::from("Test Item 2"), 1.0, 100));
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
+        bag.push(vec![item2.clone(), container2.clone()]);
+
+        // Carton contents: [Test Item 3, Test Container 3]
+        let mut carton = Container::new(Uuid::new_v4(), "Carton".to_owned(), 'X', 5.0, 1, ContainerType::OBJECT, 500);
+        let item3 = Container::wrap(Item::with_defaults(String::from("Test Item 3"), 1.0, 100));
+        // The container has to be small enough to fit in the Bag
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        carton.push(vec![item3.clone(), container3.clone()]);
+
+        bag.push(vec![carton.clone()]);
+        assert_eq!(3, bag.get_top_level_count());
+
+        chest.push(vec![bag.clone()]);
+        assert_eq!(3, chest.get_top_level_count());
+
+        // AND all of this is stored in a test level
+        let container_pos = Position { x: 1, y: 1 };
+        let mut level = build_test_level(container_pos, chest);
+
+        // WHEN we call to move items
+        // - from the first child container (Bags's Test Iem 2 and Test Container 2)
+        // - into the child container (Carton)
+        let to_move = vec![item2.get_self_item().clone(), container2.get_self_item().clone()];
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: bag.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainer(
+                WorldContainer {
+                    container: carton.clone(),
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a result to return
+        assert!(result.is_ok());
+
+        // THEN we expect a result that confirms this
+        if let Ok(response) = result {
+            assert_eq!(true, response.success);
+            assert_eq!(0, response.unmoved.len());
+
+            // -- Check the response source
+            // And the response should return a copy of the updated source container
+            assert_eq!(bag.get_self_item().get_id(), response.updated_scopes.source.get_self_item().get_id());
+            assert_eq!("Bag", response.updated_scopes.source.get_self_item().get_name());
+            // the Bag should now have 1 item inside (The Carton)
+            let updated_source_contents = response.updated_scopes.source.get_container().get_contents();
+            assert_eq!(1, updated_source_contents.len());
+            assert_eq!("Carton", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+
+            // -- Check the response target
+            // And the response should return a copy of the updated target container (the Carton)
+            assert_eq!("Carton", response.updated_scopes.target.get_self_item().get_name());
+            // the Carton should now have 4 items inside:
+            // Test Item 3
+            // Test Container 3
+            // Test Item 2 (moved)
+            // Test Container 2 (moved)
+            assert_eq!(4, response.updated_scopes.target.get_container().unwrap().get_top_level_count());
+            let updated_target_contents = response.updated_scopes.target.get_container().unwrap().get_contents().clone();
+            assert_eq!("Test Item 3", updated_target_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_target_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", updated_target_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", updated_target_contents.get(3).unwrap().get_self_item().get_name());
+
+            // AND the map will be updated to reflect this
+            // -- Check the map source
+            let source_updated = level.get_map_mut().unwrap().find_container_mut(&bag, container_pos).expect("Failed to find source container on the map");
+            assert_eq!(bag.get_self_item().get_id(), source_updated.get_self_item().get_id());
+            assert_eq!("Bag", source_updated.get_self_item().get_name());
+            // the Bag should now have 1 item inside (The Carton)
+            let updated_source_contents = source_updated.get_contents();
+            assert_eq!(1, updated_source_contents.len());
+            assert_eq!("Carton", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+
+            // -- Check the map target
+            let target_updated = level.get_map_mut().unwrap().find_container_mut(&carton, container_pos).expect("Failed to find target container on the map");
+            assert_eq!(4, target_updated.get_top_level_count());
+            let updated_target_contents = target_updated.get_contents().clone();
+            assert_eq!("Test Item 3", updated_target_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_target_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Item 2", updated_target_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 2", updated_target_contents.get(3).unwrap().get_self_item().get_name());
+
+            return;
+        }
+
+        // Fail if we don't hit our logic
+        assert!(false);
+
+
         // Fail if we don't hit our logic
         assert!(false);
     }
@@ -1029,7 +1152,7 @@ use std::collections::HashMap;
 
             let updated_target = response.updated_scopes.target;
 
-            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            let map_source_contents = level.get_map_mut().unwrap().find_container_mut(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
             assert_eq!(6, map_source_contents.len());
             assert_eq!("Test Container 3", map_source_contents.get(0).unwrap().get_self_item().get_name());
             assert_eq!("Test Container 4", map_source_contents.get(1).unwrap().get_self_item().get_name());
@@ -1106,7 +1229,7 @@ use std::collections::HashMap;
 
             let updated_target = response.updated_scopes.target;
 
-            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            let map_source_contents = level.get_map_mut().unwrap().find_container_mut(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
             assert_eq!(6, map_source_contents.len());
             assert_eq!("Test Container 5", map_source_contents.get(0).unwrap().get_self_item().get_name());
             assert_eq!("Test Container 6", map_source_contents.get(1).unwrap().get_self_item().get_name());
@@ -1183,7 +1306,7 @@ use std::collections::HashMap;
             let updated_target = response.updated_scopes.target;
 
             // AND the real map source will match this response
-            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            let map_source_contents = level.get_map_mut().unwrap().find_container_mut(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
             assert_eq!(6, map_source_contents.len());
             assert_eq!("Test Container 2", map_source_contents.get(0).unwrap().get_self_item().get_name());
             assert_eq!("Test Container 1", map_source_contents.get(1).unwrap().get_self_item().get_name());
@@ -1202,7 +1325,94 @@ use std::collections::HashMap;
     #[allow(non_snake_case)]
     //A7. Within a WorldContainer - Moving split item/container selection into another container
     fn MoveItems_A7() {
-        // TODO Fail if we don't hit our logic
+        // GIVEN a valid map
+        // that holds a Chest containing 6 containers (Each with a unique name)
+        let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container2 = Container::new(Uuid::new_v4(), "Test Container 2".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container3 = Container::new(Uuid::new_v4(), "Test Container 3".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container4 = Container::new(Uuid::new_v4(), "Test Container 4".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container5 = Container::new(Uuid::new_v4(), "Test Container 5".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+        let container6 = Container::new(Uuid::new_v4(), "Test Container 6".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
+
+        // Clone everything before moving
+        chest.push(vec![container1.clone(), container2.clone(), container3.clone(),  container4.clone(),  container5.clone(), container6.clone()], );
+        let source_copy = chest.clone();
+        assert_eq!(6, chest.get_total_count());
+
+        let container_pos =  Position { x: 1, y: 1};
+
+        let mut level = build_test_level(container_pos, chest.clone());
+
+        // WHEN we call to move container 2 and 5 (completely split selections) to the middle container (Test Container 3)
+        let to_move = vec![container2.get_self_item().clone(), container5.get_self_item().clone()];
+        let container_target = chest.get(2).clone();
+        let _expected_target = container_target.clone();
+        let request = MoveItemsRequestV2 {
+            source: SourceContainerScope::WorldContainer(
+                WorldContainer {
+                    container: chest.clone(),
+                    position: container_pos
+                }
+            ),
+            target: TargetContainerScope::WorldContainer(
+                WorldContainer {
+                    container: container_target.clone(),
+                    position: container_pos
+                }
+            ),
+            to_move: to_move
+        };
+
+        let result = move_items(request.clone(), &mut level);
+
+        // THEN we expect a valid result
+        if let Ok(response) = result {
+            assert!(response.all_items_moved());
+
+            // -- Verify response source
+            // AND the source will have been updated, with container 2 and 5 missing
+            let updated_source =  response.updated_scopes.source;
+            assert_eq!("Chest", updated_source.get_self_item().get_name());
+            let updated_source_contents = updated_source.get_container().get_contents();
+            assert_eq!(4, updated_source_contents.len());
+            assert_eq!("Test Container 1", updated_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", updated_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", updated_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", updated_source_contents.get(3).unwrap().get_self_item().get_name());
+
+            // AND Test Container 3 will now contain container's 2 and 5
+            let source_container_3 = updated_source_contents.get(1).unwrap();
+            assert_eq!(2, source_container_3.get_contents().len());
+            assert_eq!("Test Container 2", source_container_3.get(0).get_self_item().get_name());
+            assert_eq!("Test Container 5", source_container_3.get(1).get_self_item().get_name());
+
+            // -- Verify response target
+            let updated_target = response.updated_scopes.target.get_container().unwrap();
+            assert_eq!("Test Container 3", updated_target.get_self_item().get_name());
+            assert_eq!(2, updated_target.get_contents().len());
+            assert_eq!("Test Container 2", updated_target.get(0).get_self_item().get_name());
+            assert_eq!("Test Container 5", updated_target.get(1).get_self_item().get_name());
+
+            let map = level.get_map().unwrap();
+
+            // -- Verify map source
+            let map_source_contents = map.find_container(&updated_source.get_container(), container_pos).unwrap().get_contents();
+            assert_eq!(4, map_source_contents.len());
+            assert_eq!("Test Container 1", map_source_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 3", map_source_contents.get(1).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 4", map_source_contents.get(2).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 6", map_source_contents.get(3).unwrap().get_self_item().get_name());
+
+            let map_target_contents = map.find_container(&response.updated_scopes.target.get_container().unwrap(), container_pos).unwrap().get_contents();
+            assert_eq!(2, map_target_contents.len());
+            assert_eq!("Test Container 2", map_target_contents.get(0).unwrap().get_self_item().get_name());
+            assert_eq!("Test Container 5", map_target_contents.get(1).unwrap().get_self_item().get_name());
+
+            return; // pass
+        }
+
+        // Fail if we don't hit our logic
         assert!(false)
     }
 
@@ -1268,7 +1478,7 @@ use std::collections::HashMap;
             let updated_target = response.updated_scopes.target;
 
             // AND the real map source will match this response
-            let map_source_contents = level.get_map_mut().unwrap().find_container(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
+            let map_source_contents = level.get_map_mut().unwrap().find_container_mut(&response.updated_scopes.source.get_container(), container_pos).unwrap().get_contents();
             assert_eq!(6, map_source_contents.len());
             assert_eq!("Test Container 1", map_source_contents.get(0).unwrap().get_self_item().get_name());
             assert_eq!("Test Container 2", map_source_contents.get(1).unwrap().get_self_item().get_name());
