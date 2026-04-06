@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Parses the LCOV file (lcov.info) to read out the total lines found (LF) and total lines hit (LH)
 # We then sum each and calculate the total % that the sum of LH is of the sum of LF
 function analyse_totals() {
@@ -15,8 +17,8 @@ function analyse_totals() {
 }
 
 export RUSTFLAGS="-Cinstrument-coverage"
-rm -r ./target/coverage
-mkdir -P "./target/coverage"
+rm -rf ./target/coverage
+mkdir -p "./target/coverage"
 export LLVM_PROFILE_FILE="target/coverage/%p-%m.profraw"
 cargo test
 
@@ -27,7 +29,7 @@ lcov --remove ./target/coverage/lcov.info -o ./target/coverage/lcov.info\
     'src/test'
 
 # Generate the HTML version of the report for development usage
-genhtml --ignore-errors unmapped -o ./target/coverage/ --show-details --highlight --ignore-errors source --legend ./target/coverage/lcov.info
+genhtml --ignore-errors unmapped -o ./target/coverage/ --show-details --ignore-errors source --legend ./target/coverage/lcov.info
 
 # Generate the total line coverage % badge
 BADGE_PERCENTAGE=$(analyse_totals)
