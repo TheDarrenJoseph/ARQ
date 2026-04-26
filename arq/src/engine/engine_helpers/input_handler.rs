@@ -1,10 +1,10 @@
 use termion::event::Key;
 
-use crate::ui::bindings::action_bindings::Action;
+use crate::ui::bindings::action_bindings::PlayerAction;
 use crate::ui::bindings::input_bindings::{AllKeyBindings, KeyBindings};
 
 pub struct InputHandler {
-  current_action: Option<Action>,
+  current_action: Option<PlayerAction>,
   keybindings: AllKeyBindings,  
 }
 
@@ -15,7 +15,7 @@ impl InputHandler {
             keybindings
         }
     }
-    pub async fn handle_input(&mut self, key : Key) -> Option<Action> {
+    pub async fn handle_input(&mut self, key : Key) -> Option<PlayerAction> {
         let action_bindings = &self.keybindings.action_key_bindings;
         let action_input = action_bindings.get_input(key);
 

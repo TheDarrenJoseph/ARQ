@@ -29,6 +29,8 @@ use termion::event::Key;
 use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use crate::engine::command::command::Command;
+use crate::engine::command::look_command::LookCommand;
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,
@@ -47,6 +49,34 @@ pub struct OpenCommandChannels {
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
 const NOTHING_ERROR : &str = "There's nothing here to open.";
 
+impl <B: ratatui::backend::Backend> Command for OpenCommandNew<'_, B> {
+
+    async fn start(&mut self) -> Result<(), ErrorWrapper> {
+        let input_result = self.initial_prompt();
+        if input_result.is_ok() {
+
+            let input_maybe = input_result.unwrap();
+            let side = map_open_input_to_side(input_maybe);
+            if side.is_some() {
+                if let Some(p) = self.level.find_adjacent_player_position(side) {
+                    log::info!("Player opening at map position: {}, {}", &p.x, &p.y);
+                    self.re_render()?;
+
+                    let to_open : Option<Container> = self.find_container(p);
+                    if let Some(c) = to_open {
+                        self.ui.clear_console_buffer();
+                        self.re_render()?;
+                        log::info!("Player opening container of type {:?} and length: {}", c.container_type, c.get_total_count());
+                        return self.open_container(p.clone(), &c).await;
+                    } else {
+                        return ErrorWrapper::internal_result(NOTHING_ERROR.to_string())
+                    }
+                }
+            }
+        }
+        return ErrorWrapper::internal_result(NOTHING_ERROR.to_string())
+    }
+}
 
 impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
@@ -98,33 +128,6 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         }
         None
     }
-    
-    pub(crate) async fn begin(&mut self) -> Result<(), ErrorWrapper> {
-        let input_result = self.initial_prompt();
-        if input_result.is_ok() {
-            
-            let input_maybe = input_result.unwrap();
-            let side = map_open_input_to_side(input_maybe);
-            if side.is_some() {
-                if let Some(p) = self.level.find_adjacent_player_position(side) {
-                    log::info!("Player opening at map position: {}, {}", &p.x, &p.y);
-                    self.re_render()?;
-    
-                    let to_open : Option<Container> = self.find_container(p);
-                    if let Some(c) = to_open {
-                        self.ui.clear_console_buffer();
-                        self.re_render()?;
-                        log::info!("Player opening container of type {:?} and length: {}", c.container_type, c.get_total_count());
-                        return self.open_container(p.clone(), &c).await;
-                    } else {
-                        return ErrorWrapper::internal_result(NOTHING_ERROR.to_string())
-                    }
-                }
-            }
-        }
-        return ErrorWrapper::internal_result(NOTHING_ERROR.to_string())
-    }
-    
     
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {

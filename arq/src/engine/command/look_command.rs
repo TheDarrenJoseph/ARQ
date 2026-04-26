@@ -1,7 +1,7 @@
 use std::io;
 
 
-use crate::engine::command::command::Command;
+use crate::engine::command::command::{Command, CommandPlayerAction};
 use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
@@ -11,7 +11,7 @@ use crate::map::room::Room;
 use crate::map::tile::TileType;
 use crate::map::tile::TileType::{NoTile, Wall, Window};
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::bindings::action_bindings::Action;
+use crate::ui::bindings::action_bindings::PlayerAction;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::look_bindings::{map_look_input_to_side, LookInput, LookKeyBindings};
 use crate::ui::ui::UIViewMode::Map;
@@ -22,6 +22,14 @@ pub struct LookCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub ui: &'a mut UI,
     pub terminal_manager : &'a mut TerminalManager<B>,
     pub bindings : LookKeyBindings
+}
+
+impl <B: ratatui::backend::Backend> Command for LookCommand<'_, B> {
+    async fn start(&mut self) -> Result<(), ErrorWrapper> {
+        self.ui.set_console_buffer("Where do you want to look?. Arrow keys to choose. Repeat usage to choose current location.".to_string());
+        self.re_render().unwrap();
+        return Ok(())
+    }
 }
 
 fn describe_position_in_room(pos: Position, room: &Room) -> Option<String> {
@@ -116,22 +124,16 @@ impl <B: ratatui::backend::Backend> LookCommand<'_, B> {
     }
 }
 
-impl <B: ratatui::backend::Backend> Command<LookInput> for LookCommand<'_, B> {
-    fn can_handle_action(&self, action: Action) -> bool {
+impl <B: ratatui::backend::Backend> CommandPlayerAction<LookInput> for LookCommand<'_, B> {
+    fn can_handle_action(&self, action: PlayerAction) -> bool {
         return match action {
-            Action::LookAround => {
+            PlayerAction::LookAround => {
                 true
             }
             _ => {
                 false
             }
         };
-    }
-
-    fn start(&mut self) -> Result<(), ErrorWrapper> {
-        self.ui.set_console_buffer("Where do you want to look?. Arrow keys to choose. Repeat usage to choose current location.".to_string());
-        self.re_render().unwrap();
-        return Ok(())
     }
 
     fn handle_input(&mut self, _input: Option<&LookInput>) -> Result<(), ErrorWrapper> {

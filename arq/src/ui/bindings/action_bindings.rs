@@ -1,14 +1,12 @@
 use crate::map::position::Side;
 use crate::map::position::Side::{BOTTOM, LEFT, RIGHT, TOP};
-use crate::ui::bindings::action_bindings::Action::{DevBeginCombat, Escape, LookAround, MovePlayer, OpenNearby, ShowCharacterInfo};
+use crate::ui::bindings::action_bindings::PlayerAction::{DevBeginCombat, Escape, LookAround, MovePlayer, OpenNearby, ShowCharacterInfo};
 use crate::ui::bindings::input_bindings::KeyBindings;
 use std::collections::HashMap;
 use termion::event::Key;
-/*
-  An Action that the Player can take
- */
+
 #[derive(Debug, Clone)]
-pub enum Action {
+pub enum PlayerAction {
     ShowCharacterInfo, // Displays inventory and other character info
     DevBeginCombat, // For development of combat view
     LookAround,
@@ -19,7 +17,7 @@ pub enum Action {
 
 #[derive(Debug, Clone)]
 pub struct ActionKeyBindings {
-   pub bindings : HashMap<Key, Action>
+   pub bindings : HashMap<Key, PlayerAction>
 }
 
 pub fn build_default_action_keybindings() -> ActionKeyBindings {
@@ -48,12 +46,12 @@ pub fn build_default_action_keybindings() -> ActionKeyBindings {
     }
 }
 
-impl KeyBindings<Action> for ActionKeyBindings {
-    fn get_bindings(&self) -> &HashMap<Key, Action> {
+impl KeyBindings<PlayerAction> for ActionKeyBindings {
+    fn get_bindings(&self) -> &HashMap<Key, PlayerAction> {
        &self.bindings
     }
 
-    fn get_input(&self, key: Key) -> Option<&Action> {
+    fn get_input(&self, key: Key) -> Option<&PlayerAction> {
         self.get_bindings().get(&key)
     }
 }

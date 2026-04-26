@@ -26,6 +26,8 @@ use log::{debug, error, info};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::engine::command::command::Command;
+use crate::engine::command::look_command::LookCommand;
 use crate::engine::container_util;
 use crate::map::objects::items::Item;
 use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
@@ -42,6 +44,84 @@ pub struct CharacterInfoCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub widget_data: Option<CharacterInfoWidgetData>,
     // The commands available for the underlying container widgets
     pub container_widget_commands: Option<Vec<UsageCommand>>
+}
+
+impl <B: ratatui::backend::Backend> Command for CharacterInfoCommand<'_, B> {
+    async fn start(&mut self) -> Result<(), ErrorWrapper> {
+        log::info!("Player opening Character Info Screen.");
+
+        // Build the CharacterInfoWidgetData and return the required event channels for communicating
+        let channels = self.bootstrap().await;
+
+        let mut container_event_receiver = channels.container_event_receiver;
+        let child_container_sender = channels.child_container_sender;
+
+        let terminal_manager = &mut self.terminal_manager;
+        let ui = &mut self.ui;
+
+        ui.set_console_buffer(UI_USAGE_HINT.to_string());
+
+        // Spawn a thread to handle the UI events
+        let mut event_handler = TerminalEventHandler::new();
+        let _event_thread_data = event_handler.spawn_thread();
+
+        let mut running = true;
+        while running {
+            if let Some(widget_data) = &mut self.widget_data {
+                terminal_manager.terminal.draw(|frame| {
+                    debug!("Rendering Character Info Screen");
+                    ui.render(None, UIViewMode::CharacterInfo(widget_data.clone()), frame);
+                })?;
+
+                // Whenever there's a UI event, ask the widget data to handle it
+                debug!("Waiting for a Character Info UI event");
+                if let Some(e) = event_handler.receiver.recv().await {
+
+                    // If we have a container choice data set, it takes priority
+                    // Handle any events specific to choosing a container
+                    let choice_event = e.clone();
+                    if let Some(choice_data) = &mut widget_data.containers_data.container_choice_data {
+                        debug!("Handling Character Info UI Event (container choice)");
+                        choice_data.handle_event(choice_event).await;
+
+                    } else {
+                        debug!("Handling Character Info UI Event (container)");
+                        widget_data.handle_event(e).await;
+                    }
+                } else {
+                    info!("Receiver returned None!");
+                    running = false;
+                }
+
+                if let Some(widget_data) = &mut self.widget_data {
+                    let player_position = self.level.get_player_mut().unwrap().get_global_position();
+
+                    // If the widget data has sent us an event, handle that
+                    match container_event_receiver.try_recv() {
+                        Ok(event) => {
+                            // Handle the event / break the loop if we need to
+                            running = handle_container_event(
+                                terminal_manager,
+                                ui,
+                                self.level,
+                                player_position.clone(),
+                                event,
+                                &mut event_handler,
+                                &mut widget_data.containers_data,
+                                child_container_sender.clone()
+                            ).await;
+                        },
+                        Err(e) => {
+                            error!("Could not receive container event: {:?}", e);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return Ok(())
+    }
 }
 
 async fn handle_container_event<'a, B: ratatui::backend::Backend>(
@@ -132,7 +212,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             // TODO can this be refactored to be shared between this and open_command?
             UIEvent::AppEvent(
                 OpenedContainerEvent(
-                    OpenedContainerEventType::Close, 
+                    OpenedContainerEventType::Close,
                     None
                 )
             ) => {
@@ -372,81 +452,6 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 }
 
 impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
-    pub async fn start(&mut self) -> Result<(), ErrorWrapper> {
-        log::info!("Player opening Character Info Screen.");
-
-        // Build the CharacterInfoWidgetData and return the required event channels for communicating
-        let channels = self.bootstrap().await;
-
-        let mut container_event_receiver = channels.container_event_receiver;
-        let child_container_sender = channels.child_container_sender;
-
-        let terminal_manager = &mut self.terminal_manager;
-        let ui = &mut self.ui;
-
-        ui.set_console_buffer(UI_USAGE_HINT.to_string());
-
-        // Spawn a thread to handle the UI events
-        let mut event_handler = TerminalEventHandler::new();
-        let _event_thread_data = event_handler.spawn_thread();
-
-        let mut running = true;
-        while running {
-            if let Some(widget_data) = &mut self.widget_data {
-                terminal_manager.terminal.draw(|frame| {
-                    debug!("Rendering Character Info Screen");
-                    ui.render(None, UIViewMode::CharacterInfo(widget_data.clone()), frame);
-                })?;
-
-                // Whenever there's a UI event, ask the widget data to handle it
-                debug!("Waiting for a Character Info UI event");
-                if let Some(e) = event_handler.receiver.recv().await {
-
-                    // If we have a container choice data set, it takes priority
-                    // Handle any events specific to choosing a container
-                    let choice_event = e.clone();
-                    if let Some(choice_data) = &mut widget_data.containers_data.container_choice_data {
-                        debug!("Handling Character Info UI Event (container choice)");
-                     choice_data.handle_event(choice_event).await;
-                        
-                    } else {
-                        debug!("Handling Character Info UI Event (container)");
-                        widget_data.handle_event(e).await;
-                    }
-                } else {
-                    info!("Receiver returned None!");
-                    running = false;
-                }
-
-                if let Some(widget_data) = &mut self.widget_data {
-                    let player_position = self.level.get_player_mut().unwrap().get_global_position();
-
-                    // If the widget data has sent us an event, handle that
-                    match container_event_receiver.try_recv() {
-                        Ok(event) => {
-                            // Handle the event / break the loop if we need to
-                            running = handle_container_event(
-                                terminal_manager,
-                                ui,
-                                self.level,
-                                player_position.clone(),
-                                event,
-                                &mut event_handler,
-                                &mut widget_data.containers_data,
-                                child_container_sender.clone()
-                            ).await;
-                        },
-                        Err(e) => {
-                            error!("Could not receive container event: {:?}", e);
-                        }
-                    }
-                }
-
-            }
-        }
-
-        return Ok(())
-    }
 
     async fn bootstrap(&mut self) -> OpenCommandChannels {
         let ui = &mut self.ui;

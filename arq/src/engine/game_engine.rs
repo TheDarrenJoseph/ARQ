@@ -10,6 +10,7 @@ use crate::character::characters::Characters;
 use crate::engine::combat::Combat;
 use crate::engine::command::character_info::CharacterInfoCommand;
 use crate::engine::command::command::Command;
+use crate::engine::command::command::CommandPlayerAction;
 use crate::engine::command::look_command::LookCommand;
 use crate::engine::command::open_command::OpenCommandNew;
 use crate::engine::command::util::CurrentContainersData;
@@ -26,7 +27,7 @@ use crate::map::Map;
 use crate::settings::{build_settings, Settings, SETTING_BG_MUSIC, SETTING_RESOLUTION, SETTING_RNG_SEED};
 use crate::sound::sound::{build_sound_sinks, SoundSinks};
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::bindings::action_bindings::Action;
+use crate::ui::bindings::action_bindings::PlayerAction;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::resolution::Resolution;
 use crate::ui::ui::{build_ui, get_input_key};
@@ -408,22 +409,22 @@ impl <B : Backend + Send> GameEngine<B> {
         Ok(None)
     }
     
-    async fn handle_action(&mut self, action: Action, input: Option<Key>) -> Result<Option<GameOverChoice>, ErrorWrapper> {
+    async fn handle_action(&mut self, action: PlayerAction, input: Option<Key>) -> Result<Option<GameOverChoice>, ErrorWrapper> {
         let level = self.levels.get_level_mut();
         let _ui_wrapper = &mut self.ui_wrapper;
         
         match action {
-            Action::Escape => {
+            PlayerAction::Escape => {
                 if let Some(goc) = menu_command(self).await? {
                     Ok(Some(goc))
                 } else {
                     Ok(None)
                 }
             },
-            Action::DevBeginCombat => {
+            PlayerAction::DevBeginCombat => {
                 Ok(self.begin_combat()?)
             },
-            Action::ShowCharacterInfo => {
+            PlayerAction::ShowCharacterInfo => {
                 let mut command = CharacterInfoCommand {
                     level,
                     ui: &mut self.ui_wrapper.ui,
@@ -441,7 +442,7 @@ impl <B : Backend + Send> GameEngine<B> {
                 }
                 Ok(None)
             }
-            Action::LookAround => {
+            PlayerAction::LookAround => {
                 let key_bindings = self.settings.key_bindings.command_specific_key_bindings.look_key_bindings.clone();
                 let mut command = LookCommand {
                     level,
@@ -449,7 +450,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     terminal_manager: &mut self.ui_wrapper.terminal_manager,
                     bindings: key_bindings.clone()
                 };
-                command.start()?;
+                command.start().await?;
                 
                 if let Some(key) = input {
                     let bindings = key_bindings.get_bindings();
@@ -458,7 +459,7 @@ impl <B : Backend + Send> GameEngine<B> {
                 }
                 Ok(None)
             },
-            Action::OpenNearby => {
+            PlayerAction::OpenNearby => {
                 let key_bindings = self.settings.key_bindings.command_specific_key_bindings.open_key_bindings.clone();
                 
                 let input_resolver = Box::new(IoKeyInputResolver {});
@@ -470,7 +471,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     key_bindings: key_bindings.clone(),
                     containers_data: CurrentContainersData::new()
                 };
-                match command.begin().await {
+                match command.start().await {
                     Result::Ok(..) => {
                         return Ok(None);
                     },
@@ -479,7 +480,7 @@ impl <B : Backend + Send> GameEngine<B> {
                     }
                 }
             },
-            Action::MovePlayer(side) => {
+            PlayerAction::MovePlayer(side) => {
                 if let Some(game_over_choice) = self.handle_player_movement(side.clone()).await? {
                     return Ok(Some(game_over_choice));
                 } else {
