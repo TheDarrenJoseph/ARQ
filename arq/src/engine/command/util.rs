@@ -1,7 +1,7 @@
+use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 use crate::widget::stateful::container_widget::ContainerWidgetData;
 use std::collections::HashMap;
 use uuid::Uuid;
-use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 
 // Tracks the currently open containers / relevant widget data
 #[derive(Clone, Debug)]

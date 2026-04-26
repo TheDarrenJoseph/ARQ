@@ -1,14 +1,3 @@
-use std::io;
-use crate::engine::command::generate_map::GenerateMapCommand;
-use log::info;
-use rand_seeder::Seeder;
-use ratatui::backend::Backend;
-use std::io::{Error, ErrorKind};
-use futures::future;
-use futures::future::join;
-use termion::event::Key;
-use termion::input::TermRead;
-use tokio::join;
 use crate::character::battle::Battle;
 use crate::character::builder::character_builder::{build_dev_player_inventory, CharacterBuilder, CharacterPattern};
 use crate::character::characters::Characters;
@@ -16,6 +5,7 @@ use crate::engine::combat::Combat;
 use crate::engine::command::character_info::CharacterInfoCommand;
 use crate::engine::command::command::Command;
 use crate::engine::command::command::CommandPlayerAction;
+use crate::engine::command::generate_map::GenerateMapCommand;
 use crate::engine::command::look_command::LookCommand;
 use crate::engine::command::open_command::OpenCommandNew;
 use crate::engine::command::util::CurrentContainersData;
@@ -28,7 +18,6 @@ use crate::error::errors::ErrorWrapper;
 use crate::input::IoKeyInputResolver;
 use crate::map::position::{Area, Side};
 use crate::map::Map;
-use crate::map::map_generator::MapGenerator;
 use crate::settings::{build_settings, Settings, SETTING_BG_MUSIC, SETTING_RESOLUTION, SETTING_RNG_SEED};
 use crate::sound::sound::{build_sound_sinks, SoundSinks};
 use crate::terminal::terminal_manager::TerminalManager;
@@ -46,6 +35,11 @@ use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
 use crate::widget::StandardWidgetType;
+use log::info;
+use rand_seeder::Seeder;
+use ratatui::backend::Backend;
+use std::io::{Error, ErrorKind};
+use termion::event::Key;
 
 pub struct GameEngine<B: 'static + Backend>  {
     pub ui_wrapper : UIWrapper<B>,

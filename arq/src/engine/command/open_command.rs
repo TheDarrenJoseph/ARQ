@@ -1,12 +1,14 @@
-use crate::engine::event::ui::UIEvent;
-use crate::engine::event::ui::TerminalEventHandler;
-use crate::engine::event::container::OpenedContainerEventData::OpenContainer;
-use crate::engine::event::container::OpenedContainerEventType::Close;
-use crate::engine::event::container::OpenedContainerEventData;
-use crate::engine::event::container::OpenedContainerEventData::TakeItems;
-use crate::engine::event::container::OpenedContainerEventType;
+use crate::engine::command::command::Command;
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
+use crate::engine::event::container::OpenedContainerEventData;
+use crate::engine::event::container::OpenedContainerEventData::OpenContainer;
+use crate::engine::event::container::OpenedContainerEventData::TakeItems;
+use crate::engine::event::container::OpenedContainerEventType;
+use crate::engine::event::container::OpenedContainerEventType::Close;
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::TerminalEventHandler;
+use crate::engine::event::ui::UIEvent;
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::input::{IoKeyInputResolver, KeyInputResolver, MockKeyInputResolver};
@@ -15,7 +17,6 @@ use crate::map::position::Position;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::bindings::open_bindings::{map_open_input_to_side, OpenInput, OpenKeyBindings};
-use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
@@ -29,8 +30,6 @@ use termion::event::Key;
 use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use crate::engine::command::command::Command;
-use crate::engine::command::look_command::LookCommand;
 
 pub struct OpenCommandNew<'a, B: 'static + ratatui::backend::Backend> {
     pub level: &'a mut Level,

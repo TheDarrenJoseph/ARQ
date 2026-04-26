@@ -1,4 +1,3 @@
-use std::io;
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
@@ -14,6 +13,7 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use std::io;
 use termion::event::Key;
 use termion::input::TermRead;
 

@@ -1,12 +1,12 @@
-use tokio::sync::mpsc::UnboundedSender;
-use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
-use std::task::{Context, Poll};
 use log::{error, info};
 use rand::distr::StandardUniform;
 use rand::Rng;
 use rand_pcg::Pcg64;
+use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
 use crate::engine::pathfinding::Pathfinding;
@@ -565,13 +565,13 @@ impl MapGenerator {
 mod tests {
     use std::sync::mpsc::channel;
 
-    use rand_pcg::Pcg64;
-    use rand_seeder::Seeder;
-    use tokio::sync::mpsc::unbounded_channel;
     use crate::map::map_generator::build_generator;
     use crate::map::position::{build_square_area, Area, Position};
     use crate::map::tile::TileDetails;
     use crate::map::Map;
+    use rand_pcg::Pcg64;
+    use rand_seeder::Seeder;
+    use tokio::sync::mpsc::unbounded_channel;
 
     async fn build_test_map(rng: &mut Pcg64, map_area: Area) -> Map {
 

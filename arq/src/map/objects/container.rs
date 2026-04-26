@@ -2,12 +2,12 @@ use std::convert::TryInto;
 use std::fmt;
 use std::io::{Error, ErrorKind};
 
+use crate::engine::event::container::{PlayerInventoryContainer, TargetContainerScope, WorldContainer};
 use crate::error::errors::ErrorWrapper;
-use uuid::Uuid;
-use crate::engine::event::container::{SourceContainerScope, PlayerInventoryContainer, WorldContainer, TargetContainerScope};
 use crate::map::objects::items::{Item, ItemType};
 use crate::map::position::Position;
 use crate::widget::stateful::container_choice_widget::ContainerChoice;
+use uuid::Uuid;
 
 #[derive(Clone, Eq)]
 #[derive(PartialEq)]
@@ -118,7 +118,7 @@ impl Container {
     * Returns a ContainerChoice copy of each subcontainer
     */
     pub fn find_subcontainer_choices(&self, scope: TargetContainerScope, position: Position) -> Vec<ContainerChoice> {
-        let container_name =  self.get_self_item().get_name();
+        let _container_name =  self.get_self_item().get_name();
         let mut containers = Vec::new();
         for c in &self.contents {
             if c.container_type == ContainerType::OBJECT {
@@ -316,7 +316,7 @@ impl Container {
     }
 
     pub fn find_mut(&mut self, target: &Item) -> Option<&mut Container> {
-        let target_id = target.get_id();
+        let _target_id = target.get_id();
         for c in self.contents.iter_mut() {
             if c.get_self_item().id_equals(target) {
                 return Some(c)

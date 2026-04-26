@@ -1,9 +1,8 @@
-use uuid::Uuid;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::map::position::Position;
 use crate::view::framehandler::util::tabling::Column;
-use crate::widget::stateful::container_choice_widget::ContainerChoice;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum OpenedContainerEventType {
@@ -175,10 +174,10 @@ impl SourceContainerScope {
 
     pub fn is_player_scope(&self) -> bool {
         match self {
-            SourceContainerScope::PlayerInventory(pic) => {
+            SourceContainerScope::PlayerInventory(_pic) => {
                true
             },
-            SourceContainerScope::WorldContainer(wc) => {
+            SourceContainerScope::WorldContainer(_wc) => {
                false
             }
         }
@@ -186,10 +185,10 @@ impl SourceContainerScope {
 
     pub fn is_world_scope(&self) -> bool {
         match self {
-            SourceContainerScope::PlayerInventory(pic) => {
+            SourceContainerScope::PlayerInventory(_pic) => {
                 false
             },
-            SourceContainerScope::WorldContainer(wc) => {
+            SourceContainerScope::WorldContainer(_wc) => {
                 true
             }
         }
@@ -256,13 +255,13 @@ impl TargetContainerScope {
             TargetContainerScope::PlayerInventory(other_pic) => {
                 Some(other_pic.container.clone())
             },
-            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+            TargetContainerScope::PlayerInventoryItemPosition(_piip) => {
                 None
             },
             TargetContainerScope::WorldContainer(other_wc) => {
                 Some(other_wc.container.clone())
             }
-            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+            TargetContainerScope::WorldContainerItemPosition(_wcip) => {
                 None
             }
         }
@@ -270,16 +269,16 @@ impl TargetContainerScope {
 
     pub fn is_targeting_another_container(&self) -> bool {
         match self {
-            TargetContainerScope::PlayerInventory(other_pic) => {
+            TargetContainerScope::PlayerInventory(_other_pic) => {
                 true
             },
-            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+            TargetContainerScope::PlayerInventoryItemPosition(_piip) => {
                 false
             },
-            TargetContainerScope::WorldContainer(other_wc) => {
+            TargetContainerScope::WorldContainer(_other_wc) => {
                 true
             }
-            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+            TargetContainerScope::WorldContainerItemPosition(_wcip) => {
                 false
             }
         }
@@ -287,16 +286,16 @@ impl TargetContainerScope {
 
     pub fn is_targeting_item_position(&self) -> bool {
         match self {
-            TargetContainerScope::PlayerInventory(other_pic) => {
+            TargetContainerScope::PlayerInventory(_other_pic) => {
                 false
             },
-            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+            TargetContainerScope::PlayerInventoryItemPosition(_piip) => {
                 true
             },
-            TargetContainerScope::WorldContainer(other_wc) => {
+            TargetContainerScope::WorldContainer(_other_wc) => {
                 false
             }
-            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+            TargetContainerScope::WorldContainerItemPosition(_wcip) => {
                 true
             }
         }
@@ -304,16 +303,16 @@ impl TargetContainerScope {
 
     pub fn is_player_scope(&self) -> bool {
         match self {
-            TargetContainerScope::PlayerInventory(pic) => {
+            TargetContainerScope::PlayerInventory(_pic) => {
                 true
             },
-            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+            TargetContainerScope::PlayerInventoryItemPosition(_piip) => {
                 true
             },
-            TargetContainerScope::WorldContainer(wc) => {
+            TargetContainerScope::WorldContainer(_wc) => {
                 false
             }
-            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+            TargetContainerScope::WorldContainerItemPosition(_wcip) => {
                 false
             }
         }
@@ -321,16 +320,16 @@ impl TargetContainerScope {
 
     pub fn is_world_scope(&self) -> bool {
         match self {
-            TargetContainerScope::PlayerInventory(pic) => {
+            TargetContainerScope::PlayerInventory(_pic) => {
                 false
             },
-            TargetContainerScope::PlayerInventoryItemPosition(piip) => {
+            TargetContainerScope::PlayerInventoryItemPosition(_piip) => {
                 false
             },
-            TargetContainerScope::WorldContainer(wc) => {
+            TargetContainerScope::WorldContainer(_wc) => {
                 true
             }
-            TargetContainerScope::WorldContainerItemPosition(wcip) => {
+            TargetContainerScope::WorldContainerItemPosition(_wcip) => {
                 true
             }
         }

@@ -1,16 +1,13 @@
-use std::fmt::format;
-use crate::map::Map;
 use crate::engine::event::container::*;
+use crate::map::Map;
 use log::{error, info};
 use std::io;
 
-use crate::character::Character;
 use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::map::position::Position;
-use crate::map::tile::Colour::Red;
 use crate::widget::stateful::container_choice_widget::ContainerChoice;
 
 #[derive(Debug, Clone)]
@@ -217,7 +214,7 @@ fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_
         SourceContainerScope::PlayerInventory(pic) => {
             let player = level.get_player_mut().unwrap();
 
-            if (player.get_inventory().get_self_item_id() == pic.container.get_self_item_id()) {
+            if player.get_inventory().get_self_item_id() == pic.container.get_self_item_id()  {
                 source_container = player.get_inventory_mut();
             } else {
                 let inventory_mut = player.get_inventory_mut();
@@ -243,7 +240,7 @@ fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_
 fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Container) -> Result<&'a mut Container, ErrorWrapper> {
     if let Some(pos_container) = map.containers.get_mut(&position) {
         // Find the real target container in the target container stack
-        return if (pos_container.id_equals(&container)) {
+        return if pos_container.id_equals(&container)  {
             Ok(pos_container)
         } else {
           // Search each child container for an ID match
@@ -252,7 +249,7 @@ fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Cont
               .filter(|c| c.is_true_container()) {
 
               // Check the container itself before diving into it
-              if (child_container.id_equals(&container)) {
+              if child_container.id_equals(&container)  {
                   return Ok(child_container);
               }
 
@@ -287,7 +284,7 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
     }
 
     if let TargetContainerScope::PlayerInventoryItemPosition(piip) = request.target {
-        if let Some(pos) = source_container.item_position(&piip.target_position_item) {
+        if let Some(_pos) = source_container.item_position(&piip.target_position_item) {
             let mut moved: Vec<Container> = Vec::new();
             let mut unmoved = Vec::new();
             let mut moving = Vec::new();
@@ -329,7 +326,7 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
             return Some(data);
         }
     } else if let TargetContainerScope::WorldContainerItemPosition(wcip) = request.target {
-        if let Some(pos) = source_container.item_position(&wcip.target_position_item) {
+        if let Some(_pos) = source_container.item_position(&wcip.target_position_item) {
             let mut moved: Vec<Container> = Vec::new();
             let mut unmoved = Vec::new();
             let mut moving = Vec::new();
@@ -383,23 +380,23 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
 
     let mut response : Result<MoveItemsResponseV2, ErrorWrapper>= Err(ErrorWrapper::new_internal(String::from("Failed to move items")));
 
-    if let Some(map) = &mut level.map {
+    if let Some(_map) = &mut level.map {
         // Clone out the request fields so we can use them safely without moving the request
         let source = request.source.clone();
         let target = request.target.clone();
-        let to_mvoe = request.to_move.clone();
+        let _to_mvoe = request.to_move.clone();
 
         // Source cannot be the target when moving to another container
-        if (target.is_targeting_another_container() && source.get_container().id_equals(&target.get_container().unwrap())) {
+        if target.is_targeting_another_container() && source.get_container().id_equals(&target.get_container().unwrap())  {
             return Err(ErrorWrapper::new_internal(String::from("Cannot move items. Source cannot be the target")));
         }
 
-        if (source.is_world_scope() && target.is_player_scope()) {
+        if source.is_world_scope() && target.is_player_scope()  {
             return Err(ErrorWrapper::new_internal(String::from("Unsupported operation. Moving from world container to Player Inventory is supported by TakeItems instead.")));
         }
 
         let source_container = source.get_container().clone();
-        if (target.is_targeting_another_container()) {
+        if target.is_targeting_another_container()  {
             let live_target: &mut Container;
             match target {
                 TargetContainerScope::WorldContainer(target) => {
@@ -412,7 +409,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                     let live_player_inventory =
                         level.get_player_mut().unwrap().get_inventory_mut();
                     // Check if we're targeting the top-most container (The Player inventory)
-                    if (live_player_inventory.get_self_item_id() == target.container.get_self_item_id()) {
+                    if live_player_inventory.get_self_item_id() == target.container.get_self_item_id()  {
                         live_target = live_player_inventory;
                     } else {
                         let live_target_match = live_player_inventory
@@ -436,7 +433,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
             let updated_source = update_source_container(level, request.clone(), copy_result);
 
             let updated_source_scope;
-            if (request.source.is_world_scope()) {
+            if request.source.is_world_scope()  {
                 if let SourceContainerScope::WorldContainer(wc) = request.source.clone() {
                     updated_source_scope = SourceContainerScope::WorldContainer(
                         WorldContainer {
@@ -448,7 +445,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                     return Err(ErrorWrapper::new_internal(String::from("Couldn't convert source to SourceContainerScope::WorldContainer")));
                 }
             } else {
-                if let SourceContainerScope::PlayerInventory(pic) = request.source.clone() {
+                if let SourceContainerScope::PlayerInventory(_pic) = request.source.clone() {
                     updated_source_scope = SourceContainerScope::PlayerInventory(
                         PlayerInventoryContainer {
                             container: updated_source.clone()
@@ -460,7 +457,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
             }
 
             let updated_target_scope;
-            if (request.target.is_world_scope()) {
+            if request.target.is_world_scope()  {
                 if let TargetContainerScope::WorldContainer(wc) = request.target {
                     updated_target_scope = TargetContainerScope::WorldContainer(
                         WorldContainer {
@@ -472,7 +469,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
                     return Err(ErrorWrapper::new_internal(String::from("Couldn't convert target")));
                 }
             } else {
-                if let TargetContainerScope::PlayerInventory(pic) = request.target {
+                if let TargetContainerScope::PlayerInventory(_pic) = request.target {
                     updated_target_scope = TargetContainerScope::PlayerInventory(
                         PlayerInventoryContainer {
                             container: live_updated_target.clone()
@@ -496,7 +493,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
             })
         } else {
             let move_response = move_items_to_source_position(request.clone());
-            if (move_response.is_none()) {
+            if move_response.is_none()  {
                 return Err(ErrorWrapper::new_internal(String::from("Failed to move items to source position")));
             } else {
                 response = Ok(move_response.unwrap());
@@ -518,7 +515,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
         SourceContainerScope::PlayerInventory(source) => {
             let live_player_inventory = level.get_player_mut().unwrap().get_inventory_mut();
             // Check if we're targeting the top-most container (The Player inventory)
-            if (live_player_inventory.get_self_item_id() == source.container.get_self_item_id()) {
+            if live_player_inventory.get_self_item_id() == source.container.get_self_item_id()  {
                 live_source = live_player_inventory;
             } else {
                 let live_source_match = live_player_inventory.get_contents_mut()
@@ -542,7 +539,7 @@ pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<Move
     }
 }
 
-pub fn build_container_choices(source: &Container, parent_scope: TargetContainerScope, parent_position: Position) -> Result<Vec<ContainerChoice>, io::Error> {
+pub fn build_container_choices(_source: &Container, parent_scope: TargetContainerScope, parent_position: Position) -> Result<Vec<ContainerChoice>, io::Error> {
     let parent_container = parent_scope.get_container().unwrap();
     let parent_item_name = parent_scope.get_self_item().get_name();
     let mut sub_containers = parent_container.find_subcontainer_choices(parent_scope.clone(), parent_position);
@@ -587,15 +584,15 @@ pub fn build_container_choices(source: &Container, parent_scope: TargetContainer
 
 #[cfg(test)]
 mod tests {
+    use crate::engine::event::container::{MoveItemsRequestV2, MoveItemsWithinSourceRequest, PlayerInventoryContainer, PlayerInventoryItemPosition, SourceContainerScope, TargetContainerScope, WorldContainer, WorldContainerItemPosition};
     use crate::error::errors::ErrorType;
-use crate::engine::event::container::{SourceContainerScope, MoveItemsWithinSourceRequest, MoveItemsRequestV2, WorldContainer, TargetContainerScope, WorldContainerItemPosition, PlayerInventoryContainer, PlayerInventoryItemPosition};
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     use uuid::Uuid;
 
     use crate::character::builder::character_builder::{CharacterBuilder, CharacterPattern};
     use crate::character::characters::Characters;
-    use crate::engine::container_util::{move_items};
+    use crate::engine::container_util::move_items;
     use crate::engine::level::Level;
     use crate::map::objects::container::{Container, ContainerType};
     use crate::map::objects::items::Item;

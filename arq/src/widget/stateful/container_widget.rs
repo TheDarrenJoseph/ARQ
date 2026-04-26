@@ -1,18 +1,20 @@
-use crate::engine::event::container::{MoveItemsResponse, ContainerChoicesRequest, MoveItemsResponseV2};
 use crate::engine::event::container::DropItemsRequest;
 use crate::engine::event::container::MoveItemsWithinSourceRequest;
-use crate::engine::event::container::TakeItemsRequest;
 use crate::engine::event::container::OpenContainerRequest;
 use crate::engine::event::container::OpenedContainerEventData;
-use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::container::OpenedContainerEventType;
+use crate::engine::event::container::TakeItemsRequest;
+use crate::engine::event::container::{ContainerChoicesRequest, MoveItemsResponseV2};
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::UIEvent;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
-use crate::map::objects::items::{Item, ItemType};
+use crate::map::objects::items::Item;
 use crate::map::position::Area;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
 use crate::view::framehandler::util::tabling::{build_headings, Column};
+use crate::widget::standard::usage_line::UsageCommand;
 use log::{error, info};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -23,8 +25,6 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::event::ui::UIEvent;
-use crate::widget::standard::usage_line::UsageCommand;
 
 #[derive(Debug, Clone)]
 pub struct ContainerWidget {
@@ -178,7 +178,7 @@ impl ContainerWidgetData {
             let source = response.request.source;
 
             if let Some(target_container) =  target.get_container() {
-                if (target_container.id_equals(&self.container)) {
+                if target_container.id_equals(&self.container)  {
                     let updated_container = response.updated_scopes.target.get_container().unwrap();
                     // Update the current container details to the updated target
                     self.container = updated_container;
@@ -186,7 +186,7 @@ impl ContainerWidgetData {
             }
 
             // If this is the source them items have been moved FROM this container
-            if (source.get_container().id_equals(&self.container)) {
+            if source.get_container().id_equals(&self.container)  {
                 let updated_container = response.updated_scopes.source.get_container();
                 // Otherwise, items have been moved FROM this container
                 // Update the current container details to the updated source
@@ -204,7 +204,7 @@ impl ContainerWidgetData {
         let target = response.request.target;
 
         // Check for items being moved FROM this container
-        if (source.matches_target(&target)) {
+        if source.matches_target(&target)  {
             // Update the current container details to the updated target
             self.container = target.get_container().unwrap().clone();
             self.item_list_selection.cancel_selection();

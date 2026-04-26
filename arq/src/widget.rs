@@ -7,10 +7,10 @@ use crate::widget::stateful::console_input_widget::ConsoleInputState;
 use crate::widget::stateful::container_choice_widget::ContainerChoiceWidget;
 use crate::widget::stateful::container_widget::ContainerWidget;
 use crate::widget::stateful::dropdown_widget::DropdownInputState;
-use standard::loading_screen::LoadingScreenWidget;
 use crate::widget::stateful::map_widget::MapWidget;
 use crate::widget::stateful::number_widget::NumberInputState;
 use crate::widget::stateful::text_widget::TextInputState;
+use standard::loading_screen::LoadingScreenWidget;
 pub mod widgets;
 
 pub mod standard;

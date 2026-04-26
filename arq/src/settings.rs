@@ -6,7 +6,7 @@ use crate::ui::bindings::open_bindings::build_default_open_keybindings;
 use crate::ui::resolution::Resolution;
 use crate::widget::stateful::dropdown_widget::{get_resolution_dropdown_options, DropdownOption, DropdownSetting};
 use rand::distr::Alphanumeric;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use std::fs;
 
 pub const SETTING_FOG_OF_WAR : &str = "Fog of War";

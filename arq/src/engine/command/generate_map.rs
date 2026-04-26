@@ -1,27 +1,20 @@
-use termion::input::TermRead;
-use tokio::sync::mpsc::{Receiver, UnboundedReceiver};
-use std::future::Future;
-use std::io;
-use std::ops::Mul;
 use crate::engine::command::command::Command;
-use crate::engine::command::look_command::LookCommand;
 use crate::engine::level::Levels;
-use crate::map;
+use crate::map::map_generator::MapGenerator;
 use crate::map::Map;
 use crate::progress::MultiStepProgress;
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::bindings::look_bindings::LookKeyBindings;
-use crate::ui::ui::UIViewMode::LoadingScreen;
-use crate::ui::ui::{Draw, UIViewMode, UI};
+use crate::ui::ui::{Draw, UI};
 use crate::widget::standard::loading_screen::LoadingScreenWidget;
-use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
+use crate::widget::StandardWidgetType;
 use crate::ErrorWrapper;
-use log::info;
-use std::sync::mpsc::{channel};
-use futures::future::BoxFuture;
 use futures::FutureExt;
+use log::info;
+use std::future::Future;
+use std::io;
+use termion::input::TermRead;
 use tokio::join;
-use crate::map::map_generator::MapGenerator;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 // TODO Consider these
 // MapGenerationFrameHandler
@@ -36,7 +29,7 @@ impl<B: ratatui::backend::Backend> GenerateMapCommand<'_, B> {
     pub async fn generate_map(&mut self) -> Result<GenerateMapResult, ErrorWrapper> {
         let seed = self.levels.get_seed();
         let (progress_tx, progress_rx) = tokio::sync::mpsc::unbounded_channel::<MultiStepProgress>();
-        let mut map_generator =self.levels.build_map_generator(progress_tx.clone());
+        let map_generator =self.levels.build_map_generator(progress_tx.clone());
 
         // Step 1 - Create the map generator
         let size_x = map_generator.map.area.width;

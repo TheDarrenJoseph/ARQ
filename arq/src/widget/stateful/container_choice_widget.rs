@@ -1,27 +1,25 @@
-use uuid::Uuid;
-use crate::engine::event::container::{SourceContainerScope, PlayerInventoryContainer, WorldContainer, TargetContainerScope};
 use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
-use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
 use crate::engine::event::container::OpenedContainerEventType;
+use crate::engine::event::container::TargetContainerScope;
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::UIEvent;
+use crate::item_list_selection::{ItemListSelection, ListSelection};
+use crate::map::objects::items::Item;
+use crate::map::position::Area;
 use crate::ui::ui_util::build_paragraph;
 use crate::view::framehandler::util::tabling::build_headings;
+use crate::view::framehandler::util::tabling::Column;
+use crate::widget::standard::usage_line::UsageCommand;
+use crate::widget::stateful::container_choice_widget::OpenedContainerEventType::Close;
 use log::info;
-use ratatui::prelude::{Widget};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Modifier, StatefulWidget, Style};
+use ratatui::prelude::Widget;
 use ratatui::widgets::{Block, Borders, Clear};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use crate::item_list_selection::{ItemListSelection, ListSelection};
-use crate::map::objects::container::Container;
-use crate::map::objects::items::Item;
-use crate::map::position::{Area, Position};
-use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
-use crate::engine::event::ui::UIEvent;
-use crate::view::framehandler::util::tabling::Column;
-use crate::widget::standard::usage_line::UsageCommand;
 
 #[derive(Clone, Debug)]
 pub enum ContainerChoiceScope {

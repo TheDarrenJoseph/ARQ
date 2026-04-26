@@ -1,9 +1,8 @@
-use std::io;
-use std::sync::mpsc::Sender;
-use rand_pcg::Pcg64;
-use tokio::sync::mpsc::UnboundedSender;
 use crate::character::characters::Characters;
 use crate::character::Character;
+use rand_pcg::Pcg64;
+use std::io;
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::map::map_generator::{build_generator, MapGenerator};
 use crate::map::position::{build_rectangular_area, Position, Side};

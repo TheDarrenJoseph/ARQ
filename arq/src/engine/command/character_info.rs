@@ -1,36 +1,35 @@
-use crate::engine::event::container::TargetContainerScope;
+use crate::engine::command::command::Command;
+use crate::engine::command::open_command::OpenCommandChannels;
+use crate::engine::command::util::CurrentContainersData;
+use crate::engine::container_util;
 use crate::engine::container_util::move_items;
-use crate::engine::event::container::{SourceContainerScope, MoveItemsRequestV2, PlayerInventoryContainer, PlayerInventoryItemPosition, WorldContainer};
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::engine::event::container::OpenedContainerEventType;
-use crate::engine::command::open_command::{OpenCommandChannels};
-use crate::engine::command::util::CurrentContainersData;
+use crate::engine::event::container::TargetContainerScope;
+use crate::engine::event::container::{MoveItemsRequestV2, PlayerInventoryContainer, PlayerInventoryItemPosition, SourceContainerScope, WorldContainer};
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::{TerminalEventHandler, UIEvent};
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
+use crate::map::objects::items::Item;
 use crate::map::position::{Area, Position};
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
-use crate::engine::event::ui::{UIEvent, TerminalEventHandler};
 use crate::ui::ui::{UIViewMode, UI};
 use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::View;
 use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::character_info_widget::{CharacterInfoWidget, CharacterInfoWidgetData};
+use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use crate::engine::command::command::Command;
-use crate::engine::command::look_command::LookCommand;
-use crate::engine::container_util;
-use crate::map::objects::items::Item;
-use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -164,7 +163,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let source_container = current_container_widget_data.container.clone();
                 let items_selected = current_container_widget_data.item_list_selection.get_selected_items();
 
-                let player_inventory =level.get_player_mut().unwrap().get_inventory();
+                let _player_inventory =level.get_player_mut().unwrap().get_inventory();
 
                 let mut to_move: Vec<Item>  = Vec::new();
                 items_selected.iter().for_each(|item|to_move.push(item.clone()));
@@ -318,7 +317,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
 
                 // We're either moving items into a container inside the inventory, or a specific item position
-                let data = if let Some(target_container) = (data.target_container) {
+                let data = if let Some(target_container) = data.target_container  {
                     MoveItemsRequestV2 {
                         source: SourceContainerScope::PlayerInventory(PlayerInventoryContainer { container: data.source_container.clone() }),
                         target: TargetContainerScope::PlayerInventory(PlayerInventoryContainer { container: target_container.clone() }),

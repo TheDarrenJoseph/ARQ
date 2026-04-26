@@ -1,6 +1,6 @@
+use crate::map::objects::items::Item;
 use std::collections::VecDeque;
 use std::convert::TryInto;
-use crate::map::objects::items::Item;
 
 #[derive(Debug, Clone)]
 pub enum SelectionMode {

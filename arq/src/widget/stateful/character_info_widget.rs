@@ -1,5 +1,7 @@
-use crate::engine::event::ui::UIEvent;
 use crate::engine::command::util::CurrentContainersData;
+use crate::engine::event::container::{OpenedContainerEventData, OpenedContainerEventType, SourceContainerScope, TargetContainerScope};
+use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
+use crate::engine::event::ui::UIEvent;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::Position;
@@ -13,8 +15,6 @@ use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::event::container::{SourceContainerScope, OpenedContainerEventData, OpenedContainerEventType, TargetContainerScope};
-use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {

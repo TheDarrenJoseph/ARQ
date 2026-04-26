@@ -1,15 +1,13 @@
-use std::sync::mpsc::Receiver;
-use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
 use crate::map::position::Area;
-use crate::ui::ui_layout::LayoutType::SingleMainWindowCentered;
-use crate::ui::ui_areas_builder::UIAreasBuilder;
-use std::convert::TryInto;
-use ratatui::widgets::{Block, Gauge, Widget};
 use crate::progress::{MultiStepProgress, Step};
+use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
+use crate::ui::ui_areas_builder::UIAreasBuilder;
+use crate::ui::ui_layout::LayoutType::SingleMainWindowCentered;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Style};
-use crate::ui::ui::UIViewMode::LoadingScreen;
+use ratatui::widgets::{Block, Gauge, Widget};
+use std::convert::TryInto;
 // TODO Convert these
 // ProgressDisplay
 

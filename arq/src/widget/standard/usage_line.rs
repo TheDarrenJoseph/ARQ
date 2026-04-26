@@ -1,9 +1,9 @@
 use crate::engine::event::container::OpenedContainerEventType;
+use crate::util::describe_key;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Style, Widget};
 use termion::event::Key;
-use crate::util::describe_key;
 
 #[derive(Eq)]
 #[derive(PartialEq)]
