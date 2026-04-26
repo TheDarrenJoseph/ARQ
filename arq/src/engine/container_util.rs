@@ -270,68 +270,6 @@ fn find_container_mut<'a>(map: &'a mut Map, position: Position, container: &Cont
     }
 }
 
-
-/*
-    Moves items within root, from the source container
- */
-// fn move_items_within(root : &mut Container, source : Item, request: MoveItemsWithinSourceRequest) -> Option<MoveItemsResponse> {
-//     // Find a mutable reference to the target container if provided
-//     let root_target_result =  request.target_container
-//         .map_or_else(
-//             || { None },
-//             // Find the target container within the root container
-//             |target| { root.find_mut(target.get_self_item()) }
-//         );
-//
-//     if let Some(target) = root_target_result {
-//         let to_move_items = request.to_move.clone();
-//
-//         // We can't move items in-place, so first we copy..
-//         // Copy items from the source into the target
-//
-//         let to_copy = find_copying_items(request.source_container, to_move_items);
-//         let copy_result = copy_container_items(to_copy, target);
-//         if !copy_result.copied.is_empty() || !copy_result.uncopied.is_empty() {
-//
-//             // Find the source container within the root container
-//             if let Some(ref mut source_container) = root.find_mut(&source) {
-//                 source_container.remove_matching_items(copy_result.copied.clone());
-//                 // If the target contains our source, we need to replace the source there too
-//                 let mut updated_target = copy_result.updated_target;
-//                 if let Some(ut) = &mut updated_target {
-//                     if let Some(found) = ut.find_mut(source_container.get_self_item()) {
-//                        found.remove_matching_items(copy_result.copied.clone());
-//                     }
-//                 }
-//
-//                 // Now both target and source are updated, return a response to indicate what's moved
-//                 let moved = copy_result.copied;
-//                 let unmoved = copy_result.uncopied;
-//                 log::info!("Returning MoveItems response with {} moved, {} unmoved items", moved.len(), unmoved.len());
-//
-//                 // Return a response to communicate the changes made
-//                 // As the real upstream source will not have been changed here due to only a single mutable ref
-//                 let data = MoveItemsResponse {
-//                     source: source_container.clone(),
-//                     unmoved,
-//                     target_container: updated_target,
-//                     position: request.source_position,
-//                     message: format!("Moved {} of {} items", moved.len(), request.to_move.len())
-//                 };
-//                 return Some(data);
-//             } else {
-//                 log::error!("Failed to move items. Failed to find source container.");
-//             }
-//         } else {
-//             log::error!("Failed to move items. {} moved, {} unmoved items", copy_result.copied.len(), copy_result.uncopied.len());
-//         }
-//     } else {
-//         log::error!("Failed to move items. Couldn't find target container in source container.");
-//         return None;
-//     }
-//     None
-// }
-
 // Updates the containers within the request to Move items to a specific position within the source_container
 fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItemsResponseV2> {
     let request_result_copy = request.clone();
@@ -438,51 +376,6 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
 
     None
 }
-
-// Moves items between player inventory containers / into world container
-// pub fn move_player_items(data: MoveItemsRequest, level : &mut Level) -> Result<MoveItemsResponse, ErrorWrapper> {
-//     return if let Some(_) = data.source_position {
-//         Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Cannot move player items to a specific position / world container combo (Not implemented).")))
-//     } else {
-//         log::info!("[move_player_items] Attempting to move player items to a target container (inside inventory)...");
-//         let player: &mut Character = level.characters.get_player_mut().unwrap();
-//         let inventory: &mut Container = player.get_inventory_mut();
-//         let source_container;
-//         let source_item;
-//         let target_inventory = data.target_container.as_ref().map_or_else(|| false, |c| inventory.id_equals(&c));
-//         let target_in_source = data.target_container.as_ref().map_or_else(|| false, |c| data.source_container.find(c.get_self_item()).is_some());
-//         if inventory.id_equals(&data.source_container) || target_inventory || !target_in_source {
-//             source_container = Some(inventory);
-//             source_item = Some(data.source_container.get_self_item().clone());
-//         } else {
-//             source_container = inventory.find_mut(data.source_container.get_self_item());
-//             source_item = source_container.as_ref().map(|s| s.get_self_item().clone());
-//         }
-//
-//         if let Some(source) = source_container {
-//             if let Some(_) = data.target_container {
-//                 if let Some(source_item) = source_item {
-//                     log::info!("Attempting move to container..");
-//                     return move_items_within(source, source_item, data).ok_or(
-//                         ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container"))
-//                     )
-//                 } else {
-//                     return Err(ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to container. Failed to find source item")));
-//                 }
-//             } else if let Some(_) = data.target_position_item {
-//                 log::info!("Attempting move to item spot..");
-//                 return move_to_item_spot(source, data).ok_or(
-//                     ErrorWrapper::new_internal(String::from("[container_util::move_player_items] Failed to move items to item spot in container"))
-//                 )
-//             } else {
-//                 return Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. No target item provided")));
-//             }
-//         } else {
-//             Err(ErrorWrapper::new_internal(String::from("[container_util::move_items] Cannot move items. Failed to find source container")))
-//         }
-//     }
-// }
-
 
 pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<MoveItemsResponseV2, ErrorWrapper> {
     // Copy our request data so we're not moving it around too much
@@ -783,7 +676,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A1. Within a WorldContainer - Moving items/containers into another container
-    fn MoveItems_A1() {
+    fn MoveItems_A1_WorldContainer_MoveItemsToAnotherContainer() {
         // GIVEN a World Container Chest containing 2 containers and 2 items
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
         let container1 = Container::new(Uuid::new_v4(), "Test Container 1".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 600);
@@ -873,7 +766,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A2. Within a WorldContainer - Moving items/containers from child to parent
-    fn MoveItems_A2() {
+    fn MoveItems_A2_WorldContainer_MoveItemsFromChildToParent() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
@@ -975,7 +868,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A3. Within a WorldContainer - Moving items/containers from parent to child
-    fn MoveItems_A3() {
+    fn MoveItems_A3_WorldContainer_MoveItemsFromParentToChild() {
         // GIVEN a valid map
 
         // AND a chest that contains a nested bag and carton
@@ -1097,7 +990,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A4. Within a WorldContainer - Moving items/containers to the bottom of the container
-    fn MoveItems_A4() {
+    fn MoveItems_A4_WorldContainer_MoveItemsToBottom() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1176,7 +1069,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A5. Within a WorldContainer - Moving items/containers to the top of the container
-    fn MoveItems_A5() {
+    fn MoveItems_A5_WorldContainer_MoveItemsToTop() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1253,7 +1146,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A6. Within a WorldContainer - Moving item/container selection to the middle of the container
-    fn MoveItems_A6() {
+    fn MoveItems_A6_WorldContainer_MoveItemsToMiddle() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1330,7 +1223,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     //A7. Within a WorldContainer - Moving split item/container selection into another container
-    fn MoveItems_A7() {
+    fn MoveItems_A7_WorldContainer_MovingSplitSelectionToAnotherContainer() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1425,7 +1318,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // A8. Within a WorldContainer - Moving split item/container selection to a specific spot
-    fn MoveItems_A8() {
+    fn MoveItems_A8_WorldContainer_MovingSplitSelectionToSpot() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         let mut chest = Container::new(Uuid::new_v4(), "Chest".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
@@ -1502,7 +1395,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B1. Within PlayerInventory - Moving items/containers into another container
-    fn MoveItems_B1() {
+    fn MoveItems_B1_PlayerInventory_MoveItemsToAnotherContainer() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1588,7 +1481,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B2. Within PlayerInventory - Moving items/containers from child to parent
-    fn MoveItems_B2() {
+    fn MoveItems_B2_Player_Inventory_MovingItemsFromChildToParent() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1678,7 +1571,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B3. Within PlayerInventory - Moving items/containers from parent to child
-    fn MoveItems_B3() {
+    fn MoveItems_B3_PlayerInventory_MovingItemsFromParentToChild() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1763,7 +1656,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B4. Within PlayerInventory - Moving items/containers to the bottom of the container
-    fn MoveItems_B4() {
+    fn MoveItems_B4_PlayerInventory_MovingItemsToBottom() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1854,7 +1747,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B5. Within a PlayerInventory - Moving items/containers to the top of the container
-    fn MoveItems_B5() {
+    fn MoveItems_B5_PlayerInventory_MovingItemsToTop() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -1946,7 +1839,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B6. Within a PlayerInventory - Moving item/container selection to the middle of the container
-    fn MoveItems_B6() {
+    fn MoveItems_B6_PlayerInventory_MovingItemsToMiddle() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -2045,7 +1938,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B7. Within a PlayerInventory - Moving split item/container selection into another container
-    fn MoveItems_B7() {
+    fn MoveItems_B7_PlayerInventory_MovingSplitSelectionToAnotherContainer() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -2151,7 +2044,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // B8. Within a PlayerInventory - Moving split item/container selection to a specific spot
-    fn MoveItems_B8() {
+    fn MoveItems_B8_PlayerInventory_MovingSplitSelectionToSpot() {
         // GIVEN a player focused test level (which has a player and their inventory)
         let mut level = build_player_test_level();
 
@@ -2260,7 +2153,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // C1. Moving items/container from the PlayerInventory to World Container
-    fn MoveItems_C1() {
+    fn MoveItems_C1_MoveItemsFromPlayerInventoryToWorldContainer() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         // AND this also has a player inventory
@@ -2363,7 +2256,7 @@ use std::collections::HashMap;
     #[test]
     #[allow(non_snake_case)]
     // C2. Moving items/container from a World Container to the Player Inventory (should error as this is just TakeItems)
-    fn MoveItems_C2() {
+    fn MoveItems_C2_MoveItemsFromWorldContainerToPlayerInventory() {
         // GIVEN a valid map
         // that holds a Chest containing 6 containers (Each with a unique name)
         // AND this also has a player inventory
