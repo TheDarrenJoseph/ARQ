@@ -1,9 +1,14 @@
+use std::io;
+use crate::engine::command::generate_map::GenerateMapCommand;
 use log::info;
 use rand_seeder::Seeder;
 use ratatui::backend::Backend;
 use std::io::{Error, ErrorKind};
+use futures::future;
+use futures::future::join;
 use termion::event::Key;
-
+use termion::input::TermRead;
+use tokio::join;
 use crate::character::battle::Battle;
 use crate::character::builder::character_builder::{build_dev_player_inventory, CharacterBuilder, CharacterPattern};
 use crate::character::characters::Characters;
@@ -19,11 +24,11 @@ use crate::engine::engine_helpers::input_handler::InputHandler;
 use crate::engine::engine_helpers::menu::menu_command;
 use crate::engine::engine_helpers::spawning::{respawn_npcs, respawn_player};
 use crate::engine::level::{init_level_manager, LevelChange, LevelChangeResult, Levels};
-use crate::engine::process::map_generation::MapGeneration;
 use crate::error::errors::ErrorWrapper;
 use crate::input::IoKeyInputResolver;
 use crate::map::position::{Area, Side};
 use crate::map::Map;
+use crate::map::map_generator::MapGenerator;
 use crate::settings::{build_settings, Settings, SETTING_BG_MUSIC, SETTING_RESOLUTION, SETTING_RNG_SEED};
 use crate::sound::sound::{build_sound_sinks, SoundSinks};
 use crate::terminal::terminal_manager::TerminalManager;
@@ -34,11 +39,9 @@ use crate::ui::ui::{build_ui, get_input_key};
 use crate::ui::ui_wrapper::UIWrapper;
 use crate::view::combat_view::CombatView;
 use crate::view::dialog_view::DialogView;
-use crate::view::framehandler::map_generation::MapGenerationFrameHandler;
 use crate::view::game_over_view::{build_game_over_menu, GameOverChoice};
 use crate::view::util::callback::Callback;
 use crate::view::util::callback::CallbackHandler;
-use crate::view::util::progress_display::ProgressDisplay;
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
@@ -175,24 +178,13 @@ impl <B : Backend + Send> GameEngine<B> {
     }
 
     async fn generate_map(&mut self) -> Result<Map, ErrorWrapper> {
-        let seed = self.levels.get_seed();
-        let map_framehandler = MapGenerationFrameHandler { seed: seed.clone() };
-
-        let map_generator = self.levels.build_map_generator();
-        let size_x = map_generator.map.area.width;
-        let size_y = map_generator.map.area.height;
-
-        let progress_display = ProgressDisplay {
-            terminal_manager: &mut self.ui_wrapper.terminal_manager,
-            frame_handler: map_framehandler
-        };
-        let mut level_generator = MapGeneration {
-            map_generator,
-            progress_display
+        let mut generate_map_command = GenerateMapCommand {
+            levels: &mut self.levels,
+            ui: &mut self.ui_wrapper.ui,
+            terminal_manager: &mut self.ui_wrapper.terminal_manager
         };
 
-        info!("Generating map using RNG seed: {} and size: {}, {}", seed, size_x, size_y);
-        level_generator.generate_level().await
+        return generate_map_command.start().await;
     }
 
     async fn initialise(&mut self) -> Result<(), ErrorWrapper> {
@@ -212,7 +204,7 @@ impl <B : Backend + Send> GameEngine<B> {
     }
 
     fn add_or_update_additional_widgets(&mut self) {
-        let additional_widgets = self.ui_wrapper.ui.get_additional_widgets();
+        let additional_widgets = self.ui_wrapper.ui.get_standard_widgets();
         if additional_widgets.is_empty() {
             let level_number = self.levels.get_current_level() as i32 + 1;
             let level = self.levels.get_level_mut();
@@ -222,13 +214,13 @@ impl <B : Backend + Send> GameEngine<B> {
                 player.get_health(),
                 player.get_details(),
                 player.get_inventory_mut().get_loot_value());
-            self.ui_wrapper.ui.get_additional_widgets_mut().push(StandardWidgetType::StatLine(stat_line));
+            self.ui_wrapper.ui.get_standard_widgets_mut().push(StandardWidgetType::StatLine(stat_line));
             
             let map_usage_line = UsageLineWidget::new();
-            self.ui_wrapper.ui.get_additional_widgets_mut().push(StandardWidgetType::UsageLine(map_usage_line));
+            self.ui_wrapper.ui.get_standard_widgets_mut().push(StandardWidgetType::UsageLine(map_usage_line));
 
         } else {
-            let widgets_mut = self.ui_wrapper.ui.get_additional_widgets_mut();
+            let widgets_mut = self.ui_wrapper.ui.get_standard_widgets_mut();
             match widgets_mut.get_mut(0) {
                 Some(StandardWidgetType::StatLine(s)) => {
                     let level_number = self.levels.get_current_level() as i32 + 1;

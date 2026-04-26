@@ -49,7 +49,7 @@ pub struct OpenCommandChannels {
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
 const NOTHING_ERROR : &str = "There's nothing here to open.";
 
-impl <B: ratatui::backend::Backend> Command for OpenCommandNew<'_, B> {
+impl <B: ratatui::backend::Backend> Command<()> for OpenCommandNew<'_, B> {
 
     async fn start(&mut self) -> Result<(), ErrorWrapper> {
         let input_result = self.initial_prompt();
@@ -136,7 +136,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
             UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
             UsageCommand::for_container_event(Esc, String::from("close"), Close)
         ];
-        for widget in self.ui.get_additional_widgets_mut().iter_mut() {
+        for widget in self.ui.get_standard_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
                     usage_line_widget.commands = container_usage_commands.clone();
@@ -147,7 +147,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     }
 
     fn reset_usage_line(&mut self) {
-        for widget in self.ui.get_additional_widgets_mut().iter_mut() {
+        for widget in self.ui.get_standard_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
                     usage_line_widget.reset_commands();

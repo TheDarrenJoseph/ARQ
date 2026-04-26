@@ -24,7 +24,7 @@ pub struct LookCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub bindings : LookKeyBindings
 }
 
-impl <B: ratatui::backend::Backend> Command for LookCommand<'_, B> {
+impl <B: ratatui::backend::Backend> Command<()> for LookCommand<'_, B> {
     async fn start(&mut self) -> Result<(), ErrorWrapper> {
         self.ui.set_console_buffer("Where do you want to look?. Arrow keys to choose. Repeat usage to choose current location.".to_string());
         self.re_render().unwrap();

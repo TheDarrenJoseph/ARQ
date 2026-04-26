@@ -106,6 +106,15 @@ pub fn load_settings_file() -> serde_json::Value {
     serde_json::from_str(&settings_raw).unwrap()
 }
 
+fn get_random_map_seed() -> String {
+    // Generate a new random seed
+    rand::rng()
+        .sample_iter(&Alphanumeric)
+        .take(12)
+        .map(char::from)
+        .collect()
+}
+
 fn get_map_seed(settings_json: &serde_json::Value) -> String {
     // INITIAL_MAP_SEED allows setting the map seed ahead of time, useful for debugging
     let initial_map_seed : Option<String> = settings_json.get("INITIAL_MAP_SEED").map(|v| String::from(v.as_str().unwrap()));
@@ -113,12 +122,7 @@ fn get_map_seed(settings_json: &serde_json::Value) -> String {
     if initial_map_seed.is_some()  {
         initial_map_seed.unwrap()
     } else {
-        // Generate a new random seed
-        thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(12)
-            .map(char::from)
-            .collect()
+        get_random_map_seed()
     }
 }
 

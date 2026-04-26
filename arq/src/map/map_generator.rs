@@ -1,17 +1,15 @@
+use tokio::sync::mpsc::UnboundedSender;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::mpsc::Sender;
 use std::task::{Context, Poll};
-
-use log::error;
+use log::{error, info};
 use rand::distr::StandardUniform;
 use rand::Rng;
 use rand_pcg::Pcg64;
 use uuid::Uuid;
 
 use crate::engine::pathfinding::Pathfinding;
-use crate::engine::process::Progressible;
 use crate::map::objects::container::{Container, ContainerType};
 use crate::map::objects::door::build_door;
 use crate::map::objects::items::{Item, MaterialType};
@@ -22,7 +20,8 @@ use crate::map::tile::{build_library, TileDetails, TileType};
 use crate::map::{Map, Tiles};
 use crate::progress::{MultiStepProgress, Step};
 
-pub struct MapGenerator<'rng> {
+#[derive(Clone, Debug)]
+pub struct MapGenerator {
     min_room_size: u16,
     max_room_size: u16,
     room_area_quota_percentage: u16,
@@ -31,12 +30,13 @@ pub struct MapGenerator<'rng> {
     map_area : Area,
     taken_positions : Vec<Position>,
     possible_room_positions : Vec<Position>,
-    rng: &'rng mut Pcg64,
+    pub rng: Pcg64,
     pub progress: MultiStepProgress,
-    pub map: Map
+    pub map: Map,
+    pub tx: UnboundedSender<MultiStepProgress>
 }
 
-pub fn build_generator<'a>(rng : &'a mut Pcg64, map_area : Area) -> MapGenerator<'a> {
+pub fn build_generator<'a>(rng : &Pcg64, map_area : Area, tx: UnboundedSender<MultiStepProgress>) -> MapGenerator {
     let map_generation_steps: Vec<Step> = vec![
         Step { id: String::from("mapgen"), description: String::from("Generating map...") },
         Step { id: String::from("entry/exits"),  description: String::from("Adding entry/exit...") },
@@ -48,13 +48,20 @@ pub fn build_generator<'a>(rng : &'a mut Pcg64, map_area : Area) -> MapGenerator
 
     let progress = MultiStepProgress::for_steps_not_started(map_generation_steps);
 
-    MapGenerator { min_room_size: 3, max_room_size: 6,
-        room_area_quota_percentage: 30, max_door_count: 4,
-        tile_library: build_library(), map_area, taken_positions: Vec::new(),
+    MapGenerator {
+        min_room_size: 3,
+        max_room_size: 6,
+        room_area_quota_percentage: 30,
+        max_door_count: 4,
+        tile_library: build_library(),
+        map_area,
+        taken_positions: Vec::new(),
         possible_room_positions : Vec::new(),
-        rng,
+        rng: rng.clone(),
         progress,
-        map: Map {area: map_area, tiles: Tiles { tiles: Vec::new() }, rooms: Vec::new(), containers: HashMap::new()}}
+        map: Map {area: map_area, tiles: Tiles { tiles: Vec::new() }, rooms: Vec::new(), containers: HashMap::new()},
+        tx
+    }
 }
 
 pub fn build_dev_chest() -> Container {
@@ -97,7 +104,7 @@ fn generate_room_containers(rng: &mut Pcg64, room: Room) -> HashMap<Position, Co
     container_map
 }
 
-impl <'rng> Future for MapGenerator<'rng> {
+impl <'rng> Future for MapGenerator {
     type Output = Map;
 
     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -109,7 +116,7 @@ impl <'rng> Future for MapGenerator<'rng> {
     }
 }
 
-impl <'rng> MapGenerator<'rng> {
+impl MapGenerator {
 
     pub fn add_area_containers(&mut self) {
         let mut area_container_count = 0;
@@ -155,40 +162,43 @@ impl <'rng> MapGenerator<'rng> {
         log::info!("Added {} containers to rooms.", room_container_count);
     }
 
-    fn send_progress(&mut self, tx: &Sender<MultiStepProgress>) {
-        tx.send(self.progress.clone()).expect("Progress should have been send to the tx channel");
+    fn send_progress(&mut self) {
+        info!("Sending progress {}/{}", self.progress.get_current_step_number(), self.progress.step_count() - 1);
+        self.tx.send(self.progress.clone()).expect("Progress should have been send to the tx channel");
     }
 
-    pub async fn generate(&mut self, tx: Sender<MultiStepProgress>) -> Map {
+    pub async fn generate(&mut self) -> &mut MapGenerator {
+
         // 1. mapgen
         self.progress.next_step();
-        self.send_progress(&tx);
+        self.send_progress();
         self.build_map();
 
         // 2. entry/exits
         self.progress.next_step();
-        self.send_progress(&tx);
+        self.send_progress();
         self.add_entry_and_exit();
 
         // 3. rooms
         self.progress.next_step();
-        self.send_progress(&tx);
+        self.send_progress();
         self.add_rooms_to_map();
 
         // 4. pathfinding
         self.progress.next_step();
-        self.send_progress(&tx);
+        self.send_progress();
         self.path_rooms();
 
         // 5. containers
         self.progress.next_step();
-        self.send_progress(&tx);
+        self.send_progress();
         self.add_containers();
 
         // 6. completed
         self.progress.next_step();
-        self.send_progress(&tx);
-        return self.map.clone();
+        self.send_progress();
+
+        return self
     }
 
     fn add_entry_and_exit(&mut self) {
@@ -551,29 +561,23 @@ impl <'rng> MapGenerator<'rng> {
 
 }
 
-impl Progressible for MapGenerator<'_> {
-    fn get_progress(&self) -> MultiStepProgress {
-        self.progress.clone()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::sync::mpsc::channel;
 
     use rand_pcg::Pcg64;
     use rand_seeder::Seeder;
-
+    use tokio::sync::mpsc::unbounded_channel;
     use crate::map::map_generator::build_generator;
     use crate::map::position::{build_square_area, Area, Position};
     use crate::map::tile::TileDetails;
     use crate::map::Map;
 
     async fn build_test_map(rng: &mut Pcg64, map_area: Area) -> Map {
-        let mut generator = build_generator(rng, map_area);
 
-        let (tx, _rx) = channel();
-        generator.generate(tx).await
+        let (tx, _rx) = unbounded_channel();
+        let mut generator = build_generator(rng, map_area, tx);
+        generator.generate().await.map.clone()
     }
 
     #[test]
@@ -581,7 +585,8 @@ mod tests {
         // GIVEN a 12x12 map board
         let map_area = build_square_area(Position { x: 0, y: 0 }, 12);
         let rng = &mut Seeder::from("test".to_string()).into_rng();
-        let generator = build_generator(rng, map_area);
+        let (tx, _rx) = unbounded_channel();
+        let generator = build_generator(rng, map_area, tx.clone());
 
         assert_eq!(3, generator.min_room_size);
         assert_eq!(6, generator.max_room_size);
@@ -597,7 +602,8 @@ mod tests {
     fn test_generate_room() {
         let map_area = build_square_area(Position { x: 0, y: 0 }, 12);
         let rng = &mut Seeder::from("test".to_string()).into_rng();
-        let mut generator = build_generator(rng, map_area);
+        let (tx, _rx) = unbounded_channel();
+        let mut generator = build_generator(rng, map_area, tx.clone());
 
         let room = generator.generate_room(Position { x: 0, y: 0 }, 3);
         let expected_area = build_square_area(Position { x: 0, y: 0 }, 3);
@@ -610,7 +616,9 @@ mod tests {
         let map_size = 12;
         let map_area = build_square_area(Position { x: 0, y: 0 }, map_size);
         let rng = &mut Seeder::from("test".to_string()).into_rng();
-        let mut generator = build_generator(rng, map_area);
+        let (tx, _rx) = unbounded_channel();
+        let mut generator = build_generator(rng, map_area, tx.clone());
+
         let rooms = generator.generate_rooms();
         assert_ne!(0, rooms.len());
 

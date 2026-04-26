@@ -21,7 +21,7 @@ pub struct UI {
     pub render_additional: bool,
     console_visible: bool,
     stateful_widgets: Vec<StatefulWidgetType>,
-    additional_widgets: Vec<StandardWidgetType>,
+    standard_widgets: Vec<StandardWidgetType>,
     frame_size : Option<Area>,
     frame_handler: ConsoleFrameHandler,
     pub ui_layout: Option<UILayout>
@@ -42,7 +42,7 @@ pub fn build_ui() -> UI {
         render_additional: false,
         console_visible: false,
         stateful_widgets: Vec::new(),
-        additional_widgets: Vec::new(),
+        standard_widgets: Vec::new(),
         frame_handler,
         ui_layout: None
     }
@@ -68,6 +68,7 @@ pub enum SettingsMenuChoice {
 }
 
 pub enum UIViewMode {
+    LoadingScreen(),
     Map(), // The default view mode
     Container(ContainerWidgetData),
     CharacterInfo(CharacterInfoWidgetData)
@@ -89,7 +90,8 @@ impl std::convert::TryFrom<usize> for SettingsMenuChoice {
 pub trait Draw {
     fn draw_info(&mut self, frame : &mut ratatui::Frame<'_>);
     fn draw_console(&mut self, frame : &mut ratatui::Frame<'_>);
-    fn draw_additional_widgets(&mut self, frame: &mut ratatui::Frame);
+    fn draw_standard_widgets(&mut self, frame: &mut ratatui::Frame);
+    fn draw_loading_screen(&mut self, frame: &mut ratatui::Frame);
     fn draw_level_widgets(&mut self, level: &mut Level, frame: &mut ratatui::Frame);
     fn draw_container_widgets(&mut self, container: &mut ContainerWidgetData, frame: &mut ratatui::Frame);
     fn draw_character_info(&mut self, widget_data: &mut CharacterInfoWidgetData, frame: &mut ratatui::Frame);
@@ -147,6 +149,9 @@ impl UI {
             self.draw_level_widgets(&mut level, frame);
         }
         match view_mode {
+            UIViewMode::LoadingScreen() => {
+                self.draw_loading_screen(frame);
+            },
             UIViewMode::Map() => {
                 // TODO Map widget support
             },
@@ -163,7 +168,7 @@ impl UI {
         }
 
         if self.render_additional {
-            self.draw_additional_widgets(frame);
+            self.draw_standard_widgets(frame);
         }
     }
 
@@ -186,12 +191,12 @@ impl UI {
         self.frame_handler.buffer.content = String::new();
     }
 
-    pub fn get_additional_widgets(&self) -> &Vec<StandardWidgetType> {
-        &self.additional_widgets
+    pub fn get_standard_widgets(&self) -> &Vec<StandardWidgetType> {
+        &self.standard_widgets
     }
 
-    pub fn get_additional_widgets_mut(&mut self) -> &mut Vec<StandardWidgetType> {
-        &mut self.additional_widgets
+    pub fn get_standard_widgets_mut(&mut self) -> &mut Vec<StandardWidgetType> {
+        &mut self.standard_widgets
     }
 
     pub fn get_stateful_widgets_mut(&mut self) -> &mut Vec<StatefulWidgetType> {
@@ -241,16 +246,19 @@ impl Draw for UI {
         self.frame_handler.handle_frame(frame, frame_data);
     }
 
-    fn draw_additional_widgets(&mut self, frame: &mut ratatui::Frame) {
-        let widget_count = self.additional_widgets.len();
+    fn draw_standard_widgets(&mut self, frame: &mut ratatui::Frame) {
+        let widget_count = self.standard_widgets.len();
         if let Some(main_area) = self.ui_layout.as_ref().unwrap().get_ui_areas(LayoutType::StandardSplit).get_area(UI_AREA_NAME_MAIN) {
             let area = main_area.area;
             let rect = area.to_rect();
             let max_width = area.width / 2;
             if widget_count > 0 {
                 let mut _offset = 0;
-                for widget in self.additional_widgets.iter_mut() {
+                for widget in self.standard_widgets.iter_mut() {
                     match widget {
+                        StandardWidgetType::LoadingScreen(loading_screen_widget) => {
+                            frame.render_widget(loading_screen_widget.clone(), frame.area());
+                        },
                         StandardWidgetType::StatLine(w) => {
                             frame.render_widget(w.clone(),
                                                 Rect::new(rect.x + 1, rect.y, max_width, 1));
@@ -261,6 +269,20 @@ impl Draw for UI {
                         }
                     }
                     _offset += 1;
+                }
+            }
+        }
+    }
+
+    fn draw_loading_screen(&mut self, frame: &mut ratatui::Frame) {
+        let widget_count = self.standard_widgets.len();
+        if widget_count > 0 {
+            for widget in self.standard_widgets.iter_mut() {
+                match widget {
+                    StandardWidgetType::LoadingScreen(loading_screen_widget) => {
+                        frame.render_widget(loading_screen_widget.clone(), frame.area());
+                    }
+                    _ => {}
                 }
             }
         }

@@ -4,8 +4,8 @@ use crate::ui::bindings::action_bindings::PlayerAction;
 /*
  A command is a way for an action to be executed upon the game state
  */
-pub trait Command {
-    async fn start(&mut self) -> Result<(), ErrorWrapper>;
+pub trait Command<T> {
+    async fn start(&mut self) -> Result<T, ErrorWrapper>;
 }
 
 /*

@@ -46,7 +46,7 @@ pub struct CharacterInfoCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub container_widget_commands: Option<Vec<UsageCommand>>
 }
 
-impl <B: ratatui::backend::Backend> Command for CharacterInfoCommand<'_, B> {
+impl <B: ratatui::backend::Backend> Command<()> for CharacterInfoCommand<'_, B> {
     async fn start(&mut self) -> Result<(), ErrorWrapper> {
         log::info!("Player opening Character Info Screen.");
 
@@ -510,7 +510,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
         let container_usage_commands = self.container_widget_commands.clone().unwrap();
-        for widget in self.ui.get_additional_widgets_mut().iter_mut() {
+        for widget in self.ui.get_standard_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
                     usage_line_widget.commands = container_usage_commands.clone();
@@ -521,7 +521,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     }
 
     fn reset_usage_line(&mut self) {
-        for widget in self.ui.get_additional_widgets_mut().iter_mut() {
+        for widget in self.ui.get_standard_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
                     usage_line_widget.reset_commands();

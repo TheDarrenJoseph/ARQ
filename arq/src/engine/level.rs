@@ -1,13 +1,14 @@
 use std::io;
-
+use std::sync::mpsc::Sender;
 use rand_pcg::Pcg64;
-
+use tokio::sync::mpsc::UnboundedSender;
 use crate::character::characters::Characters;
 use crate::character::Character;
 
 use crate::map::map_generator::{build_generator, MapGenerator};
 use crate::map::position::{build_rectangular_area, Position, Side};
 use crate::map::Map;
+use crate::progress::MultiStepProgress;
 
 const MAP_SIZE_X: u16 = 80;
 const MAP_SIZE_Y: u16 = 30;
@@ -60,10 +61,10 @@ impl Levels {
         self._current_level.clone()
     }
 
-    pub fn build_map_generator(&mut self) -> MapGenerator<'_> {
+    pub fn build_map_generator(&mut self, tx: UnboundedSender<MultiStepProgress>) -> MapGenerator {
         let map_area = build_rectangular_area(Position { x: 0, y: 0 }, MAP_SIZE_X, MAP_SIZE_Y);
         let rng = &mut self.rng;
-        build_generator(rng, map_area)
+        build_generator(rng, map_area, tx)
     }
 
     pub(crate) fn add_level(&mut self, map: Map) {
