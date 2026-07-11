@@ -25,6 +25,8 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::engine::command::util::CurrentContainersData;
+use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 
 #[derive(Debug, Clone)]
 pub struct ContainerWidget {
@@ -49,7 +51,12 @@ pub struct ContainerWidgetData {
     pub ui_area: Area,
     pub item_list_selection : ItemListSelection,
     pub usage_commands: Vec<UsageCommand>,
-    pub event_sender: mpsc::UnboundedSender<UIEvent>,
+    pub event_sender: mpsc::UnboundedSender<UIEvent>
+}
+
+pub struct WorldContainerWidgetData {
+    pub container_widget_data: ContainerWidgetData,
+    pub container_choice_data: Option<ContainerChoiceWidgetData>
 }
 
 impl ContainerWidgetData {
@@ -67,7 +74,7 @@ impl ContainerWidgetData {
             ui_area: ui_area.clone(),
             item_list_selection,
             usage_commands: usage_commands,
-            event_sender: sender,
+            event_sender: sender
         }
     }
 
@@ -84,6 +91,8 @@ impl ContainerWidgetData {
         None
     }
 
+    // Handles the high level OpenedContainerEventType for a usage command input
+    // and emits the fully formed event UIEvent::AppEvent(OpenedContainerEvent..) for it
     pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         // Handle inputs that start usage command based events
         if let Some(container_event_type) = &usage_command.opened_container_event_type {
@@ -196,19 +205,21 @@ impl ContainerWidgetData {
     }
 
     pub fn handle_move_items_to_choice_response(&mut self, response: MoveItemsResponseV2) {
-
-        let source = response.request.source;
-        let target = response.request.target;
-
-        // Check for items being moved FROM this container
-        if source.matches_target(&target)  {
-            // Update the current container details to the updated target
-            self.container = target.get_container().unwrap().clone();
+        let self_container_id = self.container.get_self_item_id();
+        // If this is the source container
+        if (self_container_id == response.request.source.get_self_item().get_id()) {
+            let updated_source = response.updated_scopes.source;
+            // Update the current container details to the updated source
+            self.container = updated_source.get_container().clone();
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
-        } else {
-            // Update the current container details to the updated source
-            self.container = source.get_container().clone();
+        }
+
+        // If this is the target container
+        if (self_container_id == response.request.target.get_self_item().get_id()) {
+            let updated_target = response.updated_scopes.target;
+            // Update the current container details to the updated target
+            self.container = updated_target.get_container().unwrap().clone();
             self.item_list_selection.cancel_selection();
             self.rebuild_selection();
         }

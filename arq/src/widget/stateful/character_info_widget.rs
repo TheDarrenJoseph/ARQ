@@ -67,7 +67,7 @@ pub struct CharacterInfoWidgetData {
     pub container : Container,
     pub ui_areas: UIAreas,
     pub event_sender: mpsc::UnboundedSender<UIEvent>,
-    pub containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
+    pub current_containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
 }
 
 impl CharacterInfoWidgetData {
@@ -90,7 +90,7 @@ impl CharacterInfoWidgetData {
             container: inventory_container.clone(),
             ui_areas: ui_areas.clone(),
             event_sender: container_event_sender.clone(),
-            containers_data: CurrentContainersData::new()
+            current_containers_data: CurrentContainersData::new()
         }
     }
 
@@ -109,7 +109,7 @@ impl CharacterInfoWidgetData {
                 match &response.request.target {
                     TargetContainerScope::PlayerInventory(pic_target) => {
                         let target_container_id = pic_target.container.get_self_item().get_id();
-                        if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
+                        if let Some(target_data) =self.current_containers_data.get_data_mut(target_container_id) {
                             let target_event = event.clone();
                             target_data.handle_event(target_event).await;
                         }
@@ -120,7 +120,7 @@ impl CharacterInfoWidgetData {
                 match &response.request.source {
                     SourceContainerScope::PlayerInventory(pic_source) => {
                         let target_container_id = pic_source.container.get_self_item().get_id();
-                        if let Some(target_data) =self.containers_data.get_data_mut(target_container_id) {
+                        if let Some(target_data) =self.current_containers_data.get_data_mut(target_container_id) {
                             let target_event = event.clone();
                             target_data.handle_event(target_event).await;
                         }
@@ -135,7 +135,7 @@ impl CharacterInfoWidgetData {
             _ => {}
         }
 
-        if let Some(current_container_data) =  self.containers_data.get_current_data_mut() {
+        if let Some(current_container_data) =  self.current_containers_data.get_current_data_mut() {
             current_container_data.handle_event(event).await;
         }
     }
@@ -171,7 +171,7 @@ impl StatefulWidget for CharacterInfoWidget {
 
         tabs.render(heading_area, buf);
 
-        if let Some(current_container_data) =  widget_data.containers_data.get_current_data_mut() {
+        if let Some(current_container_data) =  widget_data.current_containers_data.get_current_data_mut() {
             self.container_widget.render(
                 area, buf, current_container_data
             );

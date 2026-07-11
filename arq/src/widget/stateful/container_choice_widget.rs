@@ -20,6 +20,9 @@ use ratatui::widgets::{Block, Borders, Clear};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::map::objects::container::Container;
+use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
+use crate::widget::stateful::container_widget::ContainerWidgetData;
 
 #[derive(Clone, Debug)]
 pub enum ContainerChoiceScope {
@@ -240,4 +243,32 @@ fn convert_to_item_list(choices : Vec<ContainerChoice>) -> Vec<Item> {
         items.push(c.container_scope.get_self_item().clone());
     }
     items
+}
+
+pub fn build_container_widget_area(main_area: &UIArea) -> Area {
+    let mut result = main_area.clone();
+    let ui_area = &mut result.area;
+    // Offset the container start y to allow for tabs
+    ui_area.start_position.y += 2;
+    ui_area.height -= 2;
+    ui_area.end_position.y -= 2;
+    result.area
+}
+
+pub fn build_container_choice_widget_data(choices: Vec<ContainerChoice>, ui_areas: UIAreas, container_event_sender: UnboundedSender<UIEvent>) -> ContainerChoiceWidgetData {
+    let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+    let widget_ui_area = build_container_widget_area(&main_area);
+
+    // -3 to account for:
+    // 1. Title / Border top
+    // 2. Table headings
+    // 3. Border bottom
+    let line_count = (widget_ui_area.height - 3) as i32;
+
+    ContainerChoiceWidgetData::new(
+        choices,
+        main_area.area,
+        line_count,
+        container_event_sender
+    )
 }

@@ -1,3 +1,4 @@
+use crate::widget::stateful::container_widget::WorldContainerWidgetData;
 use crate::engine::level::Level;
 use crate::map::position::Area;
 use crate::ui::resolution::Resolution;
@@ -14,8 +15,10 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use std::io;
+use log::info;
 use termion::event::Key;
 use termion::input::TermRead;
+use crate::widget::stateful::map_widget::MapWidget;
 
 pub struct UI {
     pub render_additional: bool,
@@ -70,7 +73,7 @@ pub enum SettingsMenuChoice {
 pub enum UIViewMode {
     LoadingScreen(),
     Map(), // The default view mode
-    Container(ContainerWidgetData),
+    Container(WorldContainerWidgetData),
     CharacterInfo(CharacterInfoWidgetData)
 }
 
@@ -93,7 +96,7 @@ pub trait Draw {
     fn draw_standard_widgets(&mut self, frame: &mut ratatui::Frame);
     fn draw_loading_screen(&mut self, frame: &mut ratatui::Frame);
     fn draw_level_widgets(&mut self, level: &mut Level, frame: &mut ratatui::Frame);
-    fn draw_container_widgets(&mut self, container: &mut ContainerWidgetData, frame: &mut ratatui::Frame);
+    fn draw_container_widgets(&mut self, container: &mut WorldContainerWidgetData, frame: &mut ratatui::Frame);
     fn draw_character_info(&mut self, widget_data: &mut CharacterInfoWidgetData, frame: &mut ratatui::Frame);
 }
 
@@ -202,6 +205,23 @@ impl UI {
     pub fn get_stateful_widgets_mut(&mut self) -> &mut Vec<StatefulWidgetType> {
         &mut self.stateful_widgets
     }
+
+    pub fn find_map_widget_mut(&mut self) -> Option<&mut MapWidget> {
+        let widget_count = self.stateful_widgets.len();
+        if widget_count > 0 {
+            let mut _offset = 0;
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
+                    StatefulWidgetType::Map(map_widget) => {
+                        return Some(map_widget)
+                    }
+                    _ => {}
+                }
+                _offset += 1;
+            }
+        }
+        return None
+    }
 }
 
 pub fn get_input_key() -> Result<Key, io::Error> {
@@ -305,20 +325,29 @@ impl Draw for UI {
         }
     }
 
-    fn draw_container_widgets(&mut self, widget_data: &mut ContainerWidgetData, frame: &mut ratatui::Frame) {
-        let widget_data_container_id = widget_data.container.get_self_item().get_id();
+    fn draw_container_widgets(&mut self, widget_data: &mut WorldContainerWidgetData, frame: &mut ratatui::Frame) {
+        let container_widget_data = &mut widget_data.container_widget_data;
+        let widget_data_container_id = container_widget_data.container.get_self_item().get_id();
         let widget_count = self.stateful_widgets.len();
         if widget_count > 0 {
             let ui_layout = self.ui_layout.as_mut().unwrap();
             let _ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
             for widget in self.stateful_widgets.iter_mut() {
                 match widget {
+                    // Render the container choice selection pop-up window
+                    StatefulWidgetType::ContainerChoice(container_choice_widget) => {
+                        if let Some(ccd) = &mut widget_data.container_choice_data {
+                            info!("[ui] Rendering ContainerChoice widget");
+                            frame.render_stateful_widget(container_choice_widget.clone(), frame.size(), ccd);
+                            // Stop here so we don't waste time drawing more widgets that will be hidden
+                            return;
+                        }
+                    },
                     StatefulWidgetType::Container(container_widget) => {
                         // If the data belongs to this widget, render it
                         if container_widget.container_id == widget_data_container_id {
-                            frame.render_stateful_widget(container_widget.clone(), frame.size(), widget_data);
-                            // Stop here so we don't waste time drawing more widgets that will be hidden
-                            return;
+                            info!("[ui] Rendering current ContainerWidget");
+                            frame.render_stateful_widget(container_widget.clone(), frame.size(), container_widget_data);
                         }
                     }
                     _ => {}
@@ -336,20 +365,14 @@ impl Draw for UI {
                 match widget {
                     StatefulWidgetType::CharacterInfo(charcter_info_widget) => {
                         frame.render_stateful_widget(charcter_info_widget.clone(), frame.size(), widget_data);
-                    }
-                    _ => {
-                        continue;
-                    }
-                }
-            }
-
-            for widget in self.stateful_widgets.iter_mut() {
-                match widget {
+                    },
+                    // Render the container choice selection pop-up window
                     StatefulWidgetType::ContainerChoice(container_choice_widget) => {
-                        if let Some(ccd) = &mut widget_data.containers_data.container_choice_data {
+                        if let Some(ccd) = &mut widget_data.current_containers_data.container_choice_data {
+                            info!("[ui] Rendering ContainerChoice widget");
                             frame.render_stateful_widget(container_choice_widget.clone(), frame.size(), ccd);
                         }
-                    }
+                    },
                     _ => {
                         continue;
                     }
@@ -357,6 +380,7 @@ impl Draw for UI {
             }
         }
     }
+
 }
 
 

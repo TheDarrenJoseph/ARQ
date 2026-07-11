@@ -1,3 +1,4 @@
+use crate::widget::stateful::container_choice_widget::build_container_choice_widget_data;
 use crate::engine::command::command::Command;
 use crate::engine::command::open_command::OpenCommandChannels;
 use crate::engine::command::util::CurrentContainersData;
@@ -62,7 +63,7 @@ impl <B: ratatui::backend::Backend> Command<()> for CharacterInfoCommand<'_, B> 
 
         // Spawn a thread to handle the UI events
         let mut event_handler = TerminalEventHandler::new();
-        let _event_thread_data = event_handler.spawn_thread();
+        let event_thread_data = event_handler.spawn_thread();
 
         let mut running = true;
         while running {
@@ -79,7 +80,7 @@ impl <B: ratatui::backend::Backend> Command<()> for CharacterInfoCommand<'_, B> 
                     // If we have a container choice data set, it takes priority
                     // Handle any events specific to choosing a container
                     let choice_event = e.clone();
-                    if let Some(choice_data) = &mut widget_data.containers_data.container_choice_data {
+                    if let Some(choice_data) = &mut widget_data.current_containers_data.container_choice_data {
                         debug!("Handling Character Info UI Event (container choice)");
                         choice_data.handle_event(choice_event).await;
 
@@ -106,7 +107,7 @@ impl <B: ratatui::backend::Backend> Command<()> for CharacterInfoCommand<'_, B> 
                                 player_position.clone(),
                                 event,
                                 &mut event_handler,
-                                &mut widget_data.containers_data,
+                                &mut widget_data.current_containers_data,
                                 child_container_sender.clone()
                             ).await;
                         },
@@ -119,6 +120,12 @@ impl <B: ratatui::backend::Backend> Command<()> for CharacterInfoCommand<'_, B> 
             }
         }
 
+        log::info!("Closing event handling / threading");
+        // Make sure to close the event receiver
+        event_handler.receiver.close();
+        // Make sure to close out the thread
+        event_thread_data.cancellation_token.cancel();
+        event_thread_data.join_handle.await.unwrap();
         return Ok(())
     }
 }
@@ -155,7 +162,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             },
             // If we've picked a selection, we should also close the widget
             UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
-                log::info!("Handling SelectedContainer event");
+                log::info!("Handling MoveItemsToContainerChoiceSelection event");
 
                 // Grab all the items selected in the current container widget (before the container choice was presented)
                 let current_container_widget_data : ContainerWidgetData = widget_data_by_id.get(&current_container_id).unwrap().clone();
@@ -314,8 +321,6 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 }
             },
             UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItems, Some(OpenedContainerEventData::MoveItemsWithinSource(data)))) => {
-
-
                 // We're either moving items into a container inside the inventory, or a specific item position
                 let data = if let Some(target_container) = data.target_container  {
                     MoveItemsRequestV2 {
@@ -477,7 +482,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
             // Take a copy of the commands available for the child container widget so we can display them
             self.container_widget_commands = Some(container_widget_data.usage_commands.clone());
 
-            character_info_widget_data.containers_data.add_container_data(
+            character_info_widget_data.current_containers_data.add_container_data(
                 inventory_container.get_self_item().get_id(),
                 container_widget_data
             );
@@ -532,19 +537,10 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
 }
 
-fn build_container_widget_area(main_area: &UIArea) -> Area {
-    let mut result = main_area.clone();
-    let ui_area = &mut result.area;
-    // Offset the container start y to allow for tabs
-    ui_area.start_position.y += 2;
-    ui_area.height -= 2;
-    ui_area.end_position.y -= 2;
-    result.area
-}
-
+// Builds a widget to open a sub container within the Character Info view
 fn build_container_widget_data(container: Container, ui_areas: UIAreas, container_event_sender: UnboundedSender<UIEvent>) -> ContainerWidgetData {
     let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-    let widget_ui_area = build_container_widget_area(&main_area);
+    let widget_ui_area = crate::widget::stateful::container_choice_widget::build_container_widget_area(&main_area);
 
     // -3 to account for:
     // 1. Title / Border top
@@ -569,26 +565,6 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
         ui_area: widget_ui_area,
         item_list_selection,
         usage_commands: commands,
-        event_sender: container_event_sender,
+        event_sender: container_event_sender
     }
 }
-
-
-fn build_container_choice_widget_data(choices: Vec<ContainerChoice>, ui_areas: UIAreas, container_event_sender: UnboundedSender<UIEvent>) -> ContainerChoiceWidgetData {
-    let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-    let widget_ui_area = build_container_widget_area(&main_area);
-
-    // -3 to account for:
-    // 1. Title / Border top
-    // 2. Table headings
-    // 3. Border bottom
-    let line_count = (widget_ui_area.height - 3) as i32;
-
-    ContainerChoiceWidgetData::new(
-        choices,
-        main_area.area,
-        line_count,
-        container_event_sender
-    )
-}
-
