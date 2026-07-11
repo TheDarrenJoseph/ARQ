@@ -17,6 +17,8 @@ pub struct CopyResult {
     pub updated_target : Option<Container>
 }
 
+// --- Container util internals / private functions
+
 // Finds the Container representations of the to_copy items within source and returns a Vec containing a clone of each of these
 fn find_copying_items(source : Container, to_copy: Vec<Item>) -> Vec<Container> {
     let mut results: Vec<Container> = Vec::new();
@@ -29,7 +31,6 @@ fn find_copying_items(source : Container, to_copy: Vec<Item>) -> Vec<Container> 
     }
     results
 }
-
 
 // Copies Container items from to_copy into the target container via a live mutable reference
 fn copy_container_items(to_copy: Vec<Container>, target: &mut Container) -> CopyResult {
@@ -60,148 +61,6 @@ fn copy_container_items(to_copy: Vec<Container>, target: &mut Container) -> Copy
         uncopied: uncopied_items,
         updated_target: Some(target.clone())
     }
-}
-
-pub fn player_take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItemsResponse, ErrorWrapper> {
-    let player_result = level.get_player_mut();
-    let total_to_take = data.to_take.len();
-    let source_container_id = data.source.get_self_item().get_id();
-    if let Some(player) = player_result {
-        log::info!("[container_util::player_take_items] Found player: {}", player.get_name());
-        let mut taken = Vec::new();
-        let mut untaken = Vec::new();
-        for item in data.to_take {
-            if let Some(container_item) = data.source.find(&item) {
-                let inventory = player.get_inventory_mut();
-                if inventory.can_fit_container_item(container_item) {
-                    log::info!("[container_util::player_take_items] Taking item: {}", item.get_name());
-                    match player.get_inventory_mut().add(container_item.clone()) {
-                        Ok(()) => {
-                            // If it's added to the player inventory, go ahead and add it to the taken list for removal
-                            taken.push(container_item.clone());
-                        },
-                        Err(e) => {
-                            error!("[container_util::player_take_items] Failed to take item, couldn't add it to the Player's inventory.. {}", e);
-                        }
-                    }
-                } else {
-                    untaken.push(item);
-                }
-            } else {
-                untaken.push(item);
-            }
-        }
-
-        if !taken.is_empty() || !untaken.is_empty() {
-            if let Some(pos) = data.position {
-                let map_container = level.get_map_mut().unwrap().find_container_mut(&data.source, pos);
-                if let Some(source_container) = map_container {
-                    source_container.remove_matching_items(taken.clone());
-                }
-            } else {
-                return Err(ErrorWrapper::new_internal( String::from("[container_util::player_take_items] No map position to take items from!")));
-            }
-        }
-
-        let taken_items_message;
-        if taken.is_empty() {
-            taken_items_message = "You cannot take anything".to_owned();
-        } else if untaken.is_empty() && taken.len() == total_to_take {
-            taken_items_message = format!("You take all {} items", total_to_take).to_owned();
-        } else {
-            // Both taken and untaken items
-            taken_items_message = format!("You took {} of the {} items, but could not carry any more", taken.len(), total_to_take);
-        }
-
-        log::info!("[take_items] returning TakeItemsResponse with {} un-taken items", untaken.len());
-        let response = TakeItemsResponse {
-            container_id: source_container_id,
-            message: taken_items_message.to_owned(),
-            untaken
-        };
-        return Ok(response);
-    } else {
-        return Err(ErrorWrapper::new_internal( String::from("[container_util::player_take_items] Failed to find the player in the level.")));
-    }
-}
-
-pub fn player_drop_items(data: DropItemsRequest, level: &mut Level) -> Result<DropItemsResponse, ErrorWrapper> {
-    let to_drop = data.to_drop;
-    let total_to_drop = to_drop.len();
-    let source_container_id = data.source.get_self_item().get_id();
-    let target_position = data.position.unwrap();
-
-    // Find the container on the map and add the "container" wrappers there
-    let mut undropped = Vec::new();
-    for item in &to_drop {
-        undropped.push(item.clone());
-    }
-    let mut dropped = Vec::new();
-
-    log::info!("container_util::player_drop_items] Dropping {} items at position: {}, {}", total_to_drop,  target_position.x, target_position.y);
-    // Find the container at the target position we'll be dropping items into
-
-    // Try and drop each item from the player's inventory
-    for item in to_drop {
-        let mut dropping_container_item = None;
-
-        // Modify the player inventory first
-        let player_result = level.get_player_mut();
-        if let Some(player) = player_result {
-            let player_inventory = player.get_inventory_mut();
-            // Find the "container" wrappper matching the item returned
-            if let Some(container_item) = &mut player_inventory.find_mut(&item) {
-                let self_item = container_item.get_self_item_mut();
-                self_item.unequip();
-                dropping_container_item = Some(container_item.clone());
-            }
-        }
-
-        // Secondly, add the player items to the target container
-        if let Some(dropping_container) = dropping_container_item {
-            if let Some(target_container) = level.get_map_mut().unwrap().get_container_at_position_mut(target_position) {
-                if target_container.can_fit_container_item(&dropping_container) {
-                    log::info!("container_util::player_drop_items] Dropping item: {} into: {}", item.get_name(), target_container.get_self_item().get_name());
-                    match target_container.add(dropping_container.clone()) {
-                        Ok(()) => {
-                            let pos = undropped.iter().position(|x| x.id_equals(&item));
-                            undropped.remove(pos.unwrap());
-                            dropped.push(dropping_container);
-                        }
-                        Err(e) => {
-                            error!("container_util::player_drop_items] Couldn't drop item: {}", e)
-                        }
-                    }
-                } else {
-                    log::info!("container_util::player_drop_items] Couldn't drop item. Cannot fit item: {}  into: {}", item.get_name(), target_container.get_self_item().get_name());
-                }
-            }
-        }
-    }
-
-    // Finally, remove the dropped items from the player's inventory
-    if !dropped.is_empty() {
-        let player_inventory = level.get_player_mut().unwrap().get_inventory_mut();
-        player_inventory.remove_matching_items(dropped.clone());
-    }
-
-    let dropped_items_message;
-    if dropped.is_empty() {
-        dropped_items_message = "You cannot drop anything".to_owned();
-    } else if dropped.is_empty() && dropped.len() == total_to_drop {
-        dropped_items_message = format!("You drop all {} items", total_to_drop).to_owned();
-    } else {
-        // Both taken and untaken items
-        dropped_items_message = format!("You dropped {} of the {} items, but could not drop any more", dropped.len(), total_to_drop);
-    }
-
-    log::info!("[container_util::player_drop_items] returning DropItemsResponse with {} un-dropped items", undropped.len());
-    let response = DropItemsResponse {
-        container_id: source_container_id,
-        message: dropped_items_message.to_owned(),
-        undropped,
-    };
-    return Ok(response);
 }
 
 fn update_source_container(level: &mut Level, request: MoveItemsRequestV2, copy_result: CopyResult) -> Container {
@@ -372,6 +231,150 @@ fn move_items_to_source_position(request: MoveItemsRequestV2) -> Option<MoveItem
     }
 
     None
+}
+
+// --- Public facing functions
+
+pub fn player_take_items(data: TakeItemsRequest, level : &mut Level) -> Result<TakeItemsResponse, ErrorWrapper> {
+    let player_result = level.get_player_mut();
+    let total_to_take = data.to_take.len();
+    let source_container_id = data.source.get_self_item().get_id();
+    if let Some(player) = player_result {
+        log::info!("[container_util::player_take_items] Found player: {}", player.get_name());
+        let mut taken = Vec::new();
+        let mut untaken = Vec::new();
+        for item in data.to_take {
+            if let Some(container_item) = data.source.find(&item) {
+                let inventory = player.get_inventory_mut();
+                if inventory.can_fit_container_item(container_item) {
+                    log::info!("[container_util::player_take_items] Taking item: {}", item.get_name());
+                    match player.get_inventory_mut().add(container_item.clone()) {
+                        Ok(()) => {
+                            // If it's added to the player inventory, go ahead and add it to the taken list for removal
+                            taken.push(container_item.clone());
+                        },
+                        Err(e) => {
+                            error!("[container_util::player_take_items] Failed to take item, couldn't add it to the Player's inventory.. {}", e);
+                        }
+                    }
+                } else {
+                    untaken.push(item);
+                }
+            } else {
+                untaken.push(item);
+            }
+        }
+
+        if !taken.is_empty() || !untaken.is_empty() {
+            if let Some(pos) = data.position {
+                let map_container = level.get_map_mut().unwrap().find_container_mut(&data.source, pos);
+                if let Some(source_container) = map_container {
+                    source_container.remove_matching_items(taken.clone());
+                }
+            } else {
+                return Err(ErrorWrapper::new_internal( String::from("[container_util::player_take_items] No map position to take items from!")));
+            }
+        }
+
+        let taken_items_message;
+        if taken.is_empty() {
+            taken_items_message = "You cannot take anything".to_owned();
+        } else if untaken.is_empty() && taken.len() == total_to_take {
+            taken_items_message = format!("You take all {} items", total_to_take).to_owned();
+        } else {
+            // Both taken and untaken items
+            taken_items_message = format!("You took {} of the {} items, but could not carry any more", taken.len(), total_to_take);
+        }
+
+        log::info!("[take_items] returning TakeItemsResponse with {} un-taken items", untaken.len());
+        let response = TakeItemsResponse {
+            container_id: source_container_id,
+            message: taken_items_message.to_owned(),
+            untaken
+        };
+        return Ok(response);
+    } else {
+        return Err(ErrorWrapper::new_internal( String::from("[container_util::player_take_items] Failed to find the player in the level.")));
+    }
+}
+
+pub fn player_drop_items(data: DropItemsRequest, level: &mut Level) -> Result<DropItemsResponse, ErrorWrapper> {
+    let to_drop = data.to_drop;
+    let total_to_drop = to_drop.len();
+    let source_container_id = data.source.get_self_item().get_id();
+    let target_position = data.position.unwrap();
+
+    // Find the container on the map and add the "container" wrappers there
+    let mut undropped = Vec::new();
+    for item in &to_drop {
+        undropped.push(item.clone());
+    }
+    let mut dropped = Vec::new();
+
+    log::info!("container_util::player_drop_items] Dropping {} items at position: {}, {}", total_to_drop,  target_position.x, target_position.y);
+    // Find the container at the target position we'll be dropping items into
+
+    // Try and drop each item from the player's inventory
+    for item in to_drop {
+        let mut dropping_container_item = None;
+
+        // Modify the player inventory first
+        let player_result = level.get_player_mut();
+        if let Some(player) = player_result {
+            let player_inventory = player.get_inventory_mut();
+            // Find the "container" wrappper matching the item returned
+            if let Some(container_item) = &mut player_inventory.find_mut(&item) {
+                let self_item = container_item.get_self_item_mut();
+                self_item.unequip();
+                dropping_container_item = Some(container_item.clone());
+            }
+        }
+
+        // Secondly, add the player items to the target container
+        if let Some(dropping_container) = dropping_container_item {
+            if let Some(target_container) = level.get_map_mut().unwrap().get_container_at_position_mut(target_position) {
+                if target_container.can_fit_container_item(&dropping_container) {
+                    log::info!("container_util::player_drop_items] Dropping item: {} into: {}", item.get_name(), target_container.get_self_item().get_name());
+                    match target_container.add(dropping_container.clone()) {
+                        Ok(()) => {
+                            let pos = undropped.iter().position(|x| x.id_equals(&item));
+                            undropped.remove(pos.unwrap());
+                            dropped.push(dropping_container);
+                        }
+                        Err(e) => {
+                            error!("container_util::player_drop_items] Couldn't drop item: {}", e)
+                        }
+                    }
+                } else {
+                    log::info!("container_util::player_drop_items] Couldn't drop item. Cannot fit item: {}  into: {}", item.get_name(), target_container.get_self_item().get_name());
+                }
+            }
+        }
+    }
+
+    // Finally, remove the dropped items from the player's inventory
+    if !dropped.is_empty() {
+        let player_inventory = level.get_player_mut().unwrap().get_inventory_mut();
+        player_inventory.remove_matching_items(dropped.clone());
+    }
+
+    let dropped_items_message;
+    if dropped.is_empty() {
+        dropped_items_message = "You cannot drop anything".to_owned();
+    } else if dropped.is_empty() && dropped.len() == total_to_drop {
+        dropped_items_message = format!("You drop all {} items", total_to_drop).to_owned();
+    } else {
+        // Both taken and untaken items
+        dropped_items_message = format!("You dropped {} of the {} items, but could not drop any more", dropped.len(), total_to_drop);
+    }
+
+    log::info!("[container_util::player_drop_items] returning DropItemsResponse with {} un-dropped items", undropped.len());
+    let response = DropItemsResponse {
+        container_id: source_container_id,
+        message: dropped_items_message.to_owned(),
+        undropped,
+    };
+    return Ok(response);
 }
 
 pub fn move_items(request: MoveItemsRequestV2, level: &mut Level) -> Result<MoveItemsResponseV2, ErrorWrapper> {

@@ -57,6 +57,52 @@ pub enum UIEvent {
     AppEvent(AppEventType)
 }
 
+impl UIEvent {
+    pub fn name(&self) -> &str {
+        match &self {
+            &UIEvent::Tick => { "Tick" },
+            UIEvent::Termion(te) => {
+                match te {
+                    termion::event::Event::Key(k) => {
+                        "Key"
+                    },
+                    termion::event::Event::Mouse(m) => {
+                        "Mouse"
+                    },
+                    termion::event::Event::Unsupported(u) => {
+                        "Unsupported"
+                    }
+                }
+            },
+            &UIEvent::AppEvent(app_event_type) => {
+                match app_event_type {
+                    AppEventType::OpenedContainerEvent(ocet, _) => {
+                        match ocet {
+                            OpenedContainerEventType::Close => { "Close " },
+                            OpenedContainerEventType::OpenContainer => { "OpenContainer" },
+                            //   World Container Events
+                            OpenedContainerEventType::TakeItems => { "TakeItems" },
+                            OpenedContainerEventType::TakeItemsResult => { "TakeItemsResult" },
+                            //     // Character Inventory Specific Events
+                            OpenedContainerEventType::DropItems => { "DropItems" },
+                            OpenedContainerEventType::DropItemsResult => { "DropItemsResult" },
+                            OpenedContainerEventType::MoveItems => { "MoveItems" },
+                            OpenedContainerEventType::MoveItemsResult => { "MoveItemsResult" },
+                            OpenedContainerEventType::MoveItemsToContainerChoice => { "MoveItemsToContainerChoice" },
+                            OpenedContainerEventType::MoveItemsToContainerChoiceSelection => { "MoveItemsToContainerChoiceSelection" },
+                            OpenedContainerEventType::MoveItemsToContainerChoiceResult => { "MoveItemsToContainerChoiceResult" },
+                            // Part of item equipment selection
+                            OpenedContainerEventType::EquipItems => { "EquipItems" },
+                            OpenedContainerEventType::EquipItemsResult => { "EquipItemsResult" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub enum AppEventType {
     OpenedContainerEvent(OpenedContainerEventType, Option<OpenedContainerEventData>)

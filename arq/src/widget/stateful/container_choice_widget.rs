@@ -128,7 +128,7 @@ impl ContainerChoiceWidgetData {
     }
 
     pub async fn handle_event(&mut self, event: UIEvent) {
-        log::debug!("Handling event: {:?}", event);
+        log::debug!("[container_choice_widget] Handling event: {:?}", event.name());
         match event {
             UIEvent::Termion(termion_event) => {
                 match termion_event {

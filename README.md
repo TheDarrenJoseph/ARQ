@@ -2,7 +2,7 @@ ASCII Roguelike Quester
 =============================================================
 
 A text-based high fantasy Roguelike written in Rust.
-Based on my original learner project https://github.com/TheDarrenJoseph/ARQ (which was written in C++)
+Based on my original learner project https://github.com/TheDarrenJoseph/ARQ-Legacy (which was written in C++)
 
 
 ![Build Status](https://github.com/TheDarrenJoseph/ARQ-Rust/actions/workflows/main-build.yml/badge.svg)

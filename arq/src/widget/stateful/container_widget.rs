@@ -57,6 +57,7 @@ impl ContainerWidgetData {
         container: Container,
         ui_area: Area,
         line_count: i32,
+        usage_commands: Vec<UsageCommand>,
         sender: UnboundedSender<UIEvent>
     ) -> ContainerWidgetData {
         let items = container.to_cloned_item_list();
@@ -65,11 +66,7 @@ impl ContainerWidgetData {
             container: container.clone(),
             ui_area: ui_area.clone(),
             item_list_selection,
-            usage_commands: vec![
-                UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
-                UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
-                UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close)
-            ],
+            usage_commands: usage_commands,
             event_sender: sender,
         }
     }
@@ -218,7 +215,7 @@ impl ContainerWidgetData {
     }
 
     pub async fn handle_event(&mut self, event: UIEvent) {
-        log::debug!("Handling event: {:?}", event);
+        log::debug!("[container_widget] Handling event: {:?}", event.name());
         match event {
             UIEvent::Termion(termion_event) => {
                 match termion_event {

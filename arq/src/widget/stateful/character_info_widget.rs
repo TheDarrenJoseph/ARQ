@@ -95,7 +95,7 @@ impl CharacterInfoWidgetData {
     }
 
     pub async fn handle_event(&mut self, event: UIEvent) {
-        log::debug!("Handling event: {:?}", event);
+        log::debug!("[container_info_widget] Handling event: {:?}", event.name());
 
         match event {
             // Moving items between different containers

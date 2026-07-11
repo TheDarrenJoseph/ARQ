@@ -1,3 +1,4 @@
+use crate::engine::event::ui::TerminalEventHandler;
 use crate::engine::command::command::Command;
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
@@ -7,7 +8,6 @@ use crate::engine::event::container::OpenedContainerEventData::TakeItems;
 use crate::engine::event::container::OpenedContainerEventType;
 use crate::engine::event::container::OpenedContainerEventType::Close;
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
-use crate::engine::event::ui::TerminalEventHandler;
 use crate::engine::event::ui::UIEvent;
 use crate::engine::level::Level;
 use crate::error::errors::{ErrorType, ErrorWrapper};
@@ -48,7 +48,18 @@ pub struct OpenCommandChannels {
 const UI_USAGE_HINT: &str = "Up/Down - Move\nEnter/q - Toggle/clear selection\nEsc - Exit";
 const NOTHING_ERROR : &str = "There's nothing here to open.";
 
-impl <B: ratatui::backend::Backend> Command<()> for OpenCommandNew<'_, B> {
+// These are the default usage commands available when opening a container on the map that isn't the Player's inventory
+fn world_container_default_usage_commands() -> Vec<UsageCommand> {
+    vec ! [
+        UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
+        UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
+        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainerChoice),
+        UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
+        UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close)
+    ]
+}
+
+impl<B: ratatui::backend::Backend> Command<()> for OpenCommandNew<'_, B> {
 
     async fn start(&mut self) -> Result<(), ErrorWrapper> {
         let input_result = self.initial_prompt();
@@ -130,15 +141,10 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
     
     // Updates the UI usage line widget to reflect an opened container
     fn update_usage_line(&mut self) {
-        let container_usage_commands = vec![
-            UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
-            UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
-            UsageCommand::for_container_event(Esc, String::from("close"), Close)
-        ];
         for widget in self.ui.get_standard_widgets_mut().iter_mut() {
             match widget {
                 StandardWidgetType::UsageLine(usage_line_widget) => {
-                    usage_line_widget.commands = container_usage_commands.clone();
+                    usage_line_widget.commands = world_container_default_usage_commands();
                 }
                 _ => {}
             }
@@ -179,8 +185,14 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         let ui_area = main_area.area;
         // Total area height - 3 for title, heading, and stat line
         let line_count = main_area.area.height - 3;
-        let widget_data = ContainerWidgetData::new(c.clone(), ui_area.clone(), line_count as i32, container_event_sender.clone());
-        
+        let widget_data = ContainerWidgetData::new(
+            c.clone(),
+            ui_area.clone(),
+            line_count as i32,
+            world_container_default_usage_commands(),
+            container_event_sender.clone()
+        );
+
         self.containers_data.add_container_data(container_id, widget_data.clone());
         self.update_usage_line();
 
@@ -214,7 +226,6 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
         let mut running = true;
         while running {
-            debug!("LOOPING");
             let current_container_id = self.containers_data.current_container_id.unwrap();
             
             let current_container_widget_data = self.containers_data.widget_data_by_id.get_mut(&current_container_id).unwrap();
@@ -224,18 +235,20 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
             })?;
 
             // Whenever there's a UI event, ask the widget data to handle it
-            debug!("Waiting for a UI event");
+            debug!("[open_command] Waiting for a UI event");            // These are the default usage commands available when opening a container on the map that isn't the Player's inventory
+
             if let Some(e) = event_handler.receiver.recv().await {
                 current_container_widget_data.handle_event(e).await;
             } else {
-                info!("Receiver returned None!");
+                info!("[open_command] Receiver returned None!");
                 running = false;
             }
             
             // If the widget data has sent us an event, handle that
             match container_event_receiver.try_recv() {
                 Ok(event) => {
-                   // Handle the event / break the loop if we need to 
+                    error!("[open_command] Handling event: {:?}", event.name());
+                    // Handle the event / break the loop if we need to
                    running = handle_container_event(
                        terminal_manager,
                        ui,
@@ -248,7 +261,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
                    ).await;
                 },
                 Err(e) => {
-                    error!("Could not receive container event: {:?}", e);
+                    error!("[open_command] Could not receive container event: {:?}", e);
                 }
             }
         }
@@ -256,7 +269,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
         event_handler.receiver.close();
         event_thread_data.cancellation_token.cancel();
         event_thread_data.join_handle.await.unwrap();
-        log::info!("LOOP | Open Command Event Finished");
+        log::info!("Open Command Event Finished");
     
         self.reset_usage_line();
         Ok(())
@@ -273,7 +286,6 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<UIEvent>,
 ) -> bool {
-    debug!("Handling open_command container event");
     let frame_size = terminal_manager.terminal.get_frame().area();
     let mut ui_layout = ui.ui_layout.clone().unwrap();
     let ui_areas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit);
@@ -283,29 +295,6 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     let container_ids = &mut containers_data.container_ids;
 
     match event {
-        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer, Some(OpenContainer(open_container_request)))) => {
-            let target_container = open_container_request.target;
-            let target_container_id = target_container.get_self_item().get_id();
-            let container_widget = ContainerWidget::new(target_container_id);
-            let stateful_widgets = ui.get_stateful_widgets_mut();
-            stateful_widgets.push(StatefulWidgetType::Container(container_widget));
-
-
-            let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-            let ui_area = main_area.area;
-            // Total area height - 3 for title, heading, and stat line
-            let line_count = main_area.area.height - 3;
-            let container_widget_data = ContainerWidgetData::new(
-                target_container,
-                ui_area.clone(), 
-                line_count as i32,
-                child_container_sender.clone()
-            );
-            
-            widget_data_by_id.insert(target_container_id, container_widget_data);
-            container_ids.push(target_container_id);
-            containers_data.current_container_id = Some(target_container_id);
-        }
         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::Close, None)) => {
             let closing_container_id = current_container_id.clone();
             if widget_data_by_id.len() > 1 {
@@ -345,6 +334,30 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 return false;
             }
         },
+        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::OpenContainer, Some(OpenContainer(open_container_request)))) => {
+            let target_container = open_container_request.target;
+            let target_container_id = target_container.get_self_item().get_id();
+            let container_widget = ContainerWidget::new(target_container_id);
+            let stateful_widgets = ui.get_stateful_widgets_mut();
+            stateful_widgets.push(StatefulWidgetType::Container(container_widget));
+
+
+            let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+            let ui_area = main_area.area;
+            // Total area height - 3 for title, heading, and stat line
+            let line_count = main_area.area.height - 3;
+            let container_widget_data = ContainerWidgetData::new(
+                target_container,
+                ui_area.clone(),
+                line_count as i32,
+                world_container_default_usage_commands(),
+                child_container_sender.clone()
+            );
+            
+            widget_data_by_id.insert(target_container_id, container_widget_data);
+            container_ids.push(target_container_id);
+            containers_data.current_container_id = Some(target_container_id);
+        }
         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItems, Some(TakeItems(mut data)))) => {
             log::info!("[open usage] Received data for TakeItems with {} items", data.to_take.len());
             data.position = Some(position.clone());

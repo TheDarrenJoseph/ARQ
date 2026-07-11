@@ -17,10 +17,12 @@ pub enum OpenedContainerEventType {
     DropItemsResult,
     // This move items only contains the selected items and target container
     // And is further handled by the command layer
+    // 1. ContainerWidget -> CharacterInfoCommand
     MoveItems,
     MoveItemsResult,
     // Part of the moving items to container event chain
-    // This is used to call from the widget to the command only
+    // This is used to call from the widget to the command only:
+    // 1. ContainerWidget -> CharacterInfoCommand
     MoveItemsToContainerChoice,
     // Having selected a specific container to move items into
     MoveItemsToContainerChoiceSelection,
