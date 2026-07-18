@@ -88,9 +88,9 @@ impl UIEvent {
                             OpenedContainerEventType::DropItemsResult => { "DropItemsResult" },
                             OpenedContainerEventType::MoveItems => { "MoveItems" },
                             OpenedContainerEventType::MoveItemsResult => { "MoveItemsResult" },
-                            OpenedContainerEventType::MoveItemsToContainerChoice => { "MoveItemsToContainerChoice" },
-                            OpenedContainerEventType::MoveItemsToContainerChoiceSelection => { "MoveItemsToContainerChoiceSelection" },
-                            OpenedContainerEventType::MoveItemsToContainerChoiceResult => { "MoveItemsToContainerChoiceResult" },
+                            OpenedContainerEventType::ShowMoveContainerChoices => { "MoveItemsToContainerChoice" }
+                            OpenedContainerEventType::MoveToContainerChoiceSelection => { "MoveItemsToContainerChoiceSelection" }
+                            OpenedContainerEventType::MoveToContainerChoiceResult => { "MoveItemsToContainerChoiceResult" }
                             // Part of item equipment selection
                             OpenedContainerEventType::EquipItems => { "EquipItems" },
                             OpenedContainerEventType::EquipItemsResult => { "EquipItemsResult" }

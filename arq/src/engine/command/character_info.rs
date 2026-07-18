@@ -161,7 +161,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 containers_data.container_choice_data = None;
             },
             // If we've picked a selection, we should also close the widget
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
                 log::info!("Handling MoveItemsToContainerChoiceSelection event");
 
                 // Grab all the items selected in the current container widget (before the container choice was presented)
@@ -188,7 +188,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                         event_handler.sender.send(
                             UIEvent::AppEvent(
                                 OpenedContainerEvent(
-                                    OpenedContainerEventType::MoveItemsToContainerChoiceResult,
+                                    OpenedContainerEventType::MoveToContainerChoiceResult,
                                     Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(response))
                                 )
                             )
@@ -364,7 +364,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             },
             UIEvent::AppEvent(
                 OpenedContainerEvent(
-                    OpenedContainerEventType::MoveItemsToContainerChoice,
+                    OpenedContainerEventType::ShowMoveContainerChoices,
                     Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))
                 )
             ) => {
@@ -555,7 +555,7 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
         UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
         UsageCommand::for_container_event(Key::Char('d'), String::from("drop"), OpenedContainerEventType::DropItems),
         UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
-        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainerChoice),
+        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::ShowMoveContainerChoices),
         UsageCommand::for_container_event(Key::Char('e'), String::from("equip"), OpenedContainerEventType::EquipItems),
         UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close),
     ];

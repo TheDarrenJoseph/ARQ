@@ -161,11 +161,16 @@ impl ContainerWidgetData {
                         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(data))))
                     ).expect("Error sending event");
                 },
-                OpenedContainerEventType::MoveItemsToContainerChoice => {
+                OpenedContainerEventType::ShowMoveContainerChoices => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    if (selected_items.len() == 0) {
+                        info!("No items selected, skipping ShowMoveContainerChoices");
+                        return;
+                    }
+                    
                     let data = ContainerChoicesRequest { source: self.container.clone(), to_move: selected_items, position: None };
                     self.event_sender.send(
-                        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoice, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))))
+                        UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::ShowMoveContainerChoices, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data))))
                     ).expect("Error sending event");
                 }
                 _ => {
@@ -286,7 +291,7 @@ impl ContainerWidgetData {
                     self.retain_selected_items(drop_items_response.undropped);
                 }
             },
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceResult, Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(response)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveToContainerChoiceResult, Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(response)))) => {
                 self.handle_move_items_to_choice_response(response)
             }
             _ => {}

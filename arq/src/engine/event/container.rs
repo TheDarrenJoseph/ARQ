@@ -23,10 +23,10 @@ pub enum OpenedContainerEventType {
     // Part of the moving items to container event chain
     // This is used to call from the widget to the command only:
     // 1. ContainerWidget -> CharacterInfoCommand
-    MoveItemsToContainerChoice,
+    ShowMoveContainerChoices,
     // Having selected a specific container to move items into
-    MoveItemsToContainerChoiceSelection,
-    MoveItemsToContainerChoiceResult,
+    MoveToContainerChoiceSelection,
+    MoveToContainerChoiceResult,
     // Part of item equipment selection
     EquipItems,
     EquipItemsResult

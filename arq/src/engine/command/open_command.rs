@@ -58,7 +58,7 @@ fn world_container_default_usage_commands() -> Vec<UsageCommand> {
     vec ! [
         UsageCommand::for_container_event(Key::Char('o'), String::from("open"), OpenedContainerEventType::OpenContainer),
         UsageCommand::for_container_event(Key::Char('m'), String::from("move"), OpenedContainerEventType::MoveItems),
-        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::MoveItemsToContainerChoice),
+        UsageCommand::for_container_event(Key::Char('c'), String::from("move-to-container"), OpenedContainerEventType::ShowMoveContainerChoices),
         UsageCommand::for_container_event(Key::Char('t'), String::from("take"), OpenedContainerEventType::TakeItems),
         UsageCommand::for_container_event(Key::Esc, String::from("close"), OpenedContainerEventType::Close)
     ]
@@ -333,7 +333,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             // This handles the container choice within the container choice widget
             // attempting to actually move the selected items  from the current container
             // to the chosen container choice (target from the choice selection event)
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))) => {
                 log::info!("Handling MoveItemsToContainerChoiceSelection event");
 
                 // Grab all the items selected in the current container widget (before the container choice was presented)
@@ -358,7 +358,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                         event_handler.sender.send(
                             UIEvent::AppEvent(
                                 OpenedContainerEvent(
-                                    OpenedContainerEventType::MoveItemsToContainerChoiceResult,
+                                    OpenedContainerEventType::MoveToContainerChoiceResult,
                                     Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(response))
                                 )
                             )
@@ -524,7 +524,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     }
                 }
             },
-            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoice, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data)))) => {
+            UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::ShowMoveContainerChoices, Some(OpenedContainerEventData::MoveItemsToContainerChoice(data)))) => {
                 info!("[open_command::handle_container_event] handling MoveItemsToContainerChoice");
                 let container_choice_widget = ContainerChoiceWidget::new();
                 // Register the widget with the UI
@@ -536,6 +536,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                     let player_position = player.get_global_position().clone();
                     let inventory = player.get_inventory();
 
+                    // Step 1 - Build container choices from the source container
                     let container_choices =
                         container_util::build_container_choices(
                             &data.source,
@@ -550,6 +551,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
                     let player_pos = player.get_global_position();
 
+                    // Step 2 - Add additional container choices from nearby
                     // Check the player's current position and neighbors
                     // for any containers we might want to move items to
                     if let Some(map) = &level.map {

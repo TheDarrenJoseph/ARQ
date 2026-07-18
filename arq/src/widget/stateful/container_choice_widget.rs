@@ -98,7 +98,7 @@ impl ContainerChoiceWidgetData {
             item_list_selection,
             ui_area,
             usage_commands: vec![
-                UsageCommand::for_container_event(Key::Char('\n'), String::from("Select"), OpenedContainerEventType::MoveItemsToContainerChoiceSelection),
+                UsageCommand::for_container_event(Key::Char('\n'), String::from("Select"), OpenedContainerEventType::MoveToContainerChoiceSelection),
                 UsageCommand::for_container_event(Key::Esc, String::from("Cancel"), Close),
             ],
             event_sender: sender,
@@ -108,7 +108,7 @@ impl ContainerChoiceWidgetData {
     pub async fn handle_usage_command(&mut self, usage_command: UsageCommand) {
         if let Some(container_event_type) = &usage_command.opened_container_event_type {
             match container_event_type {
-                OpenedContainerEventType::MoveItemsToContainerChoiceSelection => {
+                OpenedContainerEventType::MoveToContainerChoiceSelection => {
                     let target = match self.scope {
                         _ => {
                             let focused_item = self.item_list_selection.get_focused_item().unwrap();
@@ -116,7 +116,7 @@ impl ContainerChoiceWidgetData {
                             chosen_choice.unwrap().container_scope.clone()
                         }
                     };
-                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveItemsToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))))
+                    self.event_sender.send(UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::MoveToContainerChoiceSelection, Some(MoveItemsToContainerChoiceSelection(target)))))
                         .expect("Failed to send event");
                 },
                 Close => {

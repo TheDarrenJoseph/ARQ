@@ -101,7 +101,7 @@ impl CharacterInfoWidgetData {
             // Moving items between different containers
             UIEvent::AppEvent(
                 OpenedContainerEvent(
-                    OpenedContainerEventType::MoveItemsToContainerChoiceResult,
+                    OpenedContainerEventType::MoveToContainerChoiceResult,
                     Some(OpenedContainerEventData::MoveItemsToContainerChoiceResult(ref response))
                 )
             ) => {
