@@ -12,8 +12,8 @@ use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::map::position::Area;
 use crate::ui::ui_util::build_paragraph;
-use crate::view::framehandler::util::paging::{build_page_count, build_weight_limit};
-use crate::view::framehandler::util::tabling::{build_headings, Column};
+use crate::view::util::paging::{build_page_count, build_weight_limit};
+use crate::view::util::tabling::{build_headings, Column};
 use crate::widget::standard::usage_line::UsageCommand;
 use log::{error, info};
 use ratatui::buffer::Buffer;
@@ -152,7 +152,7 @@ impl ContainerWidgetData {
                         info!("Cannot move to a selected item, skipping MoveItems");
                         return;
                     }
-                    
+
                     focused_item.is_container();
 
                     // Find and clone either the focused container or item

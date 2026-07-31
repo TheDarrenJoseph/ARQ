@@ -5,7 +5,6 @@ use crate::ui::ui_areas::UIAreas;
 
 pub mod character_stats;
 pub mod console;
-pub mod util;
 pub mod combat;
 pub mod character_equipment;
 

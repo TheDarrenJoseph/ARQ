@@ -1,7 +1,7 @@
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
 use crate::map::position::Position;
-use crate::view::framehandler::util::tabling::Column;
+use crate::view::util::tabling::Column;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
