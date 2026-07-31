@@ -16,8 +16,6 @@ use termion::input::TermRead;
 use tokio::join;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-// TODO Consider these
-// MapGenerationFrameHandler
 pub struct GenerateMapCommand<'a, B: 'static + ratatui::backend::Backend> {
     pub levels: &'a mut Levels,
     pub ui: &'a mut UI,

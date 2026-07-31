@@ -148,7 +148,11 @@ impl ContainerWidgetData {
                     }
 
                     let focused_item = self.item_list_selection.get_focused_item().unwrap();
-
+                    if (selected_items.contains(focused_item)) {
+                        info!("Cannot move to a selected item, skipping MoveItems");
+                        return;
+                    }
+                    
                     focused_item.is_container();
 
                     // Find and clone either the focused container or item
