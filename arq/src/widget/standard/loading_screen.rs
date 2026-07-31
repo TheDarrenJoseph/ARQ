@@ -8,8 +8,6 @@ use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Style};
 use ratatui::widgets::{Block, Gauge, Widget};
 use std::convert::TryInto;
-// TODO Convert these
-// ProgressDisplay
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -20,29 +18,6 @@ pub struct LoadingScreenWidget {
 }
 
 impl LoadingScreenWidget {
-    fn handle_progress() {
-        // self.terminal_manager.terminal.draw(|frame| {
-        //     //  let current_step_number = progress.get_current_step_number();
-        //     //         if let Some(step_number) = current_step_number {
-        //     //             let step_count = progress.step_count();
-        //     //             log::info!("Showing progress: {}/{}", step_number, step_count);
-        //     //             let fh = &mut self.frame_handler;
-        //     //             self.terminal_manager.terminal.draw(|frame| {
-        //     //                 let ui_areas= UIAreasBuilder::new(Area::from_rect(frame.size()))
-        //     //                     .layout_type(SingleMainWindowCentered)
-        //     //                     .build().1;
-        //     //
-        //     //                 let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-        //     //                 fh.handle_frame(frame, FrameData { data: progress.clone(), ui_areas: ui_areas.clone(), frame_area: main_area.area })
-        //     //             }).expect("The progress display should have been drawn.");
-        //     //         }
-        //     ui.render(
-        //         None,
-        //         LoadingScreen(),
-        //         frame
-        //     );
-        // });
-    }
 
     fn build_gauge(&self) -> Gauge<'static> {
         let progress = &self.progress;
