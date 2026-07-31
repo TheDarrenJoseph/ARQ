@@ -3,7 +3,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::widgets::StatefulWidget;
 
-use crate::widget::{build_buffer, StatefulWidgetState, StatefulWidgetType};
+use crate::widget::{build_buffer, StatefulWidgetType};
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -16,9 +16,8 @@ pub struct TextInputState {
     selected_index: i8,
 }
 
-pub fn build_text_input(length: i8, name: String, input: String, input_padding: i8) -> StatefulWidgetState {
-    let name_input_state = StatefulWidgetType::Text( TextInputState { selected: false, length, input, name, input_padding,  selected_index: 0 });
-    StatefulWidgetState { state_type: name_input_state}
+pub fn build_text_input(length: i8, name: String, input: String, input_padding: i8) -> StatefulWidgetType {
+    StatefulWidgetType::Text( TextInputState { selected: false, length, input, name, input_padding,  selected_index: 0 })
 }
 
 impl TextInputState {

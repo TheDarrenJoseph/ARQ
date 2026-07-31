@@ -3,7 +3,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::widgets::StatefulWidget;
 
-use crate::widget::{StatefulWidgetState, StatefulWidgetType};
+use crate::widget::{StatefulWidgetType};
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -13,9 +13,8 @@ pub struct ButtonState {
     name: String
 }
 
-pub fn build_button(length: i8, name: String) -> StatefulWidgetState {
-    let name_input_state = StatefulWidgetType::Button( ButtonState { selected: false, length, name});
-    StatefulWidgetState { state_type: name_input_state}
+pub fn build_button(length: i8, name: String) -> StatefulWidgetType {
+   StatefulWidgetType::Button( ButtonState { selected: false, length, name})
 }
 
 impl ButtonState {

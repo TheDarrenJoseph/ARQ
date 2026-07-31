@@ -6,7 +6,7 @@ use ratatui::widgets::StatefulWidget;
 
 use crate::ui::resolution::Resolution;
 use crate::view::MIN_RESOLUTION;
-use crate::widget::{StatefulWidgetState, StatefulWidgetType};
+use crate::widget::{StatefulWidgetType};
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -81,7 +81,7 @@ impl DropdownInputState {
     }
 }
 
-pub fn build_dropdown(name: String, editable: bool, options: Vec<String>) -> StatefulWidgetState {
+pub fn build_dropdown(name: String, editable: bool, options: Vec<String>) -> StatefulWidgetType {
     let input_state = DropdownInputState {
         selected: false,
         editable,
@@ -91,8 +91,7 @@ pub fn build_dropdown(name: String, editable: bool, options: Vec<String>) -> Sta
         chosen_option: options[0].to_string(),
         options};
 
-    let state = StatefulWidgetType::Dropdown(input_state);
-    StatefulWidgetState { state_type: state}
+    StatefulWidgetType::Dropdown(input_state)
 }
 
 

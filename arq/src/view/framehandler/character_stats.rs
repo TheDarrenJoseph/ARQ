@@ -17,7 +17,7 @@ use crate::widget::stateful::dropdown_widget::build_dropdown;
 use crate::widget::stateful::number_widget::{build_number_input, build_number_input_with_value, NumberInputState};
 use crate::widget::stateful::text_widget::build_text_input;
 use crate::widget::widgets::WidgetList;
-use crate::widget::{Focusable, Named, StatefulWidgetState, StatefulWidgetType};
+use crate::widget::{Focusable, Named, StatefulWidgetType};
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum ViewMode {
@@ -49,7 +49,7 @@ impl CharacterStatsFrameHandler {
 
             let editable = self.view_mode == ViewMode::CREATION;
             let mut attribute_input = build_number_input(editable,1, attribute.to_string(), 1);
-            match attribute_input.state_type {
+            match attribute_input {
                 StatefulWidgetType::Number(ref mut state) => {
                     match score {
                         Some(s) => {
@@ -75,7 +75,7 @@ impl CharacterStatsFrameHandler {
         }
 
         let mut class_input = build_dropdown("Class".to_string(), creation_mode,vec!["None".to_string(), "Warrior".to_string()]);
-        match class_input.state_type {
+        match class_input {
             StatefulWidgetType::Dropdown(ref mut state) => {
                 state.select(character.get_class().to_string())
             }, _ => {}
@@ -90,7 +90,7 @@ impl CharacterStatsFrameHandler {
         }
 
         self.widgets.widget_index = Some(0);
-        self.widgets.widgets[0].state_type.focus();
+        self.widgets.widgets[0].focus();
     }
 
     pub fn draw_widgets(&mut self, frame: &mut ratatui::Frame) {
@@ -101,7 +101,7 @@ impl CharacterStatsFrameHandler {
             let mut y_offset = 1;
             for widget in self.widgets.widgets.iter_mut() {
                 let widget_area = Rect::new(self.attributes_area.start_position.x + x_offset, self.attributes_area.start_position.y + y_offset, self.attributes_area.width.clone() / 2, 1);
-                match &mut widget.state_type {
+                match widget {
                     StatefulWidgetType::Text(w) => {
                         frame.render_stateful_widget(w.clone(), widget_area, &mut w.clone());
                     },
@@ -176,7 +176,7 @@ impl CharacterStatsFrameHandler {
 
     pub fn update_free_points(&mut self, free_points: i32) {
         for widget in self.widgets.widgets.iter_mut() {
-            match &mut widget.state_type {
+            match widget {
                 StatefulWidgetType::Number(state) => {
                     if "Free points" == state.get_name() {
                         state.set_input(free_points.clone());
@@ -205,9 +205,8 @@ impl CharacterStatsFrameHandler {
         let mut character = self.character.clone();
         let mut scores  = character.get_attribute_scores();
         for widget in self.widgets.widgets.iter_mut() {
-            let state_type = &mut widget.state_type;
-            if String::from("Name") == state_type.get_name() {
-                match state_type {
+            if String::from("Name") == widget.get_name() {
+                match widget {
                     StatefulWidgetType::Text(state) => {
                         character.set_name(state.get_input());
                     },
@@ -215,8 +214,8 @@ impl CharacterStatsFrameHandler {
                 }
             }
 
-            if String::from("Class") == state_type.get_name() {
-                match state_type {
+            if String::from("Class") == widget.get_name() {
+                match widget {
                     StatefulWidgetType::Dropdown(state) => {
                         let class = determine_class(state.get_selection());
                         match class {
@@ -284,7 +283,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
         match self.widgets.widget_index {
             Some(idx) => {
                 let widget = &mut widgets[idx as usize];
-                widget.state_type.focus();
+                widget.focus();
                 selected_widget = Some(widget);
             },
             None => {}
@@ -303,7 +302,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             crate::global_flags::ENTER_KEY => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Dropdown(state) => {
                                 state.toggle_show();
                             },
@@ -346,7 +345,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
                     Some(widget) => {
                         log::info!("Input: {}", c.to_string());
 
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Text(state) => {
                                 state.add_char(c);
                                 log::info!("Widget state input is: {}", state.get_input());
@@ -360,7 +359,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             Key::Backspace => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Text(state) => {
                                 state.delete_char();
                             }
@@ -374,7 +373,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             Key::Down => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Dropdown(state) => {
                                 if state.editable {
                                     if state.is_showing_options() {
@@ -395,7 +394,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             Key::Up => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Dropdown(state) => {
                                 if state.editable {
                                     if state.is_showing_options() {
@@ -416,7 +415,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             Key::Right => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Number(state) => {
                                 if state.editable {
                                     let free_points = self.character.get_free_attribute_points().clone();
@@ -436,7 +435,7 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
             Key::Left => {
                 match selected_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Number(state) => {
                                 if state.editable {
                                     let free_points = self.character.get_free_attribute_points();
@@ -462,8 +461,8 @@ impl InputHandler<CharacterFrameHandlerInputResult> for CharacterStatsFrameHandl
     }
 }
 
-fn map_state(widget : &mut StatefulWidgetState) -> Option<NumberInputState> {
-    match &widget.state_type {
+fn map_state(widget : &mut StatefulWidgetType) -> Option<NumberInputState> {
+    match &widget {
         StatefulWidgetType::Number(state) => {
             Some(state.clone())
         },

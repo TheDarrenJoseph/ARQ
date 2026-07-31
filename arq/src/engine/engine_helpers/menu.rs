@@ -98,7 +98,7 @@ pub async fn menu_command<B: ratatui::backend::Backend + Send>(engine: &mut Game
 fn handle_settings_menu_selection(settings: &mut Settings, widgets: WidgetList) -> Result<(), Error> {
 
     for widget in widgets.widgets {
-        match widget.state_type {
+        match widget {
             StatefulWidgetType::Boolean(b) => {
                 let setting = settings.bool_settings.iter_mut().find(|x| x.name == b.get_name());
                 if let Some(s) = setting {

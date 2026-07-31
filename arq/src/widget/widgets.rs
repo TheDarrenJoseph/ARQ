@@ -4,11 +4,11 @@ use crate::widget::stateful::boolean_widget::build_boolean_widget;
 use crate::widget::stateful::dropdown_widget::{build_dropdown, DropdownOption};
 use crate::widget::stateful::number_widget::build_number_input_with_value;
 use crate::widget::stateful::text_widget::build_text_input;
-use crate::widget::{Focusable, StatefulWidgetState};
+use crate::widget::{Focusable, StatefulWidgetType};
 
 pub struct WidgetList {
     pub widget_index: Option<i8>,
-    pub widgets: Vec<StatefulWidgetState>
+    pub widgets: Vec<StatefulWidgetType>
 }
 
 impl WidgetList {
@@ -31,16 +31,16 @@ impl WidgetList {
         for widget in self.widgets.iter_mut() {
             if offset == index {
                 self.widget_index =  Some(offset.clone());
-                widget.state_type.focus();
+                widget.focus();
             } else {
-                widget.state_type.unfocus();
+                widget.unfocus();
             }
             offset += 1;
         }
     }
 }
 
-pub fn build_settings_widgets(settings : &Settings) -> Vec<StatefulWidgetState> {
+pub fn build_settings_widgets(settings : &Settings) -> Vec<StatefulWidgetType> {
     let mut widgets = Vec::new();
     for setting in &settings.bool_settings {
         widgets.push(build_boolean_widget(15, setting.name.clone(), setting.value))

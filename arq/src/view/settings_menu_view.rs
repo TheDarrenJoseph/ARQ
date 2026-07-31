@@ -26,7 +26,7 @@ impl <'b, B : ratatui::backend::Backend> View<bool> for SettingsMenuView<'_, B> 
     fn begin(&mut self)  -> Result<InputResult<bool>, ErrorWrapper> {
         // Select the first widget
         if self.menu.widgets.widgets.len() > 0 {
-            self.menu.widgets.widgets[0].state_type.focus();
+            self.menu.widgets.widgets[0].focus();
         }
 
         self.terminal_manager.terminal.clear()?;
@@ -48,7 +48,7 @@ impl <'b, B : ratatui::backend::Backend> View<bool> for SettingsMenuView<'_, B> 
             let mut offset = 0;
             for widget in widgets.widgets.iter() {
                 let widget_area = Rect::new(5, 5 + offset.clone(), frame_size.width.clone() / 2, 1);
-                match &widget.state_type {
+                match &widget {
                     StatefulWidgetType::Text(w) => {
                         frame.render_stateful_widget(w.clone(), widget_area, &mut w.clone());
                     },
@@ -86,7 +86,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
                 // Check for anything currently busy with focus
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Dropdown(state) => {
                                 if state.is_showing_options() {
                                     state.select_next();
@@ -104,7 +104,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
                 // Check for anything currently busy with focus
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget {
                             StatefulWidgetType::Dropdown(state) => {
                                 if state.is_showing_options() {
                                     state.select_previous();
@@ -121,7 +121,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
             crate::global_flags::ENTER_KEY => {
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget{
                             StatefulWidgetType::Boolean(state) => {
                                 state.value = !state.value;
                             },
@@ -137,7 +137,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
             Key::Backspace => {
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget{
                             StatefulWidgetType::Text(state) => {
                                 state.delete_char();
                             }
@@ -154,7 +154,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
                 match target_widget {
                     Some(widget) => {
                         log::info!("Input: {}", c.to_string());
-                        match &mut widget.state_type {
+                        match widget{
                             StatefulWidgetType::Text(state) => {
                                 state.add_char(c);
                                 log::info!("Widget state input is: {}", state.get_input());
@@ -168,7 +168,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
             Key::Left => {
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget{
                             StatefulWidgetType::Number(state) => {
                                 if state.editable {
                                     state.decrement()
@@ -183,7 +183,7 @@ impl <COM: ratatui::backend::Backend> InputHandler<bool> for SettingsMenuView<'_
             Key::Right => {
                 match target_widget {
                     Some(widget) => {
-                        match &mut widget.state_type {
+                        match widget{
                             StatefulWidgetType::Number(state) => {
                                 if state.editable {
                                     state.increment()

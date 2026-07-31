@@ -55,10 +55,6 @@ pub enum StandardWidgetType {
     LoadingScreen(LoadingScreenWidget)
 }
 
-pub struct StatefulWidgetState {
-    pub state_type: StatefulWidgetType
-}
-
 pub trait Named {
     fn get_name(&self) -> String;
 }

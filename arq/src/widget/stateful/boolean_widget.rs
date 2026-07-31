@@ -3,7 +3,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::StatefulWidget;
 
-use crate::widget::{StatefulWidgetState, StatefulWidgetType};
+use crate::widget::{StatefulWidgetType};
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -14,9 +14,8 @@ pub struct BooleanState {
     name: String
 }
 
-pub fn build_boolean_widget(length: i8, name: String, value: bool) -> StatefulWidgetState {
-    let name_input_state = StatefulWidgetType::Boolean( BooleanState { selected: false, value, length, name});
-    StatefulWidgetState { state_type: name_input_state }
+pub fn build_boolean_widget(length: i8, name: String, value: bool) -> StatefulWidgetType {
+    StatefulWidgetType::Boolean( BooleanState { selected: false, value, length, name})
 }
 
 impl BooleanState {

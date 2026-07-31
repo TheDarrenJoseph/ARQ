@@ -37,7 +37,7 @@ impl FrameHandler<ConsoleBuffer> for ConsoleFrameHandler {
         let console_input = build_console_input(length, self.buffer.content.clone(), 0);
         let text_area = Rect::new(frame_size.x +  1, frame_size.y + 1, frame_size.width - 2 , frame_size.height - 2 );
 
-        if let StatefulWidgetType::Console(w) = console_input.state_type {
+        if let StatefulWidgetType::Console(w) = console_input {
             frame.render_stateful_widget(w.clone(), text_area, &mut w.clone());
         }
     }
