@@ -129,6 +129,12 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::TakeItems=> {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    if (selected_items.len() == 0) {
+                        info!("No items selected, skipping TakeItems");
+                        return;
+                    }
+
+                    let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
                     let data = TakeItemsRequest { source: self.container.clone(), to_take: selected_items, position: None };
                     self.event_sender.send(
                         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::TakeItems, Some(OpenedContainerEventData::TakeItems(data))))
@@ -136,6 +142,11 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::MoveItems => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    if (selected_items.len() == 0) {
+                        info!("No items selected, skipping MoveItems");
+                        return;
+                    }
+
                     let focused_item = self.item_list_selection.get_focused_item().unwrap();
 
                     focused_item.is_container();
@@ -156,6 +167,11 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::DropItems => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
+                    if (selected_items.len() == 0) {
+                        info!("No items selected, skipping DropItems");
+                        return;
+                    }
+
                     let data = DropItemsRequest { source: self.container.clone(), to_drop: selected_items, position: None };
                     self.event_sender.send(
                         UIEvent::AppEvent(OpenedContainerEvent(OpenedContainerEventType::DropItems, Some(OpenedContainerEventData::DropItems(data))))
