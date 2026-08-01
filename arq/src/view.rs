@@ -18,7 +18,6 @@ pub mod util;
 pub mod map_view;
 pub mod settings_menu_view;
 pub mod game_over_view;
-pub mod combat_view;
 pub mod model;
 pub mod dialog_view;
 pub mod menu_view;

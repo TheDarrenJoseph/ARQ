@@ -3,10 +3,10 @@ mod text_dropdown {
     use crate::widget::stateful::dropdown_widget::{build_dropdown, DropdownInputState};
     use crate::widget::StatefulWidgetType;
 
-    fn assert_for_dropdown_widget<F>(widget_type : StatefulWidgetType, mut callback: F) where F : FnMut(DropdownInputState) {
+    fn assert_for_dropdown_widget<F>(widget_type : StatefulWidgetType, mut assert_callback: F) where F : FnMut(DropdownInputState) {
         match widget_type {
             StatefulWidgetType::Dropdown(s ) => {
-                callback(s);
+                assert_callback(s);
             }
             _ => {
                 panic!("Widget state type was not text!")

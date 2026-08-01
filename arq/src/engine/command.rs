@@ -5,3 +5,4 @@ pub(crate) mod look_command;
 
 pub(crate) mod character_info;
 pub(crate) mod util;
+pub(crate) mod combat_command;

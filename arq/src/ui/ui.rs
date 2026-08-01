@@ -175,6 +175,11 @@ impl UI {
         }
     }
 
+    fn clear_widgets(&mut self) {
+        self.stateful_widgets.clear();
+        self.standard_widgets.clear();
+    }
+
     pub fn show_console(&mut self) {
         self.console_visible = true;
     }

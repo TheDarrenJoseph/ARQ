@@ -27,7 +27,7 @@ pub fn all_equipment_slots() -> Vec<EquipmentSlot> {
     ]
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum WeaponSlot {
     PRIMARY,
     SECONDARY

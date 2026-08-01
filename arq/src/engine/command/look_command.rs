@@ -105,10 +105,7 @@ fn describe_position(pos: Position, level : &mut Level) -> Result<String, ErrorW
 }
 
 impl <B: ratatui::backend::Backend> LookCommand<'_, B> {
-    
-    /*
-       Re-renders just the console area, as we only make changes here
-     */
+
     fn re_render(&mut self) -> Result<(), io::Error> {
         let ui = &mut self.ui;
         let level = self.level.clone();

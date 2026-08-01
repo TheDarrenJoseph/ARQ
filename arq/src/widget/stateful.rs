@@ -8,4 +8,4 @@ pub mod map_widget;
 pub mod container_widget;
 pub mod character_info_widget;
 pub mod container_choice_widget;
-mod combat_widget;
+pub mod combat_widget;

@@ -1,3 +1,4 @@
+use crate::widget::stateful::combat_widget::CombatWidget;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
 use crate::widget::stateful::boolean_widget::BooleanState;
@@ -44,7 +45,8 @@ pub enum StatefulWidgetType {
     Map(MapWidget),
     Container(ContainerWidget),
     CharacterInfo(CharacterInfoWidget),
-    ContainerChoice(ContainerChoiceWidget)
+    ContainerChoice(ContainerChoiceWidget),
+    Combat(CombatWidget)
 }
 
 // Non stateful

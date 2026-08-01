@@ -1,3 +1,4 @@
+use crate::engine::command::combat_command::CombatCommand;
 use crate::character::battle::Battle;
 use crate::character::builder::character_builder::{build_dev_player_inventory, CharacterBuilder, CharacterPattern};
 use crate::character::characters::Characters;
@@ -26,11 +27,8 @@ use crate::ui::bindings::input_bindings::KeyBindings;
 use crate::ui::resolution::Resolution;
 use crate::ui::ui::{build_ui, get_input_key};
 use crate::ui::ui_wrapper::UIWrapper;
-use crate::view::combat_view::CombatView;
 use crate::view::dialog_view::DialogView;
 use crate::view::game_over_view::{build_game_over_menu, GameOverChoice};
-use crate::view::util::callback::Callback;
-use crate::view::util::callback::CallbackHandler;
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
@@ -349,27 +347,6 @@ impl <B : Backend + Send> GameEngine<B> {
         }
         return Ok(None)
     }
-
-    pub(crate) fn begin_combat(&mut self) -> Result<Option<GameOverChoice>, ErrorWrapper>  {
-        let level = self.levels.get_level_mut();
-
-        let characters = &level.characters;
-        let player = characters.get_player().unwrap().clone();
-        let mut npcs = Vec::new();
-        npcs.push(characters.get_npcs().first().unwrap().clone());
-        let battle_characters = Characters::new(Some(player), npcs);
-        let battle = Battle { characters: battle_characters , in_progress: true };
-
-        let view_battle = battle.clone();
-        let mut combat = Combat { battle };
-
-        let mut combat_view = CombatView::new(&mut self.ui_wrapper.ui, &mut self.ui_wrapper.terminal_manager, self.levels.get_level_mut().clone(), view_battle);
-        combat_view.set_callback(Box::new(|data| {
-            combat.handle_callback(data)
-        }));
-        combat_view.begin()?;
-        Ok(None)
-    }
     
     pub(crate) async fn re_render_all(&mut self) -> Result<(), Error> {
         let ui_wrapper = &mut self.ui_wrapper;
@@ -408,7 +385,22 @@ impl <B : Backend + Send> GameEngine<B> {
                 }
             },
             PlayerAction::DevBeginCombat => {
-                Ok(self.begin_combat()?)
+                let level = self.levels.get_level_mut();
+
+                let characters = &level.characters;
+                let player = characters.get_player().unwrap().clone();
+                let mut npcs = Vec::new();
+                npcs.push(characters.get_npcs().first().unwrap().clone());
+                let battle_characters = Characters::new(Some(player), npcs);
+                let battle = Battle { characters: battle_characters , in_progress: true };
+                let mut command = CombatCommand {
+                    level,
+                    ui: &mut self.ui_wrapper.ui,
+                    terminal_manager: &mut self.ui_wrapper.terminal_manager,
+                    battle
+                };
+                command.start().await?;
+                Ok(None)
             },
             PlayerAction::ShowCharacterInfo => {
                 let mut command = CharacterInfoCommand {

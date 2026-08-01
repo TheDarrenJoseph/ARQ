@@ -24,6 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
+use crate::engine::combat::CombatTurnChoiceEventType;
 use crate::engine::event::container::OpenedContainerEventData;
 use crate::engine::event::container::OpenedContainerEventType;
 use log::{debug, error, info};
@@ -32,6 +33,7 @@ use termion::input::TermRead;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
+use crate::engine::event::ui::AppEventType::CombatTurnChoice;
 
 #[derive(Debug)]
 pub struct TerminalEventHandler {
@@ -95,6 +97,12 @@ impl UIEvent {
                             OpenedContainerEventType::EquipItems => { "EquipItems" },
                             OpenedContainerEventType::EquipItemsResult => { "EquipItemsResult" }
                         }
+                    },
+                    AppEventType::CombatTurnChoice(ctc) => {
+                        match ctc {
+                            CombatTurnChoiceEventType::ATTACK(_) => { "Attack" },
+                            CombatTurnChoiceEventType::FLEE => { "Flee" }
+                        }
                     }
                 }
             }
@@ -105,7 +113,8 @@ impl UIEvent {
 
 #[derive(Debug, Clone)]
 pub enum AppEventType {
-    OpenedContainerEvent(OpenedContainerEventType, Option<OpenedContainerEventData>)
+    OpenedContainerEvent(OpenedContainerEventType, Option<OpenedContainerEventData>),
+    CombatTurnChoice(CombatTurnChoiceEventType)
 }
 
 impl TerminalEventHandler {

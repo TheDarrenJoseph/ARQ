@@ -3,10 +3,10 @@ mod test_text_input {
     use crate::widget::stateful::text_widget::{build_text_input, TextInputState};
     use crate::widget::StatefulWidgetType;
 
-    fn assert_for_text_widget<F>(widget_type : StatefulWidgetType, mut callback: F) where F : FnMut(TextInputState) {
+    fn assert_for_text_widget<F>(widget_type : StatefulWidgetType, mut assert_callback: F) where F : FnMut(TextInputState) {
         match widget_type {
             StatefulWidgetType::Text(s ) => {
-                callback(s);
+                assert_callback(s);
             }
             _ => {
                 panic!("Widget state type was not Text!")
