@@ -26,6 +26,7 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 use crate::engine::command::util::CurrentContainersData;
+use crate::engine::event::event::UIEventHandler;
 use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 
 #[derive(Debug, Clone)]
@@ -250,7 +251,39 @@ impl ContainerWidgetData {
         }
     }
 
-    pub async fn handle_event(&mut self, event: UIEvent) {
+    fn clone_selected_container_items(&mut self) -> Vec<Container> {
+        let mut items = Vec::new();
+        let selected_items = self.item_list_selection.get_selected_items();
+        for item in selected_items {
+            if let Some(found) = self.container.find(&item) {
+                items.push(found.clone());
+            }
+        }
+        items
+    }
+    
+    fn retain_selected_items(&mut self, to_retain: Vec<Item>) {
+        let mut droppable_containers = self.clone_selected_container_items();
+        if !droppable_containers.is_empty() {
+            let view_container = &mut self.container;
+            for retainable in to_retain {
+                if let Some(pos) = droppable_containers.iter().position(|c| *c.get_self_item() == retainable) {
+                    droppable_containers.remove(pos);
+                }
+            }
+            view_container.remove_matching_items(droppable_containers);
+            self.rebuild_selection();
+        }
+    }
+
+    pub fn rebuild_selection(&mut self) {
+        self.item_list_selection = ItemListSelection::new(self.container.to_cloned_item_list(), 1);
+    }
+
+}
+
+impl UIEventHandler for ContainerWidgetData {
+    async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("[container_widget] Handling event: {:?}", event.name());
         match event {
             UIEvent::Termion(termion_event) => {
@@ -317,36 +350,6 @@ impl ContainerWidgetData {
             _ => {}
         }
     }
-
-    fn clone_selected_container_items(&mut self) -> Vec<Container> {
-        let mut items = Vec::new();
-        let selected_items = self.item_list_selection.get_selected_items();
-        for item in selected_items {
-            if let Some(found) = self.container.find(&item) {
-                items.push(found.clone());
-            }
-        }
-        items
-    }
-    
-    fn retain_selected_items(&mut self, to_retain: Vec<Item>) {
-        let mut droppable_containers = self.clone_selected_container_items();
-        if !droppable_containers.is_empty() {
-            let view_container = &mut self.container;
-            for retainable in to_retain {
-                if let Some(pos) = droppable_containers.iter().position(|c| *c.get_self_item() == retainable) {
-                    droppable_containers.remove(pos);
-                }
-            }
-            view_container.remove_matching_items(droppable_containers);
-            self.rebuild_selection();
-        }
-    }
-
-    pub fn rebuild_selection(&mut self) {
-        self.item_list_selection = ItemListSelection::new(self.container.to_cloned_item_list(), 1);
-    }
-
 }
 
 fn build_columns() -> Vec<Column> {

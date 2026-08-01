@@ -15,6 +15,7 @@ use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::engine::event::event::UIEventHandler;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {
@@ -94,7 +95,10 @@ impl CharacterInfoWidgetData {
         }
     }
 
-    pub async fn handle_event(&mut self, event: UIEvent) {
+}
+
+impl UIEventHandler for CharacterInfoWidgetData {
+    async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("[container_info_widget] Handling event: {:?}", event.name());
 
         match event {
@@ -139,7 +143,6 @@ impl CharacterInfoWidgetData {
             current_container_data.handle_event(event).await;
         }
     }
-
 }
 
 impl StatefulWidget for CharacterInfoWidget {

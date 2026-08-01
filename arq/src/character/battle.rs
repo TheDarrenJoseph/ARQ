@@ -1,6 +1,6 @@
 use crate::character::characters::Characters;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Battle {
     pub characters: Characters,
     pub in_progress : bool

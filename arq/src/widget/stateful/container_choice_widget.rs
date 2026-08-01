@@ -1,3 +1,4 @@
+use crate::engine::event::event::UIEventHandler;
 use crate::engine::event::container::OpenedContainerEventData::MoveItemsToContainerChoiceSelection;
 use crate::engine::event::container::OpenedContainerEventType;
 use crate::engine::event::container::TargetContainerScope;
@@ -130,7 +131,10 @@ impl ContainerChoiceWidgetData {
         }
     }
 
-    pub async fn handle_event(&mut self, event: UIEvent) {
+}
+
+impl UIEventHandler for ContainerChoiceWidgetData {
+    async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("[container_choice_widget] Handling event: {:?}", event.name());
         match event {
             UIEvent::Termion(termion_event) => {
@@ -174,7 +178,6 @@ impl ContainerChoiceWidgetData {
             _ => {}
         }
     }
-
 }
 
 impl StatefulWidget for ContainerChoiceWidget {
