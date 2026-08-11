@@ -43,8 +43,10 @@ impl CombatWidgetData {
     fn list_equipment(&self, equipment: Equipment) -> Paragraph<'static> {
         let mut spans = vec![];
         for slot in equipment.get_slots() {
-            let item = slot.1;
-            spans.push(Line::from(item.get_name().clone()))
+            let item_result = slot.1;
+            if let Some(item) = item_result {
+                spans.push(Line::from(item.get_name().clone()))
+            }
         }
         Paragraph::new(spans)
     }

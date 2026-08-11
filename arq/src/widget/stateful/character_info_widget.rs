@@ -5,7 +5,7 @@ use crate::engine::event::ui::UIEvent;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::Position;
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
 use crate::widget::stateful::container_widget::ContainerWidget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -16,7 +16,11 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::character::equipment::Equipment;
 use crate::engine::event::event::UIEventHandler;
+use crate::widget::stateful::character_details_widget::{CharacterDetailsWidget, CharacterDetailsWidgetData};
+use crate::widget::stateful::equipment_widget::EquipmentWidget;
+use crate::widget::stateful::equipment_widget::EquipmentWidgetData;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum TabChoice {
@@ -49,7 +53,9 @@ impl Tab {
 
 #[derive(Debug, Clone)]
 pub struct CharacterInfoWidget {
-    pub container_widget : ContainerWidget
+    pub container_widget : ContainerWidget,
+    pub equipment_widget : EquipmentWidget,
+    pub character_details_widget : CharacterDetailsWidget
 }
 
 impl CharacterInfoWidget {
@@ -57,8 +63,12 @@ impl CharacterInfoWidget {
         inventory_container_id: Uuid
     ) -> CharacterInfoWidget {
         let container_widget = ContainerWidget::new(inventory_container_id);
+        let equipment_widget = EquipmentWidget::new();
+        let character_details_widget = CharacterDetailsWidget::new();
         CharacterInfoWidget {
-            container_widget
+            container_widget,
+            equipment_widget,
+            character_details_widget
         }
     }
 
@@ -82,12 +92,15 @@ pub struct CharacterInfoWidgetData {
     pub container : Container,
     pub ui_areas: UIAreas,
     pub event_sender: mpsc::UnboundedSender<UIEvent>,
-    pub current_containers_data: CurrentContainersData // Tracks the currently open containers / relevant widget data
+    pub current_containers_data: CurrentContainersData, // Tracks the currently open containers / relevant widget data
+    pub equipment_widget_data : EquipmentWidgetData,
+    pub character_details_widget_data : CharacterDetailsWidgetData
 }
 
 impl CharacterInfoWidgetData {
     pub fn new(
-        inventory_container: Container, 
+        inventory_container: Container,
+        equipment: Equipment,
         ui_areas: UIAreas,
         container_event_sender: UnboundedSender<UIEvent>
     ) -> CharacterInfoWidgetData {
@@ -105,7 +118,14 @@ impl CharacterInfoWidgetData {
             container: inventory_container.clone(),
             ui_areas: ui_areas.clone(),
             event_sender: container_event_sender.clone(),
-            current_containers_data: CurrentContainersData::new()
+            current_containers_data: CurrentContainersData::new(),
+            equipment_widget_data: EquipmentWidgetData::new(
+                main_area.clone(),
+                equipment
+            ),
+            character_details_widget_data: CharacterDetailsWidgetData::new(
+                main_area.clone()
+            )
         }
     }
 
@@ -215,10 +235,14 @@ impl StatefulWidget for CharacterInfoWidget {
                 }
             },
             TabChoice::EQUIPMENT => {
-
+                self.equipment_widget.render(
+                    area, buf, &mut widget_data.equipment_widget_data
+                );
             },
             TabChoice::CHARACTER => {
-
+                self.character_details_widget.render(
+                    area, buf, &mut widget_data.character_details_widget_data
+                );
             }
         }
     }

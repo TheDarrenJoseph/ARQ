@@ -1,3 +1,4 @@
+use crate::ui::ui_layout::LayoutType::StandardSplit;
 use crate::engine::event::event::UIEventHandler;
 use crate::widget::stateful::container_choice_widget::build_container_choice_widget_data;
 use crate::engine::command::command::Command;
@@ -32,6 +33,8 @@ use log::{debug, error, info};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::character::equipment::Equipment;
+use crate::widget::stateful::equipment_widget::EquipmentWidgetData;
 
 const UI_USAGE_HINT: &str = "Up/Down - Move, Enter/q - Toggle/clear selection\nTab - Change tab, Esc - Exit";
 
@@ -280,7 +283,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let target_container_id = target_container.get_self_item().get_id();
                 let container_widget = ContainerWidget::new(target_container_id);
                 ui.add_stateful_widget(StatefulWidgetType::Container(container_widget));
-                
+
                 let container_widget_data = build_container_widget_data(
                     target_container.clone(),
                     ui_areas.clone(),
@@ -460,6 +463,8 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
     async fn bootstrap(&mut self) -> OpenCommandChannels {
         let ui = &mut self.ui;
+        let character_equipment = &self.level.get_player_mut().unwrap().get_equipment().clone();
+
         ui.set_console_buffer(UI_USAGE_HINT.to_string());
 
         // This is a special channel designed to allow widget data to send events back to this command
@@ -471,6 +476,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         if self.widget_data.is_none() {
             let mut character_info_widget_data = CharacterInfoWidgetData::new(
                 inventory_container.clone(),
+                character_equipment.clone(),
                 ui_areas.clone(),
                 container_event_sender.clone(),
             );
@@ -490,6 +496,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
 
             self.widget_data = Some(character_info_widget_data);
         }
+
 
         let inventory_container_id = inventory_container.get_self_item().get_id();
         let character_info_widget = CharacterInfoWidget::new(
@@ -567,4 +574,12 @@ fn build_container_widget_data(container: Container, ui_areas: UIAreas, containe
         usage_commands: commands,
         event_sender: container_event_sender
     }
+}
+
+fn build_equipment_widget_data(ui_areas: UIAreas, equipment: Equipment) -> EquipmentWidgetData {
+    let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
+    EquipmentWidgetData::new(
+        main_area.clone(),
+        equipment
+    )
 }

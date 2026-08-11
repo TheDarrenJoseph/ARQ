@@ -3,10 +3,13 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::StatefulWidget;
-
+use crate::character::equipment::{Equipment, EquipmentSlot, EquipmentSlotItem};
+use crate::map::objects::items::Item;
 use crate::ui::resolution::Resolution;
+use crate::ui::ui_areas::UIArea;
 use crate::view::MIN_RESOLUTION;
 use crate::widget::{StatefulWidgetType};
+use crate::widget::stateful::equipment_widget::EquipmentWidgetData;
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -20,15 +23,47 @@ pub struct DropdownInputState {
     chosen_option : String
 }
 
+impl DropdownInputState {
+    pub(crate) fn new(option: DropdownOption<Item>) -> DropdownInputState {
+
+        let option_value_name = if let Some(item) = option.value {
+             item.get_name()
+         } else {
+             "NONE".to_string()
+         };
+
+         DropdownInputState {
+            selected: false,
+            editable: false,
+            show_options: false,
+            name: option.display_name.to_string(),
+            // Only 1 option for now
+            options: vec!(option_value_name.clone()),
+            selected_index: 0,
+            chosen_option: option_value_name
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DropdownOption<T> {
-    pub display_name : &'static str,
+    pub display_name : String,
     pub value: Option<T>
 }
 
+impl DropdownOption<Item> {
+    pub(crate) fn new(slot_item: EquipmentSlotItem) -> DropdownOption<Item> {
+        let slot_name = slot_item.slot.clone().to_string();
+        DropdownOption {
+            display_name: slot_name,
+            value: slot_item.item
+        }
+    }
+}
+
 pub fn get_resolution_dropdown_options() -> Vec<DropdownOption<Resolution>> {
-    let min_resolution_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: "80x24", value: Some(MIN_RESOLUTION) };
-    let fullscreen_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: "FULLSCREEN", value: None };
+    let min_resolution_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: String::from("80x24"), value: Some(MIN_RESOLUTION) };
+    let fullscreen_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name:  String::from("FULLSCREEN"), value: None };
     vec! [
         fullscreen_dropdown_option,
         min_resolution_dropdown_option

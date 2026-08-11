@@ -50,7 +50,12 @@ impl Display for EquipmentSlot {
 
 #[derive(Clone, Debug)]
 pub struct Equipment {
-    slots : HashMap<EquipmentSlot, Item>
+    slots : HashMap<EquipmentSlot, Option<Item>>
+}
+
+pub struct EquipmentSlotItem {
+    pub slot : EquipmentSlot,
+    pub item: Option<Item>
 }
 
 // Slot mapping
@@ -76,7 +81,14 @@ pub fn get_potential_slots(item_type: ItemType) -> Vec<EquipmentSlot> {
 
 impl Equipment {
     pub fn new() -> Equipment {
-        Equipment { slots : HashMap::new() }
+        let mut slots = HashMap::new();
+        for slot in all_equipment_slots() {
+            slots.insert(slot, None);
+        }
+
+        Equipment {
+            slots
+        }
     }
 
     pub fn is_slot_filled(&self, slot: EquipmentSlot) -> bool {
@@ -89,7 +101,7 @@ impl Equipment {
                 // Only wrapped items can be equipped
                 ContainerType::ITEM => {
                     let item = container_item.get_self_item().clone();
-                    self.slots.insert(slot, item);
+                    self.slots.insert(slot, Some(item));
                     Ok(())
                 },
                 ct => {
@@ -101,21 +113,39 @@ impl Equipment {
         }
     }
 
+    pub fn replace(&mut self, container_item : Container, slot: EquipmentSlot) -> Result<(), ErrorWrapper> {
+        match container_item.get_container_type() {
+            // Only wrapped items can be equipped
+            ContainerType::ITEM => {
+                let item = container_item.get_self_item().clone();
+                self.slots.insert(slot, Some(item));
+                Ok(())
+            },
+            ct => {
+                ErrorWrapper::internal_result(format!("Unsupported container_type: {}", ct))
+            }
+        }
+    }
+
     pub fn get_item(&self, slot: EquipmentSlot) -> Option<&Item> {
-        self.slots.get(&slot)
+        self.slots.get(&slot).unwrap().as_ref()
     }
 
     pub fn unequip(&mut self, slot: EquipmentSlot) -> Result<Container, ErrorWrapper> {
         return if self.is_slot_filled(slot.clone()) {
-            let item = self.slots.remove(&slot).unwrap();
-            let container = Container::wrap(item);
-            Ok(container)
+            let item_result = self.slots.remove(&slot).unwrap();
+            if let Some(item) = item_result {
+                let container = Container::wrap(item);
+                Ok(container)
+            } else {
+                ErrorWrapper::internal_result(format!("Cannot un-equip. Equipment slot: {} is empty.", slot))
+            }
         } else {
             ErrorWrapper::internal_result(format!("Cannot un-equip. Equipment slot: {} is empty.", slot))
         }
     }
 
-    pub fn get_slots(&self) -> &HashMap<EquipmentSlot, Item> {
+    pub fn get_slots(&self) -> &HashMap<EquipmentSlot, Option<Item>> {
         &self.slots
     }
 }

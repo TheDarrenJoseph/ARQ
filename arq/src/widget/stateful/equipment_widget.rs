@@ -1,0 +1,127 @@
+use std::ptr::eq;
+use ratatui::prelude::Widget;
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::prelude::StatefulWidget;
+use ratatui::widgets::{Block, Borders};
+use termion::event::Key;
+use crate::character::equipment::{Equipment, EquipmentSlotItem};
+use crate::engine::event::event::UIEventHandler;
+use crate::engine::event::ui::UIEvent;
+use crate::map::position::Area;
+use crate::ui::ui_areas::UIArea;
+use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
+use crate::widget::stateful::container_widget::ContainerWidgetData;
+use crate::widget::stateful::dropdown_widget::{DropdownInputState, DropdownOption};
+
+#[derive(Debug, Clone)]
+pub struct EquipmentWidget {
+}
+
+impl EquipmentWidget {
+    pub(crate) fn new() -> EquipmentWidget {
+        EquipmentWidget {
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct EquipmentWidgetData {
+    pub main_ui_area: UIArea,
+    pub selected_index: usize,
+    pub equipment: Equipment
+}
+
+impl EquipmentWidgetData {
+    pub(crate) fn new(main_ui_area: UIArea, equipment: Equipment) -> EquipmentWidgetData {
+        EquipmentWidgetData {
+            main_ui_area: main_ui_area,
+            selected_index: 0,
+            equipment
+        }
+    }
+
+    pub fn move_selection_up(&mut self) {
+        let slots_size = self.equipment.get_slots().len();
+        if self.selected_index < slots_size - 1 {
+            self.selected_index += 1;
+        }
+    }
+
+    pub fn move_selection_down(&mut self) {
+        if self.selected_index > 0 {
+            self.selected_index -= 1;
+        }
+    }
+}
+
+
+impl UIEventHandler for EquipmentWidgetData {
+    async fn handle_event(&mut self, event: UIEvent) {
+        log::debug!("[container_widget] Handling event: {:?}", event.name());
+        match event {
+            UIEvent::Termion(termion_event) => {
+                match termion_event {
+                    termion::event::Event::Key(key) => {
+                        match key {
+                            // These are key specific as they are not attached to events and thus are purely UI controls for the widget
+                            // These may move into some bindings in future to make them dynamic instead of hardcoded
+                            Key::Up => {
+                                self.move_selection_up();
+                            },
+                            Key::Down => {
+                                self.move_selection_down();
+                            },
+                            _ => {}
+                        }
+                    },
+                    _ => {}
+                }
+            },
+            _ => {}
+        }
+    }
+}
+
+
+impl StatefulWidget for EquipmentWidget {
+    type State = EquipmentWidgetData;
+
+    fn render(self, area: Rect, buf: &mut Buffer, data: &mut Self::State) {
+        let main_area = data.main_ui_area.get_bordered_area();
+
+        let window_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Equipment");
+
+        // Adjust the inner main window area to account for the tabs
+        let window_start_x = main_area.inner.start_position.x;
+        let window_start_y = main_area.inner.start_position.y + 1;
+        let window_width = main_area.inner.width;
+        let window_height = main_area.inner.height - 1;
+        let window_area = Rect::new(window_start_x, window_start_y, window_width, window_height);
+
+        window_block.render(window_area, buf);
+
+        let mut dropdown_index = 0;
+        for equipment in data.equipment.get_slots() {
+            let slot_item = EquipmentSlotItem {
+                slot: equipment.0.clone(),
+                item: equipment.1.clone()
+            };
+            let dropdown_option = DropdownOption::new(slot_item);
+            let dropdown = DropdownInputState::new(dropdown_option);
+            let mut dropdown_state = dropdown.clone();
+
+            let dropdown_start_x = main_area.inner.start_position.x + 1;
+            let dropdown_start_y = main_area.inner.start_position.y + 2 + dropdown_index;
+            let dropdown_width = main_area.inner.width - 1;
+            let dropdown_height = main_area.inner.height - 2 + dropdown_index;
+            let dropdown_area = Rect::new(dropdown_start_x, dropdown_start_y, dropdown_width, dropdown_height);
+            dropdown.render(dropdown_area, buf, &mut dropdown_state);
+
+            dropdown_index += 1;
+        }
+
+    }
+}

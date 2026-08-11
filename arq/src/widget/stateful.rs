@@ -9,3 +9,5 @@ pub mod container_widget;
 pub mod character_info_widget;
 pub mod container_choice_widget;
 pub mod combat_widget;
+pub mod equipment_widget;
+pub mod character_details_widget;

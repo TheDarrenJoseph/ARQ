@@ -64,7 +64,7 @@ impl CharacterPattern {
         let sword = weapon_builder.build();
         let equipped_sword = Container::wrap(sword.clone());
         let mut equipment = Equipment::new();
-        equipment.equip(equipped_sword, PRIMARY).expect("The sword should have been equipped as PRIMARY");
+        equipment.replace(equipped_sword, PRIMARY).expect("The sword should have been equipped as PRIMARY");
 
         let mut inventory = build_dev_player_inventory();
         let add_result = inventory.add_item(sword);
@@ -89,7 +89,7 @@ impl CharacterPattern {
         let dagger = weapon_builder.build();
         let equipped_dagger = Container::wrap(dagger.clone());
         let mut equipment = Equipment::new();
-        equipment.equip(equipped_dagger, PRIMARY).expect("The Dagger should have been equipped as PRIMARY");
+        equipment.replace(equipped_dagger, PRIMARY).expect("The Dagger should have been equipped as PRIMARY");
 
         let mut inventory = Container::new(Uuid::new_v4(), "A Goblin's dead body".to_owned(), 'X', 1.0, 1, ContainerType::OBJECT, 100);
         let add_result = inventory.add_item(dagger);

@@ -129,7 +129,6 @@ fn handle_settings_menu_selection(settings: &mut Settings, widgets: WidgetList) 
                     } else {
                         error!("No resolution selected!")
                     }
-
                 }
             },
             _ => {}

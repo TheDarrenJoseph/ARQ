@@ -32,6 +32,12 @@ pub struct UIArea {
     pub area: Area
 }
 
+impl UIArea {
+    pub fn get_bordered_area(&self) -> BorderedArea {
+        BorderedArea::from_area(self.area).unwrap()
+    }
+}
+
 impl UIAreas {
 
     pub const fn new(areas: HashMap<String, UIArea>) -> UIAreas {
@@ -43,8 +49,8 @@ impl UIAreas {
     }
 
     pub fn get_bordered_area(&self, key: &str) -> BorderedArea {
-        let area = self.areas.get(key).unwrap().area;
-        BorderedArea::from_area(area).unwrap()
+        let area = self.areas.get(key).unwrap().get_bordered_area();
+        area
     }
 
     pub fn len(&self) -> usize {

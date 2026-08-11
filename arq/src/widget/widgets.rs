@@ -56,11 +56,11 @@ pub fn build_settings_widgets(settings : &Settings) -> Vec<StatefulWidgetType> {
     for setting in &settings.dropdown_settings {
         let mut options : Vec<String> = Vec::new();
 
-        let chosen_option_name = String::from(setting.value.chosen_option.display_name);
+        let chosen_option_name = setting.value.chosen_option.display_name.clone();
         options.push(chosen_option_name.clone());
-        let other_options : Vec<DropdownOption<Resolution>> = setting.value.options.iter().filter(|o| String::from(o.display_name) != chosen_option_name ).map(|o| o.clone()).collect();
+        let other_options : Vec<DropdownOption<Resolution>> = setting.value.options.iter().filter(|o| String::from(o.display_name.clone()) != chosen_option_name ).map(|o| o.clone()).collect();
         for option in &other_options {
-            options.push(String::from(option.display_name))
+            options.push(option.display_name.clone())
         }
         let dropdown = build_dropdown(setting.name.clone(), true, options);
         widgets.push(dropdown)
