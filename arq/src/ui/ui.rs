@@ -206,9 +206,17 @@ impl UI {
     pub fn get_standard_widgets_mut(&mut self) -> &mut Vec<StandardWidgetType> {
         &mut self.standard_widgets
     }
+    
+    pub fn add_standard_widget(&mut self, widget: StandardWidgetType) {
+        self.standard_widgets.push(widget);
+    }
 
     pub fn get_stateful_widgets_mut(&mut self) -> &mut Vec<StatefulWidgetType> {
         &mut self.stateful_widgets
+    }
+
+    pub fn add_stateful_widget(&mut self, widget: StatefulWidgetType) {
+        self.stateful_widgets.push(widget);
     }
 
     pub fn find_map_widget_mut(&mut self) -> Option<&mut MapWidget> {

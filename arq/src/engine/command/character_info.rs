@@ -279,9 +279,8 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let target_container = open_container_request.target;
                 let target_container_id = target_container.get_self_item().get_id();
                 let container_widget = ContainerWidget::new(target_container_id);
-                let stateful_widgets = ui.get_stateful_widgets_mut();
-                stateful_widgets.push(StatefulWidgetType::Container(container_widget));
-
+                ui.add_stateful_widget(StatefulWidgetType::Container(container_widget));
+                
                 let container_widget_data = build_container_widget_data(
                     target_container.clone(),
                     ui_areas.clone(),
@@ -373,8 +372,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
             ) => {
                 let container_choice_widget = ContainerChoiceWidget::new();
                 // Register the widget with the UI
-                let stateful_widgets = ui.get_stateful_widgets_mut();
-                stateful_widgets.push(StatefulWidgetType::ContainerChoice(container_choice_widget));
+                ui.add_stateful_widget(StatefulWidgetType::ContainerChoice(container_choice_widget));
 
                 let player_mut = level.characters.get_player_mut();
 
@@ -499,8 +497,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         );
 
         // Add the character info widget to the UI
-        let stateful_widgets = self.ui.get_stateful_widgets_mut();
-        stateful_widgets.push(StatefulWidgetType::CharacterInfo(character_info_widget));
+        ui.add_stateful_widget(StatefulWidgetType::CharacterInfo(character_info_widget));
 
         // This is the sender channel that all child containers that get opened will use
         let child_container_sender = container_event_sender.clone();

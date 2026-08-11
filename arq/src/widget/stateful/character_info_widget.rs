@@ -9,7 +9,7 @@ use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::widget::stateful::container_widget::ContainerWidget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
+use ratatui::prelude::{Color, Line, Modifier, StatefulWidget, Style};
 use ratatui::symbols::line::VERTICAL;
 use ratatui::widgets::{Block, Borders, Tabs, Widget};
 use termion::event::Key;
@@ -68,7 +68,7 @@ impl CharacterInfoWidget {
         let tab_titles: Vec<_> = tabs.iter().map(|t| t.title.clone()).map(Line::from).collect();
         let tabs = Tabs::new(tab_titles)
             .block(Block::default().title("Character Info").borders(Borders::NONE))
-            .style(Style::default())
+            .style(Style::default().bg(Color::Black).fg(Color::White))
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
             .divider(VERTICAL)
             .select(current_tab_choice as usize);

@@ -206,8 +206,7 @@ impl <B: ratatui::backend::Backend> OpenCommandNew<'_, B> {
 
         // Add the container widget to the UI
         let container_widget = ContainerWidget::new(self.containers_data.current_container_id.unwrap());
-        let stateful_widgets = ui.get_stateful_widgets_mut();
-        stateful_widgets.push(StatefulWidgetType::Container(container_widget));
+       ui.add_stateful_widget(StatefulWidgetType::Container(container_widget));
 
         OpenCommandChannels {
             container_event_receiver,
@@ -426,9 +425,8 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 let target_container = open_container_request.target;
                 let target_container_id = target_container.get_self_item().get_id();
                 let container_widget = ContainerWidget::new(target_container_id);
-                let stateful_widgets = ui.get_stateful_widgets_mut();
-                stateful_widgets.push(StatefulWidgetType::Container(container_widget));
 
+                ui.add_stateful_widget(StatefulWidgetType::Container(container_widget));
 
                 let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
                 let ui_area = main_area.area;
@@ -529,8 +527,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
                 info!("[open_command::handle_container_event] handling MoveItemsToContainerChoice");
                 let container_choice_widget = ContainerChoiceWidget::new();
                 // Register the widget with the UI
-                let stateful_widgets = ui.get_stateful_widgets_mut();
-                stateful_widgets.push(StatefulWidgetType::ContainerChoice(container_choice_widget));
+                ui.add_stateful_widget(StatefulWidgetType::ContainerChoice(container_choice_widget));
 
                 let player_mut = level.characters.get_player_mut();
                 if let Some(player) = player_mut {

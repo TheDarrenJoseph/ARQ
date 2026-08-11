@@ -68,8 +68,7 @@ impl<B : ratatui::backend::Backend> View<bool> for MapView<'_, B> {
         
         if self.ui.find_map_widget_mut().is_none() {
             let fresh_widget = self.build_widget();
-            let stateful_widgets = self.ui.get_stateful_widgets_mut();
-            stateful_widgets.push(StatefulWidgetType::Map(fresh_widget));
+            self.ui.add_stateful_widget(StatefulWidgetType::Map(fresh_widget));
         };
 
         self.draw(None)?;

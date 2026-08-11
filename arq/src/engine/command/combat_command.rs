@@ -47,9 +47,7 @@ impl <B: ratatui::backend::Backend> Command<()> for CombatCommand<'_, B> {
         let bordered_main_area = BorderedArea::from_area(main_area).unwrap();
 
         let combat_widget = CombatWidget {};
-        let stateful_widgets = ui.get_stateful_widgets_mut();
-        stateful_widgets.push(StatefulWidgetType::Combat(combat_widget));
-
+        ui.add_stateful_widget(StatefulWidgetType::Combat(combat_widget));
 
         // Input / Output loop
         while self.battle.in_progress {

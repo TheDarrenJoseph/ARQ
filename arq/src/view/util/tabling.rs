@@ -1,6 +1,6 @@
 use crate::map::position::Area;
 use ratatui::layout::Alignment;
-use ratatui::style::Style;
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
@@ -36,7 +36,7 @@ pub fn build_headings<'a>(columns : Vec<Column>) -> Paragraph<'a> {
     Paragraph::new(heading_spans)
         .block(Block::default()
             .borders(Borders::NONE))
-        .style(Style::default())
+        .style(Style::default().bg(Color::Black).fg(Color::White))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: false })
 }

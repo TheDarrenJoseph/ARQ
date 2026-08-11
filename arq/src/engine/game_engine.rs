@@ -206,10 +206,10 @@ impl <B : Backend + Send> GameEngine<B> {
                 player.get_health(),
                 player.get_details(),
                 player.get_inventory_mut().get_loot_value());
-            self.ui_wrapper.ui.get_standard_widgets_mut().push(StandardWidgetType::StatLine(stat_line));
+            self.ui_wrapper.ui.add_standard_widget(StandardWidgetType::StatLine(stat_line));
             
             let map_usage_line = UsageLineWidget::new();
-            self.ui_wrapper.ui.get_standard_widgets_mut().push(StandardWidgetType::UsageLine(map_usage_line));
+            self.ui_wrapper.ui.add_standard_widget(StandardWidgetType::UsageLine(map_usage_line));
 
         } else {
             let widgets_mut = self.ui_wrapper.ui.get_standard_widgets_mut();

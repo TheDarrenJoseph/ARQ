@@ -32,6 +32,7 @@ impl LoadingScreenWidget {
             .block(Block::default()
                 .title("Map Generation"))
             .label(label)
+            .style(Style::default().fg(Color::White).bg(Color::Black))
             .gauge_style(Style::default().fg(Color::White).bg(Color::Black))
             // No support for usize? Not ideal.
             .percent(progress_percentage.try_into().unwrap())
