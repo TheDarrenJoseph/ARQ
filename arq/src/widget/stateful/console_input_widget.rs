@@ -1,7 +1,8 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
-use ratatui::widgets::StatefulWidget;
+use ratatui::widgets::{Block, Borders, StatefulWidget};
+use ratatui::prelude::Widget;
 
 use crate::widget::{build_buffer, StatefulWidgetType};
 
@@ -13,6 +14,16 @@ pub struct ConsoleInputState {
     input : String,
     input_padding: i8,
     selected_index: i8,
+}
+
+impl ConsoleInputState {
+    pub const fn new(
+        length: i8,
+        input: String,
+        input_padding: i8
+    ) -> ConsoleInputState {
+        ConsoleInputState { selected: false, length, input, input_padding, selected_index: 0 }
+    }
 }
 
 pub fn build_console_input(length: i8, input: String, input_padding: i8) -> StatefulWidgetType {
@@ -50,12 +61,18 @@ impl StatefulWidget for ConsoleInputState {
     type State = ConsoleInputState;
 
     fn render(self, area: Rect, buf: &mut Buffer, _state: &mut Self::State) {
+        let window_block = Block::default()
+            .borders(Borders::ALL);
+        window_block.render(area, buf);
+
         let input_start_index = area.left() + self.input_padding as u16;
         let input = self.input;
         let current_cursor_index = input_start_index + input.len() as u16;
         let max_index = input_start_index + self.length as u16;
         let input_buffer = build_buffer(self.length.clone(), input.clone());
-        let mut line_no = 0;
+
+        // Start on the 2nd line to prevent writing on the border
+        let mut line_no = self.input_padding as u16;
         for line in input_buffer.lines() {
             if line_no < area.height {
                 buf.set_string(input_start_index, area.top() + line_no, line, Style::default());

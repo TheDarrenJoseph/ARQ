@@ -32,12 +32,17 @@ use crate::view::game_over_view::{build_game_over_menu, GameOverChoice};
 use crate::view::View;
 use crate::widget::standard::character_stat_line::CharacterStatLineWidget;
 use crate::widget::standard::usage_line::UsageLineWidget;
-use crate::widget::StandardWidgetType;
+use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::info;
 use rand_seeder::Seeder;
 use ratatui::backend::Backend;
 use std::io::{Error, ErrorKind};
+use ratatui::layout::Rect;
+use ratatui::widgets::{Block, Borders};
 use termion::event::Key;
+use crate::ui::ui_areas::UI_AREA_NAME_CONSOLE;
+use crate::ui::ui_layout::LayoutType;
+use crate::widget::stateful::console_input_widget::ConsoleInputState;
 
 pub struct GameEngine<B: 'static + Backend>  {
     pub ui_wrapper : UIWrapper<B>,
@@ -210,6 +215,21 @@ impl <B : Backend + Send> GameEngine<B> {
             
             let map_usage_line = UsageLineWidget::new();
             self.ui_wrapper.ui.add_standard_widget(StandardWidgetType::UsageLine(map_usage_line));
+
+
+            let console_area = self.ui_wrapper.ui.ui_layout.as_ref().unwrap()
+                .get_ui_areas(LayoutType::StandardSplit)
+                .get_area(UI_AREA_NAME_CONSOLE).unwrap()
+                .area;
+
+            let adjusted_text_width = console_area.width - 2;
+            let length : i8 = if adjusted_text_width >= i8::MAX as u16 { i8::MAX } else { adjusted_text_width as i8 };
+            let console_widget = StatefulWidgetType::Console(
+                // Input padding of 1 to prevent writing on the borders
+                ConsoleInputState::new(length, String::new(), 1)
+            );
+            self.ui_wrapper.ui.add_stateful_widget(console_widget);
+
 
         } else {
             let widgets_mut = self.ui_wrapper.ui.get_standard_widgets_mut();

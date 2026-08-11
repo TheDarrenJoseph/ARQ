@@ -4,7 +4,6 @@ use crate::map::position::Area;
 use crate::ui::ui_areas::UIAreas;
 
 pub mod character_stats;
-pub mod console;
 
 /*
     FrameHandlers are "dumb" views that simply draw their state (T) or other given input to a terminal frame (the screen)

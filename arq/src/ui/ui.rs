@@ -5,7 +5,6 @@ use crate::ui::resolution::Resolution;
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::{LayoutType, UILayout};
-use crate::view::framehandler::console::{ConsoleBuffer, ConsoleFrameHandler};
 use crate::view::framehandler::{FrameData, FrameHandler};
 use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
 use crate::widget::stateful::container_widget::ContainerWidgetData;
@@ -26,7 +25,6 @@ pub struct UI {
     stateful_widgets: Vec<StatefulWidgetType>,
     standard_widgets: Vec<StandardWidgetType>,
     frame_size : Option<Area>,
-    frame_handler: ConsoleFrameHandler,
     pub ui_layout: Option<UILayout>
 }
 
@@ -39,14 +37,12 @@ pub enum StartMenuChoice {
 }
 
 pub fn build_ui() -> UI {
-    let frame_handler = ConsoleFrameHandler { buffer: ConsoleBuffer { content: String::from("") } };
     UI {
         frame_size : None,
         render_additional: false,
         console_visible: false,
         stateful_widgets: Vec::new(),
         standard_widgets: Vec::new(),
-        frame_handler,
         ui_layout: None
     }
 }
@@ -192,11 +188,33 @@ impl UI {
         Updates the buffer that is written to console on each rendering of the UI
      */
     pub fn set_console_buffer(&mut self, input: String) {
-        self.frame_handler.buffer.content = input;
+        let widget_count = self.stateful_widgets.len();
+        if widget_count > 0 {
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
+                    // Render the container choice selection pop-up window
+                    StatefulWidgetType::Console(console_input_state) => {
+                        console_input_state.set_input(input.clone());
+                    },
+                    _ => {}
+                }
+            }
+        }
     }
 
     pub fn clear_console_buffer(&mut self) {
-        self.frame_handler.buffer.content = String::new();
+        let widget_count = self.stateful_widgets.len();
+        if widget_count > 0 {
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
+                    // Render the container choice selection pop-up window
+                    StatefulWidgetType::Console(console_input_state) => {
+                        console_input_state.set_input(String::new());
+                    },
+                    _ => {}
+                }
+            }
+        }
     }
 
     pub fn get_standard_widgets(&self) -> &Vec<StandardWidgetType> {
@@ -272,13 +290,6 @@ impl Draw for UI {
         frame.render_widget(paragraph, paragraph_size);
     }
 
-    fn draw_console(&mut self, frame: &mut ratatui::Frame) {
-        let ui_areas = self.ui_layout.as_ref().unwrap().get_ui_areas(LayoutType::StandardSplit);
-        let console_area = ui_areas.get_area(UI_AREA_NAME_CONSOLE).unwrap().area;
-        let frame_data = FrameData { frame_area: console_area, ui_areas: ui_areas.clone(), data: ConsoleBuffer { content: self.frame_handler.buffer.content.clone() } };
-        self.frame_handler.handle_frame(frame, frame_data);
-    }
-
     fn draw_standard_widgets(&mut self, frame: &mut ratatui::Frame) {
         let widget_count = self.standard_widgets.len();
         if let Some(main_area) = self.ui_layout.as_ref().unwrap().get_ui_areas(LayoutType::StandardSplit).get_area(UI_AREA_NAME_MAIN) {
@@ -334,6 +345,31 @@ impl Draw for UI {
                     _ => {}
                 }
                 _offset += 1;
+            }
+        }
+    }
+
+    fn draw_console(&mut self, frame: &mut ratatui::Frame) {
+        let widget_count = self.stateful_widgets.len();
+        if widget_count > 0 {
+            let ui_layout = self.ui_layout.as_mut().unwrap();
+            let _ui_areas = ui_layout.get_or_build_areas(frame.size(), LayoutType::StandardSplit);
+            for widget in self.stateful_widgets.iter_mut() {
+                match widget {
+                    // Render the container choice selection pop-up window
+                    StatefulWidgetType::Console(console_input_state) => {
+                        let console_area = self.ui_layout.as_ref().unwrap()
+                            .get_ui_areas(LayoutType::StandardSplit)
+                            .get_area(UI_AREA_NAME_CONSOLE).unwrap()
+                            .area;
+
+                        info!("[ui] Rendering ContainerChoice widget");
+                        frame.render_stateful_widget(console_input_state.clone(), console_area.to_rect(), console_input_state);
+                        // Stop here so we don't waste time drawing more widgets that will be hidden
+                        return;
+                    },
+                    _ => {}
+                }
             }
         }
     }
