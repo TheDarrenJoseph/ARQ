@@ -12,6 +12,7 @@ use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Modifier, StatefulWidget, Style};
 use ratatui::symbols::line::VERTICAL;
 use ratatui::widgets::{Block, Borders, Tabs, Widget};
+use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
@@ -60,6 +61,19 @@ impl CharacterInfoWidget {
             container_widget
         }
     }
+
+    fn build_tabs(&self, current_tab_choice: i32) -> Tabs {
+        // All tab values
+        let tabs = Tab::values();
+        let tab_titles: Vec<_> = tabs.iter().map(|t| t.title.clone()).map(Line::from).collect();
+        let tabs = Tabs::new(tab_titles)
+            .block(Block::default().title("Character Info").borders(Borders::NONE))
+            .style(Style::default())
+            .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+            .divider(VERTICAL)
+            .select(current_tab_choice as usize);
+        return tabs;
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -101,7 +115,33 @@ impl UIEventHandler for CharacterInfoWidgetData {
     async fn handle_event(&mut self, event: UIEvent) {
         log::debug!("[container_info_widget] Handling event: {:?}", event.name());
 
-        match event {
+        match event.clone() {
+            // Changing tabs
+            UIEvent::Termion(termion_event) => {
+                match termion_event {
+                    termion::event::Event::Key(key) => {
+                        match key {
+                            // These are key specific as they are not attached to events and thus are purely UI controls for the widget
+                            // These may move into some bindings in future to make them dynamic instead of hardcoded
+                            Key::Right => {
+                                let tab_choices = Tab::values();
+                                let tab_index = tab_choices.iter().position(|t| t.tab_choice == self.tab_choice).unwrap();
+
+                                if (tab_index < tab_choices.len() - 1) {
+                                    self.tab_choice = tab_choices.get(tab_index + 1).unwrap().tab_choice.clone();
+                                } else {
+                                    // Wrap around to the start again
+                                    self.tab_choice = tab_choices.get(0).unwrap().tab_choice.clone();
+                                }
+                            },
+                            _ => {}
+                        }
+                    },
+                    _ => {
+                        // no-op
+                    }
+                }
+            },
             // Moving items between different containers
             UIEvent::AppEvent(
                 OpenedContainerEvent(
@@ -153,16 +193,6 @@ impl StatefulWidget for CharacterInfoWidget {
         let frame_size = main_area.area.to_rect();
         
         let widget_data = state;
-        
-        let tabs = Tab::values();
-        let titles: Vec<_> = tabs.iter().map(|t| t.title.clone()).map(Line::from).collect();
-        let selection_index = widget_data.tab_choice.clone() as i32;
-        let tabs = Tabs::new(titles)
-            .block(Block::default().title("Character Info").borders(Borders::NONE))
-            .style(Style::default())
-            .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-            .divider(VERTICAL)
-            .select(selection_index as usize);
 
         let heading_pos = Position::new(frame_size.x + 1, frame_size.y);
         let heading_area = Rect::new(
@@ -172,12 +202,24 @@ impl StatefulWidget for CharacterInfoWidget {
             3
         );
 
+        let current_tab_choice = widget_data.tab_choice.clone() as i32;
+        let tabs = self.build_tabs(current_tab_choice);
         tabs.render(heading_area, buf);
 
-        if let Some(current_container_data) =  widget_data.current_containers_data.get_current_data_mut() {
-            self.container_widget.render(
-                area, buf, current_container_data
-            );
+        match widget_data.tab_choice {
+            TabChoice::INVENTORY => {
+                if let Some(current_container_data) =  widget_data.current_containers_data.get_current_data_mut() {
+                    self.container_widget.render(
+                        area, buf, current_container_data
+                    );
+                }
+            },
+            TabChoice::EQUIPMENT => {
+
+            },
+            TabChoice::CHARACTER => {
+
+            }
         }
     }
 }
