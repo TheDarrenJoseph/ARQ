@@ -29,7 +29,7 @@ impl DropdownInputState {
         let option_value_name = if let Some(item) = option.value {
              item.get_name()
          } else {
-             "NONE".to_string()
+             "Empty".to_string()
          };
 
          DropdownInputState {
