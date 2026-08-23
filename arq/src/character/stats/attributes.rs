@@ -33,7 +33,7 @@ impl AttributeScore {
 impl AttributeScores {
     pub fn default() -> AttributeScores {
         let mut scores = Vec::new();
-        let attributes = get_all_attributes();
+        let attributes = all_attributes();
         for attr in attributes {
             scores.push(AttributeScore::default(attr));
         }
@@ -42,7 +42,7 @@ impl AttributeScores {
 
     pub fn all_at_value(score: i8) -> AttributeScores {
         let mut scores = Vec::new();
-        let attributes = get_all_attributes();
+        let attributes = all_attributes();
         for attr in attributes {
             scores.push(AttributeScore::new(attr, score));
         }
@@ -52,13 +52,13 @@ impl AttributeScores {
 
 pub fn build_default_attributes() -> Vec<AttributeScore> {
     let mut scores = Vec::new();
-    let attributes = get_all_attributes();
+    let attributes = all_attributes();
     for attr in attributes {
         scores.push(AttributeScore { attribute: attr, score: 0 });
     }
     return scores;
 }
 
-pub fn get_all_attributes() -> Vec<Attribute> {
+pub fn all_attributes() -> Vec<Attribute> {
     vec![Attribute::Strength, Attribute::Health, Attribute::Agility, Attribute::Intelligence, Attribute::Stealth]
 }

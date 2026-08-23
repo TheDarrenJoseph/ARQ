@@ -6,12 +6,19 @@ use crate::widget::stateful::number_widget::build_number_input_with_value;
 use crate::widget::stateful::text_widget::build_text_input;
 use crate::widget::{Focusable, StatefulWidgetType};
 
+// Useful for storing sets of StatefulWidgetType with an index for the current selection
+// This also allows for focus/defocus behavior as you move between widgets
+#[derive(Debug, Clone)]
 pub struct WidgetList {
     pub widget_index: Option<i8>,
     pub widgets: Vec<StatefulWidgetType>
 }
 
 impl WidgetList {
+    pub fn new() -> Self {
+        WidgetList { widgets: Vec::new(), widget_index: None }
+    }
+    
     pub fn previous_widget(&mut self) {
         let selected_widget = self.widget_index.unwrap();
         if selected_widget > 0 && selected_widget < self.widgets.len() as i8 {

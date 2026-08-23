@@ -16,9 +16,10 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
+use crate::character::Character;
 use crate::character::equipment::Equipment;
 use crate::engine::event::event::UIEventHandler;
-use crate::widget::stateful::character_details_widget::{CharacterDetailsWidget, CharacterDetailsWidgetData};
+use crate::widget::stateful::character_details_widget::{CharacterDetailsWidget, CharacterDetailsWidgetData, ViewMode};
 use crate::widget::stateful::equipment_widget::EquipmentWidget;
 use crate::widget::stateful::equipment_widget::EquipmentWidgetData;
 
@@ -89,7 +90,7 @@ impl CharacterInfoWidget {
 #[derive(Debug, Clone)]
 pub struct CharacterInfoWidgetData {
     pub tab_choice: TabChoice,
-    pub container : Container,
+    pub inventory_container: Container,
     pub ui_areas: UIAreas,
     pub event_sender: mpsc::UnboundedSender<UIEvent>,
     pub current_containers_data: CurrentContainersData, // Tracks the currently open containers / relevant widget data
@@ -100,6 +101,7 @@ pub struct CharacterInfoWidgetData {
 impl CharacterInfoWidgetData {
     pub fn new(
         inventory_container: Container,
+        player_character: Character,
         equipment: Equipment,
         ui_areas: UIAreas,
         container_event_sender: UnboundedSender<UIEvent>
@@ -115,7 +117,7 @@ impl CharacterInfoWidgetData {
         
         CharacterInfoWidgetData {
             tab_choice: TabChoice::INVENTORY,
-            container: inventory_container.clone(),
+            inventory_container: inventory_container.clone(),
             ui_areas: ui_areas.clone(),
             event_sender: container_event_sender.clone(),
             current_containers_data: CurrentContainersData::new(),
@@ -124,7 +126,9 @@ impl CharacterInfoWidgetData {
                 equipment
             ),
             character_details_widget_data: CharacterDetailsWidgetData::new(
-                main_area.clone()
+                main_area.clone(),
+                player_character,
+                ViewMode::VIEW
             )
         }
     }

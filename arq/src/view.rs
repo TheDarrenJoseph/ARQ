@@ -13,7 +13,6 @@ pub use crate::ui::resolution::MIN_RESOLUTION;
 use crate::ui::ui::get_input_key;
 use crate::ui::ui_util::{build_paragraph_multi, check_display_size};
 
-pub mod framehandler;
 pub mod util;
 pub mod map_view;
 pub mod settings_menu_view;
@@ -25,11 +24,8 @@ pub mod menu_view;
 /*
     A "View" is:
      * Responsible for managing a particular screen of the UI
-     * Something that usually contains a series of FrameHandler(s) that own widgets / state that is then rendered to each UI frame (the entire window per render)
-     * Something that often behaves as a proxy between the engine and underlying framehandlers
      * Able to take control of the UI and I/O (rendering, keyboard input, etc) until it exits
         * In this manner a View can take control / begin an I/O loop (upon calling begin()) while rendering itself via framhandlers
-
     From a data perspective, a View has direct access to both:
      * UI (ARQ's base UI, window areas, and it's elements (widgets))
      * The terminal manager (from ratatui) which is what allows us access to each frame via draw() which is then passed to each framehandler, this also allows direct access to the terminal display (character printing etc)

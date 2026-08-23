@@ -464,6 +464,7 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
     async fn bootstrap(&mut self) -> OpenCommandChannels {
         let ui = &mut self.ui;
         let character_equipment = &self.level.get_player_mut().unwrap().get_equipment().clone();
+        let player_character = self.level.get_player_mut().unwrap().clone();
 
         ui.set_console_buffer(UI_USAGE_HINT.to_string());
 
@@ -474,8 +475,10 @@ impl<B: ratatui::backend::Backend> CharacterInfoCommand<'_, B> {
         let ui_areas = ui.ui_layout.as_mut().expect("Failed to get UI Layout").get_ui_areas(LayoutType::StandardSplit);
 
         if self.widget_data.is_none() {
+
             let mut character_info_widget_data = CharacterInfoWidgetData::new(
                 inventory_container.clone(),
+                player_character,
                 character_equipment.clone(),
                 ui_areas.clone(),
                 container_event_sender.clone(),

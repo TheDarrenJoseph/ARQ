@@ -17,9 +17,6 @@ use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{get_input_key, Draw, StartMenuChoice, UI};
 use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
-use crate::view::framehandler::character_stats::CharacterFrameHandlerInputResult::VALIDATION;
-use crate::view::framehandler::character_stats::{CharacterFrameHandlerInputResult, CharacterStatsFrameHandler, ViewMode};
-use crate::view::framehandler::{FrameData, FrameHandler};
 use crate::view::map_view::MapView;
 use crate::view::menu_view::MenuView;
 use crate::view::{verify_display_size, GenericInputResult, InputHandler, InputResult, View};
@@ -108,47 +105,50 @@ impl <B : Backend> UIWrapper<B> {
         self.terminal_manager.terminal.draw(move |frame| { ui.draw_info(frame) })
     }
 
-    // TODO this should live in it's own view likely
+    // TODO rework
     // Shows character creation screen
     // Returns the finished character once input is confirmed
     fn show_character_creation(&mut self, base_character: Character) -> Result<Character, ErrorWrapper> {
-        let mut character_view = CharacterStatsFrameHandler { character: base_character.clone(),  widgets: WidgetList { widgets: Vec::new(), widget_index: None }, view_mode: ViewMode::CREATION, attributes_area: Area::new(Position::zero(), 0, 0)};
-        // Begin capture of a new character
-        let mut character_creation_result = InputResult { generic_input_result:
-        GenericInputResult { done: false, requires_view_refresh: false },
-            view_specific_result: None
-        };
-        while !character_creation_result.generic_input_result.done {
-            let ui = &mut self.ui;
-            ui.show_console();
-            let ui_layout = ui.ui_layout.as_mut().unwrap();
-            let frame_size = self.terminal_manager.terminal.get_frame().size();
-            let ui_areas: UIAreas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit).clone();
-            if let Some(main) = ui_areas.get_area(UI_AREA_NAME_MAIN) {
-                self.terminal_manager.terminal.draw(|frame| {
-                    let mut main_area = main.area;
-                    main_area.height -= 2;
-                    ui.render(None, Map(), frame);
-                    character_view.handle_frame(frame, FrameData { data: base_character.clone(), ui_areas: ui_areas.clone(), frame_area: main_area });
-                })?;
-            }
-            ui.hide_console();
+        // TODO implement
+        return Ok(base_character);
 
-            let key = get_input_key()?;
-            character_creation_result = character_view.handle_input(Some(key))?;
-
-            match character_creation_result.view_specific_result {
-                Some(VALIDATION(message)) => {
-                    self.ui.set_console_buffer(message);
-                    self.re_render()?;
-                },
-                Some(CharacterFrameHandlerInputResult::NONE) => {
-                    return Ok(character_view.get_character())
-                },
-                _ => {}
-            }
-        }
-        return Ok(character_view.get_character());
+        // let mut character_view = CharacterStatsFrameHandler { character: base_character.clone(),  widgets: WidgetList { widgets: Vec::new(), widget_index: None }, view_mode: ViewMode::CREATION, attributes_area: Area::new(Position::zero(), 0, 0)};
+        // // Begin capture of a new character
+        // let mut character_creation_result = InputResult { generic_input_result:
+        // GenericInputResult { done: false, requires_view_refresh: false },
+        //     view_specific_result: None
+        // };
+        // while !character_creation_result.generic_input_result.done {
+        //     let ui = &mut self.ui;
+        //     ui.show_console();
+        //     let ui_layout = ui.ui_layout.as_mut().unwrap();
+        //     let frame_size = self.terminal_manager.terminal.get_frame().size();
+        //     let ui_areas: UIAreas = ui_layout.get_or_build_areas(frame_size, LayoutType::StandardSplit).clone();
+        //     if let Some(main) = ui_areas.get_area(UI_AREA_NAME_MAIN) {
+        //         self.terminal_manager.terminal.draw(|frame| {
+        //             let mut main_area = main.area;
+        //             main_area.height -= 2;
+        //             ui.render(None, Map(), frame);
+        //             character_view.handle_frame(frame, FrameData { data: base_character.clone(), ui_areas: ui_areas.clone(), frame_area: main_area });
+        //         })?;
+        //     }
+        //     ui.hide_console();
+        //
+        //     let key = get_input_key()?;
+        //     character_creation_result = character_view.handle_input(Some(key))?;
+        //
+        //     match character_creation_result.view_specific_result {
+        //         Some(VALIDATION(message)) => {
+        //             self.ui.set_console_buffer(message);
+        //             self.re_render()?;
+        //         },
+        //         Some(CharacterFrameHandlerInputResult::NONE) => {
+        //             return Ok(character_view.get_character())
+        //         },
+        //         _ => {}
+        //     }
+        // }
+        // return Ok(character_view.get_character());
     }
 
     fn calculate_map_view_area(&self) -> Option<Area> {

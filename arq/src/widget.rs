@@ -34,7 +34,7 @@ pub fn build_buffer(length: i8, input: String) -> String {
 }
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum StatefulWidgetType {
     Text(TextInputState),
     Boolean(BooleanState),
