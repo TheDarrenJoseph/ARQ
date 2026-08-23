@@ -34,8 +34,9 @@ Licensed under Creative Commons BY Attribution 4.0 License
 https://creativecommons.org/licenses/by/4.0/
 ```
 
-![Main map dev screenshot](images/map-view-80-25-example.png)
-![Inventory view dev screenshot](images/inventory-view-80-25-example.png)
+![Main map dev screenshot](images/map_view_example.png)
+
+![Inventory view dev screenshot](images/inventory_view_example.png)
 
 TODO (Not in any specific order)
 ----
