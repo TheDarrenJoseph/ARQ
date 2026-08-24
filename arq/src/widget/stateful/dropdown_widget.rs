@@ -1,3 +1,4 @@
+use std::i8::MAX;
 use log::info;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -5,7 +6,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::StatefulWidget;
 use crate::character::equipment::EquipmentSlotItem;
 use crate::map::objects::items::Item;
-use crate::ui::resolution::Resolution;
+use crate::ui::resolution::{Resolution, MAX_RESOLUTION};
 use crate::view::MIN_RESOLUTION;
 use crate::widget::{StatefulWidgetType};
 
@@ -60,11 +61,17 @@ impl DropdownOption<Item> {
 }
 
 pub fn get_resolution_dropdown_options() -> Vec<DropdownOption<Resolution>> {
-    let min_resolution_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: String::from("80x24"), value: Some(MIN_RESOLUTION) };
+    // Smallest resolution that we can adapt the UI to
+    // TODO this should probably be larger!
+    let min_resolution_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: format!("{}x{}", MIN_RESOLUTION.width, MIN_RESOLUTION.height), value: Some(MIN_RESOLUTION) };
+    // The largest resolution that we can adapt the UI to
+    // This as big as we can design for
+    let max_resolution_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name: format!("{}x{}", MAX_RESOLUTION.width, MAX_RESOLUTION.height), value: Some(MAX_RESOLUTION) };
     let fullscreen_dropdown_option: DropdownOption<Resolution> = DropdownOption { display_name:  String::from("FULLSCREEN"), value: None };
     vec! [
-        fullscreen_dropdown_option,
-        min_resolution_dropdown_option
+        min_resolution_dropdown_option,
+        max_resolution_dropdown_option,
+        fullscreen_dropdown_option
     ]
 }
 

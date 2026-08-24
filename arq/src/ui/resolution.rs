@@ -7,6 +7,7 @@ pub struct Resolution {
 }
 
 pub const MIN_RESOLUTION: Resolution = Resolution::new(80, 24);
+pub const MAX_RESOLUTION: Resolution = Resolution::new(200, 51);
 
 impl Resolution {
     pub const fn new(width: u16, height: u16) -> Resolution {
