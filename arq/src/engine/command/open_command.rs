@@ -4,11 +4,10 @@ use crate::engine::event::ui::TerminalEventHandler;
 use crate::engine::command::command::Command;
 use crate::engine::command::util::CurrentContainersData;
 use crate::engine::container_util;
-use crate::engine::event::container::{MoveItemsRequestV2, OpenedContainerEventData, PlayerInventoryContainer, PlayerInventoryItemPosition, SourceContainerScope, TargetContainerScope, WorldContainer, WorldContainerItemPosition};
+use crate::engine::event::container::{MoveItemsRequestV2, OpenedContainerEventData, PlayerInventoryContainer, SourceContainerScope, TargetContainerScope, WorldContainer, WorldContainerItemPosition};
 use crate::engine::event::container::OpenedContainerEventData::{MoveItemsToContainerChoiceSelection, OpenContainer};
 use crate::engine::event::container::OpenedContainerEventData::TakeItems;
 use crate::engine::event::container::OpenedContainerEventType;
-use crate::engine::event::container::OpenedContainerEventType::{Close, MoveItems};
 use crate::engine::event::ui::AppEventType::OpenedContainerEvent;
 use crate::engine::event::ui::UIEvent;
 use crate::engine::level::Level;
@@ -29,7 +28,6 @@ use crate::widget::{Named, StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
 use std::io;
 use termion::event::Key;
-use termion::event::Key::Esc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use crate::engine::container_util::move_items;
@@ -322,7 +320,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
 
     // If we have a container choice data set, it takes priority
     // Handle any events specific to choosing a container
-    if let Some(choice_data) = container_choice_data {
+    if let Some(_choice_data) = container_choice_data {
         log::info!("Handling events for existing ContainerChoiceWidgetData");
         match event {
             // Clear the data if we're exiting the widget

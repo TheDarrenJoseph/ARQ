@@ -1,4 +1,3 @@
-use std::ptr::eq;
 use ratatui::prelude::Widget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -8,10 +7,7 @@ use termion::event::Key;
 use crate::character::equipment::{Equipment, EquipmentSlotItem};
 use crate::engine::event::event::UIEventHandler;
 use crate::engine::event::ui::UIEvent;
-use crate::map::position::Area;
 use crate::ui::ui_areas::UIArea;
-use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
-use crate::widget::stateful::container_widget::ContainerWidgetData;
 use crate::widget::stateful::dropdown_widget::{DropdownInputState, DropdownOption};
 
 #[derive(Debug, Clone)]
@@ -87,7 +83,7 @@ impl UIEventHandler for EquipmentWidgetData {
 impl StatefulWidget for EquipmentWidget {
     type State = EquipmentWidgetData;
 
-    fn render(self, area: Rect, buf: &mut Buffer, data: &mut Self::State) {
+    fn render(self, _area: Rect, buf: &mut Buffer, data: &mut Self::State) {
         let main_area = data.main_ui_area.get_bordered_area();
 
         let window_block = Block::default()

@@ -5,7 +5,7 @@ use crate::engine::event::ui::UIEvent;
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::position::Position;
-use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::widget::stateful::container_widget::ContainerWidget;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -73,7 +73,7 @@ impl CharacterInfoWidget {
         }
     }
 
-    fn build_tabs(&self, current_tab_choice: i32) -> Tabs {
+    fn build_tabs(&self, current_tab_choice: i32) -> Tabs<'_> {
         // All tab values
         let tabs = Tab::values();
         let tab_titles: Vec<_> = tabs.iter().map(|t| t.title.clone()).map(Line::from).collect();
@@ -151,7 +151,7 @@ impl UIEventHandler for CharacterInfoWidgetData {
                                 let tab_choices = Tab::values();
                                 let tab_index = tab_choices.iter().position(|t| t.tab_choice == self.tab_choice).unwrap();
 
-                                if (tab_index < tab_choices.len() - 1) {
+                                if tab_index < tab_choices.len() - 1  {
                                     self.tab_choice = tab_choices.get(tab_index + 1).unwrap().tab_choice.clone();
                                 } else {
                                     // Wrap around to the start again

@@ -25,7 +25,6 @@ use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
-use crate::engine::command::util::CurrentContainersData;
 use crate::engine::event::event::UIEventHandler;
 use crate::widget::stateful::container_choice_widget::ContainerChoiceWidgetData;
 
@@ -130,7 +129,7 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::TakeItems=> {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                    if (selected_items.len() == 0) {
+                    if selected_items.len() == 0  {
                         info!("No items selected, skipping TakeItems");
                         return;
                     }
@@ -143,13 +142,13 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::MoveItems => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                    if (selected_items.len() == 0) {
+                    if selected_items.len() == 0  {
                         info!("No items selected, skipping MoveItems");
                         return;
                     }
 
                     let focused_item = self.item_list_selection.get_focused_item().unwrap();
-                    if (selected_items.contains(focused_item)) {
+                    if selected_items.contains(focused_item)  {
                         info!("Cannot move to a selected item, skipping MoveItems");
                         return;
                     }
@@ -172,7 +171,7 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::DropItems => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                    if (selected_items.len() == 0) {
+                    if selected_items.len() == 0  {
                         info!("No items selected, skipping DropItems");
                         return;
                     }
@@ -184,7 +183,7 @@ impl ContainerWidgetData {
                 },
                 OpenedContainerEventType::ShowMoveContainerChoices => {
                     let selected_items = Vec::from(self.item_list_selection.get_selected_items().clone());
-                    if (selected_items.len() == 0) {
+                    if selected_items.len() == 0  {
                         info!("No items selected, skipping ShowMoveContainerChoices");
                         return;
                     }
@@ -233,7 +232,7 @@ impl ContainerWidgetData {
     pub fn handle_move_items_to_choice_response(&mut self, response: MoveItemsResponseV2) {
         let self_container_id = self.container.get_self_item_id();
         // If this is the source container
-        if (self_container_id == response.request.source.get_self_item().get_id()) {
+        if self_container_id == response.request.source.get_self_item().get_id()  {
             let updated_source = response.updated_scopes.source;
             // Update the current container details to the updated source
             self.container = updated_source.get_container().clone();
@@ -242,7 +241,7 @@ impl ContainerWidgetData {
         }
 
         // If this is the target container
-        if (self_container_id == response.request.target.get_self_item().get_id()) {
+        if self_container_id == response.request.target.get_self_item().get_id()  {
             let updated_target = response.updated_scopes.target;
             // Update the current container details to the updated target
             self.container = updated_target.get_container().unwrap().clone();

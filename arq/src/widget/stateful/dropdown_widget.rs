@@ -3,13 +3,11 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::StatefulWidget;
-use crate::character::equipment::{Equipment, EquipmentSlot, EquipmentSlotItem};
+use crate::character::equipment::EquipmentSlotItem;
 use crate::map::objects::items::Item;
 use crate::ui::resolution::Resolution;
-use crate::ui::ui_areas::UIArea;
 use crate::view::MIN_RESOLUTION;
 use crate::widget::{StatefulWidgetType};
-use crate::widget::stateful::equipment_widget::EquipmentWidgetData;
 
 #[derive(Clone)]
 #[derive(Debug)]

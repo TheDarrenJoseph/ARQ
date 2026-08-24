@@ -1,4 +1,3 @@
-use crate::ui::ui_layout::LayoutType::StandardSplit;
 use crate::engine::event::event::UIEventHandler;
 use crate::widget::stateful::container_choice_widget::build_container_choice_widget_data;
 use crate::engine::command::command::Command;
@@ -18,15 +17,15 @@ use crate::error::errors::{ErrorType, ErrorWrapper};
 use crate::item_list_selection::{ItemListSelection, ListSelection};
 use crate::map::objects::container::Container;
 use crate::map::objects::items::Item;
-use crate::map::position::{Area, Position};
+use crate::map::position::Position;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::{UIViewMode, UI};
-use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::LayoutType;
 use crate::view::View;
 use crate::widget::standard::usage_line::UsageCommand;
 use crate::widget::stateful::character_info_widget::{CharacterInfoWidget, CharacterInfoWidgetData, TabChoice};
-use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget, ContainerChoiceWidgetData};
+use crate::widget::stateful::container_choice_widget::{ContainerChoice, ContainerChoiceWidget};
 use crate::widget::stateful::container_widget::{ContainerWidget, ContainerWidgetData};
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use log::{debug, error, info};
@@ -142,7 +141,7 @@ async fn handle_container_event<'a, B: ratatui::backend::Backend>(
     player_position: Position, // Needed for DropItems
     event: UIEvent,
     event_handler: &mut TerminalEventHandler, // This provides terminal IO input (key input)
-    tab_choice: &mut TabChoice,
+    _tab_choice: &mut TabChoice,
     containers_data: &mut CurrentContainersData, // Tracks the currently open containers / relevant widget data
     child_container_sender: UnboundedSender<UIEvent>,
 ) -> bool {

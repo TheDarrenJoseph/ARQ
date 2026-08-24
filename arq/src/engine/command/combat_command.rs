@@ -6,11 +6,9 @@ use ratatui::prelude::Widget;
 use crate::character::battle::Battle;
 use crate::engine::combat::CombatTurnChoiceEventType;
 use crate::engine::command::command::Command;
-use crate::engine::command::look_command::LookCommand;
 use crate::engine::level::Level;
 use crate::error::errors::ErrorWrapper;
 use crate::terminal::terminal_manager::TerminalManager;
-use crate::ui::bindings::look_bindings::LookKeyBindings;
 use crate::ui::ui::UI;
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{BorderedArea, UI_AREA_NAME_MAIN};
@@ -40,11 +38,11 @@ impl <B: ratatui::backend::Backend> Command<()> for CombatCommand<'_, B> {
 
         let frame_area = Area::from_rect(self.terminal_manager.terminal.get_frame().size());
 
-        let mut ui_layout= ui.ui_layout.as_mut().expect("Failed to get UI Layout");
+        let ui_layout= ui.ui_layout.as_mut().expect("Failed to get UI Layout");
         let ui_areas =ui_layout.get_or_build_areas(frame_area.to_rect(), LayoutType::CombatView);
 
         let main_area = ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap().area;
-        let bordered_main_area = BorderedArea::from_area(main_area).unwrap();
+        let _bordered_main_area = BorderedArea::from_area(main_area).unwrap();
 
         let combat_widget = CombatWidget {};
         ui.add_stateful_widget(StatefulWidgetType::Combat(combat_widget));

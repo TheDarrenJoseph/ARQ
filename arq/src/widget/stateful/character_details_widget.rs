@@ -7,17 +7,12 @@ use ratatui::prelude::StatefulWidget;
 use ratatui::widgets::{Block, Borders};
 use termion::event::Key;
 use crate::character::{determine_class, Character, Class};
-use crate::character::equipment::Equipment;
 use crate::character::stats::attributes::all_attributes;
 use crate::engine::event::event::UIEventHandler;
 use crate::engine::event::ui::UIEvent;
-use crate::error::errors::ErrorWrapper;
 use crate::map::position::{Area, Position};
 use crate::ui::ui_areas::UIArea;
-use crate::view::{GenericInputResult, InputResult};
 use crate::widget::stateful::button_widget::build_button;
-use crate::widget::stateful::container_choice_widget::{ContainerChoiceWidget, ContainerChoiceWidgetData};
-use crate::widget::stateful::container_widget::ContainerWidgetData;
 use crate::widget::stateful::dropdown_widget::build_dropdown;
 use crate::widget::stateful::number_widget::{build_number_input, build_number_input_with_value, NumberInputState};
 use crate::widget::stateful::text_widget::build_text_input;
@@ -236,7 +231,7 @@ impl UIEventHandler for CharacterDetailsWidgetData {
             None => {}
         }
 
-        let mut done = false;
+        let _done = false;
         // let default_done_result = Ok(InputResult {
         //     generic_input_result: GenericInputResult { done, requires_view_refresh: true },
         //     view_specific_result: None
@@ -422,7 +417,7 @@ impl UIEventHandler for CharacterDetailsWidgetData {
 impl StatefulWidget for CharacterDetailsWidget {
     type State = CharacterDetailsWidgetData;
 
-    fn render(self, area: Rect, buf: &mut Buffer, data: &mut Self::State) {
+    fn render(self, _area: Rect, buf: &mut Buffer, data: &mut Self::State) {
         let title = match data.view_mode {
             ViewMode::CREATION => {
                 "Character Creation"

@@ -15,12 +15,11 @@ use crate::menu;
 use crate::terminal::terminal_manager::TerminalManager;
 use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui::{get_input_key, Draw, StartMenuChoice, UI};
-use crate::ui::ui_areas::{UIAreas, UI_AREA_NAME_MAIN};
+use crate::ui::ui_areas::UI_AREA_NAME_MAIN;
 use crate::ui::ui_layout::LayoutType;
 use crate::view::map_view::MapView;
 use crate::view::menu_view::MenuView;
-use crate::view::{verify_display_size, GenericInputResult, InputHandler, InputResult, View};
-use crate::widget::widgets::WidgetList;
+use crate::view::{verify_display_size, InputResult, View};
 
 pub struct UIWrapper<B: 'static + ratatui::backend::Backend> {
     pub(crate) ui : UI,

@@ -21,9 +21,7 @@ use ratatui::widgets::{Block, Borders, Clear};
 use termion::event::Key;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
-use crate::map::objects::container::Container;
 use crate::ui::ui_areas::{UIArea, UIAreas, UI_AREA_NAME_MAIN};
-use crate::widget::stateful::container_widget::ContainerWidgetData;
 
 #[derive(Clone, Debug)]
 pub enum ContainerChoiceScope {

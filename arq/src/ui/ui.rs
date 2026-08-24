@@ -6,7 +6,6 @@ use crate::ui::ui::UIViewMode::Map;
 use crate::ui::ui_areas::{UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MAIN};
 use crate::ui::ui_layout::{LayoutType, UILayout};
 use crate::widget::stateful::character_info_widget::CharacterInfoWidgetData;
-use crate::widget::stateful::container_widget::ContainerWidgetData;
 use crate::widget::{StandardWidgetType, StatefulWidgetType};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};

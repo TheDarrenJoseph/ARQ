@@ -8,17 +8,11 @@ use termion::event::Key;
 use crate::character::battle::Battle;
 use crate::character::equipment::{Equipment, EquipmentSlot, WeaponSlot};
 use crate::engine::combat::CombatTurnChoiceEventType;
-use crate::engine::command::combat_command::CombatCallbackData;
 use crate::engine::event::event::UIEventHandler;
 use crate::engine::event::ui::UIEvent;
-use crate::engine::level::Level;
-use crate::map::map_view_areas::MapViewAreas;
-use crate::map::position::{build_rectangular_area, Area, Position};
+use crate::map::position::{build_rectangular_area, Position};
 use crate::option_list_selection::{MappedOption, OptionListSelection};
-use crate::ui::ui_areas::{BorderedArea, UIAreas, UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MAIN, UI_AREA_NAME_MINIMAP};
-use crate::ui::ui_layout::LayoutType;
-use crate::widget::stateful::container_widget::ContainerWidgetData;
-use crate::widget::stateful::map_widget::MapWidget;
+use crate::ui::ui_areas::{BorderedArea, UIAreas, UI_AREA_NAME_CONSOLE, UI_AREA_NAME_MINIMAP};
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -106,8 +100,8 @@ fn build_options(equipment: Equipment) -> Vec<MappedOption<CombatTurnChoiceEvent
 impl StatefulWidget for CombatWidget {
     type State = CombatWidgetData;
 
-    fn render(mut self, _: Rect, buf: &mut Buffer, data: &mut CombatWidgetData) {
-        let mut characters = &mut data.battle.characters;
+    fn render(self, _: Rect, buf: &mut Buffer, data: &mut CombatWidgetData) {
+        let characters = &mut data.battle.characters;
         let player = characters.get_player_mut().unwrap();
         let player_equipment = player.get_equipment_mut().clone();
 
@@ -180,7 +174,7 @@ impl StatefulWidget for CombatWidget {
         }
 
         let minimap_area = data.ui_areas.get_area(UI_AREA_NAME_MINIMAP).unwrap();
-        let bordered_minimap_area = BorderedArea::from_area(minimap_area.area).unwrap();
+        let _bordered_minimap_area = BorderedArea::from_area(minimap_area.area).unwrap();
 
         // TODO pass through current minimap data / render
         // let mut player_global_pos = self.level.characters.get_player_mut().unwrap().get_global_position();
@@ -225,7 +219,7 @@ impl UIEventHandler for CombatWidgetData {
                             },
                             crate::global_flags::ENTER_KEY => {
                                 let selection = &self.selection;
-                                let chosen_option = selection.get_chosen();
+                                let _chosen_option = selection.get_chosen();
 
                                 // TODO convert
                                 //let _data = CombatCallbackData { choice: CombatTurnChoiceEventType::ATTACK(WeaponSlot::PRIMARY), result: None };
@@ -244,7 +238,7 @@ impl UIEventHandler for CombatWidgetData {
                     _ => {}
                 }
             },
-            UIEvent::AppEvent(CombatTurnChoice(CombatTurnChoiceEventType::ATTACK(weapon_slot))) => {
+            UIEvent::AppEvent(CombatTurnChoice(CombatTurnChoiceEventType::ATTACK(_weapon_slot))) => {
                 messages.push(String::from("You attempt attack..."));
                 // TODO
             }

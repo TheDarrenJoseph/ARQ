@@ -33,7 +33,6 @@ use termion::input::TermRead;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::engine::event::ui::AppEventType::CombatTurnChoice;
 
 #[derive(Debug)]
 pub struct TerminalEventHandler {
@@ -65,13 +64,13 @@ impl UIEvent {
             &UIEvent::Tick => { "Tick" },
             UIEvent::Termion(te) => {
                 match te {
-                    termion::event::Event::Key(k) => {
+                    termion::event::Event::Key(_k) => {
                         "Key"
                     },
-                    termion::event::Event::Mouse(m) => {
+                    termion::event::Event::Mouse(_m) => {
                         "Mouse"
                     },
-                    termion::event::Event::Unsupported(u) => {
+                    termion::event::Event::Unsupported(_u) => {
                         "Unsupported"
                     }
                 }
