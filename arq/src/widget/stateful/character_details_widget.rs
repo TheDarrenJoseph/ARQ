@@ -417,7 +417,7 @@ impl UIEventHandler for CharacterDetailsWidgetData {
 impl StatefulWidget for CharacterDetailsWidget {
     type State = CharacterDetailsWidgetData;
 
-    fn render(self, _area: Rect, buf: &mut Buffer, data: &mut Self::State) {
+    fn render(self, area: Rect, buf: &mut Buffer, data: &mut Self::State) {
         let title = match data.view_mode {
             ViewMode::CREATION => {
                 "Character Creation"
@@ -427,18 +427,10 @@ impl StatefulWidget for CharacterDetailsWidget {
             }
         };
 
-        let main_area = data.main_ui_area.get_bordered_area();
 
         let window_block = Block::default()
             .borders(Borders::ALL)
             .title(title);
-
-        // Adjust the inner main window area to account for the tabs
-        let window_start_x = main_area.inner.start_position.x;
-        let window_start_y = main_area.inner.start_position.y + 1;
-        let window_width = main_area.inner.width;
-        let window_height = main_area.inner.height - 1;
-        let window_area = Rect::new(window_start_x, window_start_y, window_width, window_height);
 
         data.get_character();
         if data.widget_list.widgets.is_empty() {
@@ -454,6 +446,9 @@ impl StatefulWidget for CharacterDetailsWidget {
 
         let mut _attribute_start = (data.widget_list.widgets.len() as u16 - 1) - (all_attributes.len() as u16 - 1);
 
+
+        let window_start_x = area.x;
+        let window_start_y = area.y;
         let attributes_area;
         // To account for the enter button
         if data.view_mode == ViewMode::CREATION {
@@ -462,7 +457,7 @@ impl StatefulWidget for CharacterDetailsWidget {
             // And an inner attributes window
             // We also center the attributes window
             let target_area = Rect::new(window_start_x + 1, window_start_y + 1, 50, 10);
-            let available_area = Rect::new(window_start_x + 1, window_start_y + 1, window_width - 2, window_height - 2);
+            let available_area = Rect::new(window_start_x + 1, window_start_y + 1, area.width - 2, area.height - 2);
             let resolution = Resolution::new(target_area.width, target_area.height);
             let attributes_area_result = center_area(target_area, available_area, resolution);
             // TODO error handling if center_area fails?
@@ -471,10 +466,10 @@ impl StatefulWidget for CharacterDetailsWidget {
             data.attributes_area = attributes_area;
             attributes_block.render(attributes_area.to_rect(), buf);
         } else {
-            attributes_area = Area::new(Position::new(window_start_x, window_start_y), window_width, window_height);
+            attributes_area = Area::new(Position::new(window_start_x, window_start_y), area.width, area.height);
         }
 
-        window_block.render(window_area, buf);
+        window_block.render(area, buf);
 
         let widgets = data.widget_list.widgets.clone();
         let widget_count = widgets.len();

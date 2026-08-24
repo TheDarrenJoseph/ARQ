@@ -83,21 +83,12 @@ impl UIEventHandler for EquipmentWidgetData {
 impl StatefulWidget for EquipmentWidget {
     type State = EquipmentWidgetData;
 
-    fn render(self, _area: Rect, buf: &mut Buffer, data: &mut Self::State) {
-        let main_area = data.main_ui_area.get_bordered_area();
-
+    fn render(self, area: Rect, buf: &mut Buffer, data: &mut Self::State) {
         let window_block = Block::default()
             .borders(Borders::ALL)
             .title("Equipment");
 
-        // Adjust the inner main window area to account for the tabs
-        let window_start_x = main_area.inner.start_position.x;
-        let window_start_y = main_area.inner.start_position.y + 1;
-        let window_width = main_area.inner.width;
-        let window_height = main_area.inner.height - 1;
-        let window_area = Rect::new(window_start_x, window_start_y, window_width, window_height);
-
-        window_block.render(window_area, buf);
+        window_block.render(area, buf);
 
         let mut dropdown_index = 0;
         for equipment in data.equipment.get_slots() {
@@ -109,10 +100,10 @@ impl StatefulWidget for EquipmentWidget {
             let dropdown = DropdownInputState::new(dropdown_option);
             let mut dropdown_state = dropdown.clone();
 
-            let dropdown_start_x = main_area.inner.start_position.x + 1;
-            let dropdown_start_y = main_area.inner.start_position.y + 2 + dropdown_index;
-            let dropdown_width = main_area.inner.width - 1;
-            let dropdown_height = main_area.inner.height - 2 + dropdown_index;
+            let dropdown_start_x = area.x + 1;
+            let dropdown_start_y = area.y + 2 + dropdown_index;
+            let dropdown_width = area.width - 1;
+            let dropdown_height = area.height - 2 + dropdown_index;
             let dropdown_area = Rect::new(dropdown_start_x, dropdown_start_y, dropdown_width, dropdown_height);
             dropdown.render(dropdown_area, buf, &mut dropdown_state);
 

@@ -78,7 +78,7 @@ impl CharacterInfoWidget {
         let tabs = Tab::values();
         let tab_titles: Vec<_> = tabs.iter().map(|t| t.title.clone()).map(Line::from).collect();
         let tabs = Tabs::new(tab_titles)
-            .block(Block::default().title("Character Info").borders(Borders::NONE))
+            .block(Block::default().borders(Borders::NONE))
             .style(Style::default().bg(Color::Black).fg(Color::White))
             .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
             .divider(VERTICAL)
@@ -213,39 +213,47 @@ impl StatefulWidget for CharacterInfoWidget {
     type State = CharacterInfoWidgetData;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let main_area = state.ui_areas.get_area(UI_AREA_NAME_MAIN).unwrap();
-        let frame_size = main_area.area.to_rect();
-        
+        // This is the main window area, which is the window above the console on the standard split window
+        let main_area_bordered = state.ui_areas.get_bordered_area(UI_AREA_NAME_MAIN);
+
         let widget_data = state;
 
-        let heading_pos = Position::new(frame_size.x + 1, frame_size.y);
         let heading_area = Rect::new(
-            heading_pos.x,
-            heading_pos.y,
-            frame_size.width - 2,
-            3
+            main_area_bordered.inner.start_position.x,
+            main_area_bordered.inner.start_position.y,
+            main_area_bordered.inner.width,
+            1
         );
 
         let current_tab_choice = widget_data.tab_choice.clone() as i32;
         let tabs = self.build_tabs(current_tab_choice);
         tabs.render(heading_area, buf);
 
+
+        let tab_window_area_inner = Rect::new(
+            main_area_bordered.inner.start_position.x,
+            // + 1 to the inner area start to avoid the Character Info tabs
+            main_area_bordered.inner.start_position.y + 1,
+            main_area_bordered.inner.width,
+            // - 1 to height to account for the tabs
+            main_area_bordered.inner.height - 1
+        );
         match widget_data.tab_choice {
             TabChoice::INVENTORY => {
                 if let Some(current_container_data) =  widget_data.current_containers_data.get_current_data_mut() {
                     self.container_widget.render(
-                        area, buf, current_container_data
+                        tab_window_area_inner, buf, current_container_data
                     );
                 }
             },
             TabChoice::EQUIPMENT => {
                 self.equipment_widget.render(
-                    area, buf, &mut widget_data.equipment_widget_data
+                    tab_window_area_inner, buf, &mut widget_data.equipment_widget_data
                 );
             },
             TabChoice::CHARACTER => {
                 self.character_details_widget.render(
-                    area, buf, &mut widget_data.character_details_widget_data
+                    tab_window_area_inner, buf, &mut widget_data.character_details_widget_data
                 );
             }
         }

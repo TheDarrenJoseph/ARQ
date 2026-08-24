@@ -398,25 +398,27 @@ fn build_container_column_text(column: &Column, container: &Container) -> String
 impl StatefulWidget for ContainerWidget {
     type State = ContainerWidgetData;
 
-    fn render(mut self, _: Rect, buf: &mut Buffer, data: &mut ContainerWidgetData) {
-        let main_area = data.ui_area;
-        let frame_size = main_area.to_rect();
-        
+
+    fn render(mut self, area: Rect, buf: &mut Buffer, data: &mut ContainerWidgetData) {
+
+        // For the container, we need to obey the area provided to us
+        // as we don't know the context of where we're being displayed
+        // (as it could be in opened containers or the player's inventory, which display differently)
+
         let container = &mut data.container;
         let item_list_selection = &mut data.item_list_selection;
-        //let usage_line = &mut data.usage_line;
 
         let window_block = Block::default()
             .borders(Borders::ALL)
             .title(container.get_self_item().get_name().clone());
-        let window_area = Rect::new(frame_size.x.clone(), frame_size.y.clone(), frame_size.width.clone(), frame_size.height.clone());
+        let window_area = Rect::new(area.x.clone(), area.y.clone(), area.width.clone(), area.height.clone());
         let inventory_item_lines = window_area.height - 3;
         self.row_count = inventory_item_lines as i32;
         item_list_selection.page_line_count = inventory_item_lines as i32;
         window_block.render(window_area, buf);
 
         let headings = build_headings(self.columns.clone());
-        let headings_area = Rect::new(frame_size.x.clone() + 1, frame_size.y.clone() + 1, frame_size.width.clone() - 4, 2);
+        let headings_area = Rect::new(area.x.clone() + 1, area.y.clone() + 1, area.width.clone() - 4, 2);
         headings.render(headings_area, buf);
 
         let mut line_index = 0;
@@ -428,13 +430,13 @@ impl StatefulWidget for ContainerWidget {
             for c in view_contents {
                 let item_index = start_index.clone() + line_index.clone();
                 let item = &c.get_self_item();
-                // The x offset is the starting x 
+                // The x offset is the starting x
                 // + 1 to avoid the left-hand border
-                let mut x_offset: u16 = frame_size.x.clone() + 1;
-                // The y offset is the starting y 
-                // + 2 (to avoid top border and the header row) 
+                let mut x_offset: u16 = area.x.clone() + 1;
+                // The y offset is the starting y
+                // + 2 (to avoid top border and the header row)
                 // + line index (to avoid previous lines)
-                let y_offset: u16 = frame_size.y.clone() as u16 + 2 + line_index.clone() as u16;
+                let y_offset: u16 = area.y.clone() as u16 + 2 + line_index.clone() as u16;
 
                 let current_index = item_list_selection.is_focused(item_index);
                 let selected = item_list_selection.is_selected(item_index);
